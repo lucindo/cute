@@ -5,7 +5,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 ## Roadmap
 
 - [x] Scaffold: repo builds, tests, lints with HRV toolchain (strict tsconfig, Vite, Tailwind, Vitest, ESLint); empty app renders with Mono Zen light/dark theme
-- [ ] App shell: Practice/Collection switcher routes between placeholder screens; EN/PT-BR strings infra wired
+- [x] App shell: Practice/Collection switcher routes between placeholder screens; EN/PT-BR strings infra wired
 - [ ] Storage foundation: IndexedDB stores (sources, blobs, thumbs, sessions, hold events) behind typed Result wrappers; `cute:`-prefixed localStorage prefs with HRV key-collision audit; `storage.persist()` requested on first run
 - [ ] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
 - [ ] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint

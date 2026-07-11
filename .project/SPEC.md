@@ -176,6 +176,6 @@ One role: **the practitioner**. Goals:
 
 1. **PT-BR seeded tag names** — final translations (Bebês, Gatinhos, Filhotes, Família, Bhakti?) to be settled when writing `strings.ts`.
 2. **Slop threshold value** for swipe-vs-hold disambiguation (likely ~10px, tune on device during implementation).
-3. **HRV localStorage key audit** — confirm HRV's actual key names before choosing the `cute:` prefix scheme, to guarantee zero collision on the shared origin.
+3. **HRV localStorage key audit** — RESOLVED: HRV writes only `hrv:state:v1` and `hrv:install-dismissed` (all `hrv:`-prefixed); the `cute:` prefix cannot collide. Our key: `cute:state:v1`.
 
 None of these block planning; all resolve during implementation of their respective slices.

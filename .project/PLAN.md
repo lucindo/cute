@@ -2,6 +2,19 @@
 
 Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hrv` (reference implementation).
 
+## Now
+
+**State:** Tasks 1–2 done and committed on branch `dev` (scaffold + app shell). Mode switcher, EN/PT-BR strings infra, and the localStorage envelope (`cute:state:v1`, prefs slice pulled forward from task 3) are live; lint/tests(18)/build all green.
+
+**Next:** Task 3 — IndexedDB storage foundation: sources/blobs/thumbs/sessions/hold-events stores behind typed `Result` wrappers, plus `navigator.storage.persist()` on first run. No HRV precedent to port; new design work.
+
+**Open questions:** none blocking.
+
+**Watch:**
+- PT-BR copy pending native-speaker review before release (SPEC OQ-1); swipe slop threshold to tune on device (SPEC OQ-2).
+- `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
+- `PROJECT.md` repo map is slightly behind (src/domain|storage|hooks|content|components now exist with real code) — re-run `/ds-project-map` after the storage layer lands.
+
 ## Roadmap
 
 - [x] Scaffold: repo builds, tests, lints with HRV toolchain (strict tsconfig, Vite, Tailwind, Vitest, ESLint); empty app renders with Mono Zen light/dark theme

@@ -49,3 +49,4 @@ Decisions resolved during design discussion and the grill interview. One entry p
 - **Wake lock:** kept as in HRV (progressive enhancement) — screen must not sleep between holds.
 - **Deploy/desktop:** HRV's `deploy.yml` (multi-version Pages + versions.json) and `desktop.yml` (Pake wrapping the live URL) reused with name/URL swapped, per original scope.
 - **Deferred beyond v1:** named presets, merge-on-import backup, custom background track, recency-weighted aww formula, charts, Android PWA share-target, Fullscreen API enhancement, optional end chime.
+- **Envelope storage ported without HRV's migration ladder.** `readEnvelope` keeps the forward-compat spread and `writeEnvelope` keeps the cross-tab downgrade guard, but `migrateEnvelope` is omitted until the first real schema change (STATE_VERSION starts at 1, no legacy data exists). *Rationale: the guard is live safety; the ladder is dead code until there's something to migrate.*

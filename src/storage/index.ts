@@ -11,6 +11,7 @@ export type {
   StoreName,
   WriteOp,
 } from './db'
+export { deleteSource } from './sources'
 export { requestPersistence } from './persistence'
 export type { PersistenceDeps } from './persistence'
 export { STATE_KEY, STATE_VERSION, asRecord, readEnvelope, writeEnvelope } from './storage'

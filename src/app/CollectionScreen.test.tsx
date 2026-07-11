@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom/vitest'
 
-import { act, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CollectionScreen } from './CollectionScreen'
 import { UI_STRINGS } from '../content/strings'
@@ -104,5 +105,119 @@ describe('CollectionScreen', () => {
     expect(revoked).toHaveBeenCalledWith(url)
     created.mockRestore()
     revoked.mockRestore()
+  })
+})
+
+describe('CollectionScreen import', () => {
+  const IMPORT_LABEL = UI_STRINGS.en.collection.importButton
+  // The decode fake rejects this fixture type to simulate an undecodable file.
+  const BROKEN_TYPE = 'image/heic'
+
+  function makeImageFile(name: string, type = 'image/jpeg'): File {
+    return new File(['x'], name, { type })
+  }
+
+  // A list item whose full text matches — rejection lines render as split
+  // text nodes (name — hint), which the default text matcher can't see.
+  function findRejectionLine(expected: string): Promise<HTMLElement> {
+    return screen.findByText(
+      (_content, element) => element !== null && element.tagName === 'LI' && element.textContent === expected,
+    )
+  }
+
+  function pasteFiles(files: File[]): void {
+    const event = new Event('paste', { bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'clipboardData', { value: { files } })
+    window.dispatchEvent(event)
+  }
+
+  beforeEach(() => {
+    vi.stubGlobal('createImageBitmap', (blob: Blob) =>
+      blob.type === BROKEN_TYPE
+        ? Promise.reject(new Error('cannot decode'))
+        // Reason: only width/height/close are consumed by the pipeline; jsdom
+        // cannot construct a real ImageBitmap.
+        : Promise.resolve({ width: 800, height: 600, close: () => {} } as unknown as ImageBitmap),
+    )
+    // Reason: jsdom's canvas needs the native canvas package; the pipeline
+    // needs a working 2d surface and encoder, not real pixels.
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(
+      { imageSmoothingQuality: 'low', drawImage: () => {} } as unknown as CanvasRenderingContext2D,
+    )
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
+      function (this: HTMLCanvasElement, callback: BlobCallback, type?: string) {
+        callback(new Blob(['enc'], { type: type ?? 'image/png' }))
+      },
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('imports picked files into the grid', async () => {
+    const { container } = renderScreen()
+    await screen.findByText(EMPTY_TEXT)
+
+    await userEvent.upload(screen.getByLabelText(IMPORT_LABEL), [makeImageFile('a.jpg')])
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('img')).toHaveLength(1)
+    })
+    expect(screen.queryByText(EMPTY_TEXT)).not.toBeInTheDocument()
+  })
+
+  it('imports dropped files and lists per-file rejection hints', async () => {
+    const { container } = renderScreen()
+    await screen.findByText(EMPTY_TEXT)
+
+    const dropZone = container.firstElementChild
+    if (dropZone === null) throw new Error('expected the drop zone')
+    fireEvent.drop(dropZone, {
+      dataTransfer: {
+        files: [
+          makeImageFile('good.jpg'),
+          makeImageFile('notes.pdf', 'application/pdf'),
+          makeImageFile('broken.heic', BROKEN_TYPE),
+        ],
+      },
+    })
+
+    await findRejectionLine(`notes.pdf — ${UI_STRINGS.en.collection.rejection.unsupportedType}`)
+    await findRejectionLine(`broken.heic — ${UI_STRINGS.en.collection.rejection.undecodable}`)
+    await waitFor(() => {
+      expect(container.querySelectorAll('img')).toHaveLength(1)
+    })
+  })
+
+  it('imports pasted files', async () => {
+    const { container } = renderScreen()
+    await screen.findByText(EMPTY_TEXT)
+
+    act(() => {
+      pasteFiles([makeImageFile('pasted.png', 'image/png')])
+    })
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('img')).toHaveLength(1)
+    })
+  })
+
+  it('disables the import button while a batch is processing', async () => {
+    let release: ((bitmap: ImageBitmap) => void) | undefined
+    vi.stubGlobal('createImageBitmap', () => new Promise<ImageBitmap>((resolve) => { release = resolve }))
+    renderScreen()
+    await screen.findByText(EMPTY_TEXT)
+
+    await userEvent.upload(screen.getByLabelText(IMPORT_LABEL), [makeImageFile('slow.jpg')])
+    const busyButton = await screen.findByRole('button', { name: UI_STRINGS.en.collection.importing })
+    expect(busyButton).toBeDisabled()
+
+    act(() => {
+      release?.({ width: 10, height: 10, close: () => {} })
+    })
+    expect(await screen.findByRole('button', { name: IMPORT_LABEL })).toBeEnabled()
+    expect(await screen.findAllByRole('listitem')).toHaveLength(1)
   })
 })

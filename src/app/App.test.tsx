@@ -18,7 +18,9 @@ describe('App', () => {
     expect(screen.getByText('The practice will live here.')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Collection' }))
-    expect(screen.getByText('Your collection will live here.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Your collection is empty. Import photos to begin.'),
+    ).toBeInTheDocument()
     expect(screen.queryByText('The practice will live here.')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Practice' }))

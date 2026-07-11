@@ -18,7 +18,8 @@ export interface UiStrings {
     readonly placeholder: string
   }
   readonly collection: {
-    readonly placeholder: string
+    readonly empty: string
+    readonly loadError: string
   }
 }
 
@@ -35,7 +36,8 @@ const EN: UiStrings = {
     placeholder: 'The practice will live here.',
   },
   collection: {
-    placeholder: 'Your collection will live here.',
+    empty: 'Your collection is empty. Import photos to begin.',
+    loadError: 'Could not open the collection storage.',
   },
 }
 
@@ -52,7 +54,8 @@ const PT_BR: UiStrings = {
     placeholder: 'A prática vai morar aqui.',
   },
   collection: {
-    placeholder: 'Sua coleção vai morar aqui.',
+    empty: 'Sua coleção está vazia. Importe fotos para começar.',
+    loadError: 'Não foi possível abrir o armazenamento da coleção.',
   },
 }
 

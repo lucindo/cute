@@ -84,7 +84,13 @@ export interface DbDeps {
 }
 
 export function openDb(deps: DbDeps = {}): Promise<Result<IDBDatabase, StorageError>> {
-  const factory = deps.factory ?? indexedDB
+  // Reason: lib.dom types indexedDB as always-present, but older browsers and
+  // some private modes lack it — that must surface as a Result, not a crash.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  const factory = deps.factory ?? (globalThis.indexedDB as IDBFactory | undefined)
+  if (factory === undefined) {
+    return Promise.resolve(err({ name: 'Unavailable', message: 'IndexedDB is not available' }))
+  }
   return new Promise((resolve) => {
     try {
       const request = factory.open(DB_NAME, DB_VERSION)

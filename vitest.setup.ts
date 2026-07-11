@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest'
+import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, vi } from 'vitest'
 
 // Clear localStorage before every test so persisted state from one test does
@@ -12,6 +13,24 @@ beforeEach(() => {
     window.localStorage.clear()
   }
 })
+
+// Fresh global IndexedDB per test (jsdom ships none) — components that open
+// the default connection get an isolated, empty fake; tests seed it through
+// the same global. Storage unit tests keep injecting their own factories.
+beforeEach(() => {
+  globalThis.indexedDB = new IDBFactory()
+})
+
+// URL.createObjectURL/revokeObjectURL fakes — unconditional override: vitest
+// wires these to Node's implementations, which accept only node:buffer Blobs,
+// while blobs read back from fake-indexeddb are degraded jsdom clones. Distinct
+// fake URLs per call; revocation is a no-op that tests observe via vi.spyOn.
+let objectUrlCounter = 0
+URL.createObjectURL = () => {
+  objectUrlCounter += 1
+  return `blob:fake-${String(objectUrlCounter)}`
+}
+URL.revokeObjectURL = () => {}
 
 // localStorage polyfill — Node 25+ ships a built-in localStorage that is a
 // non-functional empty object when `--localstorage-file` is not provided

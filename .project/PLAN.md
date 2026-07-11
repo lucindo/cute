@@ -4,14 +4,15 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Tasks 1–3 done and committed on branch `dev`. Storage foundation live: `cute-db` v1 with five stores (`sources`/`blobs`/`thumbs`/`sessions`/`holdEvents`, keyPath `id`) behind `Result`-typed `openDb`/`getRecord`/`getAllRecords`/`writeMany` (atomic multi-store batches); `requestPersistence()` fired at startup; `Result` in `src/domain/result.ts`; storage tests use injected `fake-indexeddb` factories. No `holdEvents` indexes (stats read all events; adding one later is a version bump). Lint/tests(30)/build green.
+**State:** Tasks 1–4 done and committed on branch `dev`. Image import complete end-to-end: pure pipeline (`src/domain/image.ts` animation detection + dimension math; `src/media/importImage.ts` decode→≤2000px→WebP/JPEG re-encode behind injectable codec seams; animated GIF/WebP passthrough with poster thumb), batch orchestration (`src/media/importFiles.ts`, sequential, per-file rejection, atomic source+blob+thumb writes), Collection grid (`useCollection` + object-URL lifecycle, `cute:collection-changed` refresh event), and the import surface (picker/drag-drop/paste in `CollectionScreen`, `useImportFiles`, rejection hints in strings). Lint/tests(56)/build green.
 
-**Next:** Task 4 — image import: picker, drag-drop, paste → re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives.
+**Next:** Task 5 — video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint. (`importFiles` currently rejects `video/*` as unsupported — swap in the video path there.)
 
 **Open questions:** none blocking.
 
 **Watch:**
 - PT-BR copy pending native-speaker review before release (SPEC OQ-1); swipe slop threshold to tune on device (SPEC OQ-2).
+- Import's browser-only leaves (createImageBitmap, canvas encode) are stubbed in jsdom tests — verify a real import in a browser before relying on them (AC-2/AC-3).
 - `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
 
 ## Roadmap
@@ -19,7 +20,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Scaffold: repo builds, tests, lints with HRV toolchain (strict tsconfig, Vite, Tailwind, Vitest, ESLint); empty app renders with Mono Zen light/dark theme
 - [x] App shell: Practice/Collection switcher routes between placeholder screens; EN/PT-BR strings infra wired
 - [x] Storage foundation: IndexedDB stores (sources, blobs, thumbs, sessions, hold events) behind typed Result wrappers; `cute:`-prefixed localStorage prefs with HRV key-collision audit; `storage.persist()` requested on first run
-- [ ] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
+- [x] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
 - [ ] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [ ] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
 - [ ] Tags & captions: seeded tag list, create/rename/delete, multi-select assign/remove on sources, optional caption editing

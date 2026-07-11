@@ -11,7 +11,9 @@ function rejectionHint(rejection: FileRejection, strings: UiStrings): string {
     case 'unsupported-type':
       return strings.collection.rejection.unsupportedType
     case 'undecodable':
-      return strings.collection.rejection.undecodable
+      return rejection.mimeType.startsWith('video/')
+        ? strings.collection.rejection.undecodableVideo
+        : strings.collection.rejection.undecodable
     case 'encode-failed':
       return strings.collection.rejection.encodeFailed
     case 'storage-failed':
@@ -81,7 +83,7 @@ export function CollectionScreen(): ReactElement {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*"
         multiple
         aria-label={strings.collection.importButton}
         className="sr-only"

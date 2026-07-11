@@ -1,9 +1,10 @@
-// Batch import orchestration (SPEC FR-7, FR-10, FR-12): each file lands
+// Batch import orchestration (SPEC FR-7, FR-9, FR-10, FR-12): each file lands
 // source + blob + thumb atomically; a rejected file never kills the batch.
 // The outcome is not a Result — the batch always completes, per file.
 
 import { processImageFile, type ImageCodecDeps, type ImportRejection } from './importImage'
-import { writeMany, type SourceRecord, type StorageError } from '../storage'
+import { processVideoFile, type VideoProbeDeps } from './importVideo'
+import { writeMany, type SourceRecord, type SourceType, type StorageError } from '../storage'
 
 export type FileRejection =
   | ImportRejection
@@ -17,6 +18,7 @@ export interface ImportOutcome {
 
 export interface ImportDeps {
   codec?: ImageCodecDeps
+  video?: VideoProbeDeps
 }
 
 export async function importFiles(
@@ -28,16 +30,22 @@ export async function importFiles(
   // Sequential on purpose: decoding a batch in parallel holds every bitmap in
   // memory at once, which sinks phones on large drops.
   for (const file of files) {
-    // Videos get their own probe pipeline (task 5); until then they reject
-    // like any other non-image.
-    if (!file.type.startsWith('image/')) {
+    const kind: SourceType | null = file.type.startsWith('image/')
+      ? 'image'
+      : file.type.startsWith('video/')
+        ? 'video'
+        : null
+    if (kind === null) {
       outcome.rejected.push({
         name: file.name,
         rejection: { reason: 'unsupported-type', mimeType: file.type },
       })
       continue
     }
-    const processed = await processImageFile(file, deps.codec ?? {})
+    const processed =
+      kind === 'image'
+        ? await processImageFile(file, deps.codec ?? {})
+        : await processVideoFile(file, deps.video ?? {})
     if (!processed.ok) {
       outcome.rejected.push({ name: file.name, rejection: processed.error })
       continue
@@ -45,7 +53,7 @@ export async function importFiles(
     const { blob, thumb } = processed.value
     const source: SourceRecord = {
       id: crypto.randomUUID(),
-      type: 'image',
+      type: kind,
       mimeType: blob.type,
       bytes: blob.size,
       createdAt: Date.now(),

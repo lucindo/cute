@@ -25,6 +25,7 @@ export interface UiStrings {
     readonly rejection: {
       readonly unsupportedType: string
       readonly undecodable: string
+      readonly undecodableVideo: string
       readonly encodeFailed: string
       readonly storageFailed: string
     }
@@ -44,13 +45,14 @@ const EN: UiStrings = {
     placeholder: 'The practice will live here.',
   },
   collection: {
-    empty: 'Your collection is empty. Import photos to begin.',
+    empty: 'Your collection is empty. Import photos or videos to begin.',
     loadError: 'Could not open the collection storage.',
-    importButton: 'Import photos',
+    importButton: 'Import media',
     importing: 'Importing…',
     rejection: {
-      unsupportedType: 'Not a supported image type.',
+      unsupportedType: 'Not a supported image or video type.',
       undecodable: 'Could not read this image. Converting it to JPEG may help.',
+      undecodableVideo: 'Could not play this video. Converting it to MP4 (H.264) may help.',
       encodeFailed: 'Could not process this image.',
       storageFailed: 'Could not save — device storage may be full.',
     },
@@ -70,13 +72,14 @@ const PT_BR: UiStrings = {
     placeholder: 'A prática vai morar aqui.',
   },
   collection: {
-    empty: 'Sua coleção está vazia. Importe fotos para começar.',
+    empty: 'Sua coleção está vazia. Importe fotos ou vídeos para começar.',
     loadError: 'Não foi possível abrir o armazenamento da coleção.',
-    importButton: 'Importar fotos',
+    importButton: 'Importar mídia',
     importing: 'Importando…',
     rejection: {
-      unsupportedType: 'Tipo de imagem não suportado.',
+      unsupportedType: 'Tipo de imagem ou vídeo não suportado.',
       undecodable: 'Não foi possível ler esta imagem. Converter para JPEG pode ajudar.',
+      undecodableVideo: 'Não foi possível reproduzir este vídeo. Converter para MP4 (H.264) pode ajudar.',
       encodeFailed: 'Não foi possível processar esta imagem.',
       storageFailed: 'Não foi possível salvar — o armazenamento do aparelho pode estar cheio.',
     },

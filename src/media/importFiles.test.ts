@@ -10,18 +10,23 @@ async function freshDb(): Promise<IDBDatabase> {
   return opened.value
 }
 
-// Codec that decodes everything except files whose content is 'BAD'.
-function fakeCodec(): ImportDeps {
+// Decode/probe leaves that reject files whose content is 'BAD'.
+function fakeDeps(): ImportDeps {
+  // Reason: only close() is consumed by the pipelines; a full ImageBitmap
+  // cannot be constructed in jsdom.
+  const bitmap = async (blob: Blob): Promise<ImageBitmap> => {
+    if ((await blob.text()) === 'BAD') throw new Error('undecodable')
+    return { close: vi.fn() } as unknown as ImageBitmap
+  }
   return {
     codec: {
-      decode: async (blob: Blob) => {
-        if ((await blob.text()) === 'BAD') throw new Error('undecodable')
-        // Reason: only close() is consumed by the pipeline; a full ImageBitmap
-        // cannot be constructed in jsdom.
-        return { close: vi.fn() } as unknown as ImageBitmap
-      },
+      decode: bitmap,
       encode: (_bitmap: ImageBitmap, maxEdge: number) =>
         Promise.resolve(new Blob([`encoded-${String(maxEdge)}`], { type: 'image/webp' })),
+    },
+    video: {
+      probe: bitmap,
+      encode: () => Promise.resolve(new Blob(['poster'], { type: 'image/webp' })),
     },
   }
 }
@@ -34,7 +39,7 @@ describe('importFiles', () => {
       new File(['b'], 'b.png', { type: 'image/png' }),
     ]
 
-    const outcome = await importFiles(db, files, fakeCodec())
+    const outcome = await importFiles(db, files, fakeDeps())
     expect(outcome.rejected).toEqual([])
     expect(outcome.imported).toHaveLength(2)
 
@@ -58,18 +63,38 @@ describe('importFiles', () => {
     expect(ids.size).toBe(2)
   })
 
+  it('imports a video as-is with a poster thumbnail', async () => {
+    const db = await freshDb()
+    const files = [new File(['clip'], 'clip.mp4', { type: 'video/mp4' })]
+
+    const outcome = await importFiles(db, files, fakeDeps())
+    expect(outcome.rejected).toEqual([])
+    const [source] = outcome.imported
+    if (!source) throw new Error('expected an imported source')
+    expect(source).toMatchObject({ type: 'video', mimeType: 'video/mp4', tags: [], deleted: false })
+    // Original size, not a re-encode; byte identity is covered in importVideo tests.
+    expect(source.bytes).toBe(files[0]?.size)
+
+    const blob = await getRecord(db, 'blobs', source.id)
+    const thumb = await getRecord(db, 'thumbs', source.id)
+    expect(blob.ok && blob.value !== null).toBe(true)
+    expect(thumb.ok && thumb.value !== null).toBe(true)
+  })
+
   it('rejects per file and keeps the rest of the batch alive', async () => {
     const db = await freshDb()
     const files = [
       new File(['good'], 'good.jpg', { type: 'image/jpeg' }),
       new File(['BAD'], 'broken.heic', { type: 'image/heic' }),
+      new File(['BAD'], 'broken.mov', { type: 'video/quicktime' }),
       new File(['doc'], 'notes.pdf', { type: 'application/pdf' }),
     ]
 
-    const outcome = await importFiles(db, files, fakeCodec())
+    const outcome = await importFiles(db, files, fakeDeps())
     expect(outcome.imported).toHaveLength(1)
     expect(outcome.rejected).toEqual([
       { name: 'broken.heic', rejection: { reason: 'undecodable', mimeType: 'image/heic' } },
+      { name: 'broken.mov', rejection: { reason: 'undecodable', mimeType: 'video/quicktime' } },
       { name: 'notes.pdf', rejection: { reason: 'unsupported-type', mimeType: 'application/pdf' } },
     ])
 
@@ -82,7 +107,7 @@ describe('importFiles', () => {
     const db = await freshDb()
     db.close()
 
-    const outcome = await importFiles(db, [new File(['a'], 'a.jpg', { type: 'image/jpeg' })], fakeCodec())
+    const outcome = await importFiles(db, [new File(['a'], 'a.jpg', { type: 'image/jpeg' })], fakeDeps())
     expect(outcome.imported).toEqual([])
     expect(outcome.rejected).toHaveLength(1)
     expect(outcome.rejected[0]?.rejection.reason).toBe('storage-failed')
@@ -90,6 +115,6 @@ describe('importFiles', () => {
 
   it('returns an empty outcome for an empty batch', async () => {
     const db = await freshDb()
-    await expect(importFiles(db, [], fakeCodec())).resolves.toEqual({ imported: [], rejected: [] })
+    await expect(importFiles(db, [], fakeDeps())).resolves.toEqual({ imported: [], rejected: [] })
   })
 })

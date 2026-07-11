@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <!-- iOS standalone mode -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Cute Baby Meditation">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <!-- Chrome/Android browser tab + PWA theme color -->
+    <meta name="theme-color" content="#414957">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Pre-paint theme attribute so returning dark-theme users never see a light
+         flash. Reads system preference only for now; the persisted-theme read
+         hooks in here once the storage layer defines its localStorage keys. -->
+    <script>(function(){try{var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}catch(_){document.documentElement.setAttribute('data-theme','light')}})();</script>
+    <title>Cute Baby Meditation</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

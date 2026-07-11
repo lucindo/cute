@@ -13,7 +13,6 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 **Watch:**
 - PT-BR copy pending native-speaker review before release (SPEC OQ-1); swipe slop threshold to tune on device (SPEC OQ-2).
 - `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
-- `PROJECT.md` repo map is slightly behind (src/domain|storage|hooks|content|components now exist with real code) — re-run `/ds-project-map` after the storage layer lands.
 
 ## Roadmap
 

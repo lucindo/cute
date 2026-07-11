@@ -1,3 +1,16 @@
+export { DB_NAME, DB_VERSION, getAllRecords, getRecord, openDb, writeMany } from './db'
+export type {
+  DbDeps,
+  HoldEventRecord,
+  MediaBlobRecord,
+  SessionEndReason,
+  SessionRecord,
+  SourceRecord,
+  SourceType,
+  StorageError,
+  StoreName,
+  WriteOp,
+} from './db'
 export { STATE_KEY, STATE_VERSION, asRecord, readEnvelope, writeEnvelope } from './storage'
 export type { Envelope, StorageDeps } from './storage'
 export {

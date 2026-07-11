@@ -12,7 +12,6 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 **Watch:**
 - PT-BR copy pending native-speaker review before release (SPEC OQ-1); swipe slop threshold to tune on device (SPEC OQ-2).
-- Import's browser-only leaves (createImageBitmap, canvas encode) are stubbed in jsdom tests — verify a real import in a browser before relying on them (AC-2/AC-3).
 - `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
 
 ## Roadmap

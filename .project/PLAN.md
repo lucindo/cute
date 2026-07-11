@@ -4,9 +4,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Tasks 1–2 done and committed on branch `dev` (scaffold + app shell). Mode switcher, EN/PT-BR strings infra, and the localStorage envelope (`cute:state:v1`, prefs slice pulled forward from task 3) are live; lint/tests(18)/build all green.
+**State:** Tasks 1–3 done and committed on branch `dev`. Storage foundation live: `cute-db` v1 with five stores (`sources`/`blobs`/`thumbs`/`sessions`/`holdEvents`, keyPath `id`) behind `Result`-typed `openDb`/`getRecord`/`getAllRecords`/`writeMany` (atomic multi-store batches); `requestPersistence()` fired at startup; `Result` in `src/domain/result.ts`; storage tests use injected `fake-indexeddb` factories. No `holdEvents` indexes (stats read all events; adding one later is a version bump). Lint/tests(30)/build green.
 
-**Next:** Task 3 — IndexedDB storage foundation: sources/blobs/thumbs/sessions/hold-events stores behind typed `Result` wrappers, plus `navigator.storage.persist()` on first run. No HRV precedent to port; new design work.
+**Next:** Task 4 — image import: picker, drag-drop, paste → re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives.
 
 **Open questions:** none blocking.
 
@@ -19,7 +19,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 - [x] Scaffold: repo builds, tests, lints with HRV toolchain (strict tsconfig, Vite, Tailwind, Vitest, ESLint); empty app renders with Mono Zen light/dark theme
 - [x] App shell: Practice/Collection switcher routes between placeholder screens; EN/PT-BR strings infra wired
-- [ ] Storage foundation: IndexedDB stores (sources, blobs, thumbs, sessions, hold events) behind typed Result wrappers; `cute:`-prefixed localStorage prefs with HRV key-collision audit; `storage.persist()` requested on first run
+- [x] Storage foundation: IndexedDB stores (sources, blobs, thumbs, sessions, hold events) behind typed Result wrappers; `cute:`-prefixed localStorage prefs with HRV key-collision audit; `storage.persist()` requested on first run
 - [ ] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
 - [ ] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [ ] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events

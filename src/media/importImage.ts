@@ -57,7 +57,8 @@ function decodeImage(blob: Blob): Promise<ImageBitmap> {
   return createImageBitmap(blob)
 }
 
-async function encodeImage(bitmap: ImageBitmap, maxEdge: number): Promise<Blob> {
+// Shared with the video pipeline, which encodes poster frames the same way.
+export async function encodeImage(bitmap: ImageBitmap, maxEdge: number): Promise<Blob> {
   const { width, height } = fitWithin(bitmap.width, bitmap.height, maxEdge)
   const canvas = document.createElement('canvas')
   canvas.width = width

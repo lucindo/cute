@@ -22,6 +22,13 @@ export interface UiStrings {
     readonly loadError: string
     readonly importButton: string
     readonly importing: string
+    readonly storageGauge: (used: string, total: string) => string
+    readonly deleteLabel: string
+    readonly deleteTitle: string
+    readonly deleteBody: string
+    readonly deleteConfirm: string
+    readonly deleteCancel: string
+    readonly deleteFailed: string
     readonly rejection: {
       readonly unsupportedType: string
       readonly undecodable: string
@@ -49,6 +56,13 @@ const EN: UiStrings = {
     loadError: 'Could not open the collection storage.',
     importButton: 'Import media',
     importing: 'Importing…',
+    storageGauge: (used, total) => `Using ${used} of ${total}`,
+    deleteLabel: 'Delete',
+    deleteTitle: 'Remove from collection?',
+    deleteBody: 'The file is deleted from this device. Practice history is kept.',
+    deleteConfirm: 'Delete',
+    deleteCancel: 'Cancel',
+    deleteFailed: 'Could not delete. Please try again.',
     rejection: {
       unsupportedType: 'Not a supported image or video type.',
       undecodable: 'Could not read this image. Converting it to JPEG may help.',
@@ -76,6 +90,13 @@ const PT_BR: UiStrings = {
     loadError: 'Não foi possível abrir o armazenamento da coleção.',
     importButton: 'Importar mídia',
     importing: 'Importando…',
+    storageGauge: (used, total) => `Usando ${used} de ${total}`,
+    deleteLabel: 'Excluir',
+    deleteTitle: 'Remover da coleção?',
+    deleteBody: 'O arquivo é apagado deste aparelho. O histórico de prática é mantido.',
+    deleteConfirm: 'Excluir',
+    deleteCancel: 'Cancelar',
+    deleteFailed: 'Não foi possível excluir. Tente novamente.',
     rejection: {
       unsupportedType: 'Tipo de imagem ou vídeo não suportado.',
       undecodable: 'Não foi possível ler esta imagem. Converter para JPEG pode ajudar.',

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -8,7 +8,13 @@ import { CollectionScreen } from './CollectionScreen'
 import { UI_STRINGS } from '../content/strings'
 import { COLLECTION_CHANGED_EVENT } from '../hooks/useCollection'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
-import { openDb, writeMany, type SourceRecord, type WriteOp } from '../storage'
+import { getRecord, openDb, writeMany, type SourceRecord, type WriteOp } from '../storage'
+
+async function openDbOrThrow(): Promise<IDBDatabase> {
+  const opened = await openDb()
+  if (!opened.ok) throw new Error('openDb failed')
+  return opened.value
+}
 
 const EMPTY_TEXT = UI_STRINGS.en.collection.empty
 const ERROR_TEXT = UI_STRINGS.en.collection.loadError
@@ -105,6 +111,60 @@ describe('CollectionScreen', () => {
     expect(revoked).toHaveBeenCalledWith(url)
     created.mockRestore()
     revoked.mockRestore()
+  })
+})
+
+describe('CollectionScreen delete & storage', () => {
+  const DELETE_LABEL = UI_STRINGS.en.collection.deleteLabel
+
+  async function openDeleteDialog(): Promise<HTMLElement> {
+    await userEvent.click(await screen.findByRole('button', { name: DELETE_LABEL }))
+    return screen.getByRole('dialog')
+  }
+
+  it('shows per-source file size', async () => {
+    await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
+    renderScreen()
+    expect(await screen.findByText('2.4 MB')).toBeInTheDocument()
+  })
+
+  it('shows the storage gauge when an estimate is available', async () => {
+    Object.defineProperty(navigator, 'storage', {
+      value: { estimate: () => Promise.resolve({ usage: 1_000_000, quota: 2_000_000_000 }) },
+      configurable: true,
+    })
+    renderScreen()
+    expect(
+      await screen.findByText(UI_STRINGS.en.collection.storageGauge('1.0 MB', '2.0 GB')),
+    ).toBeInTheDocument()
+    Reflect.deleteProperty(navigator, 'storage')
+  })
+
+  it('keeps the source when deletion is cancelled', async () => {
+    await seed([source({ id: 's1', caption: 'One' })])
+    renderScreen()
+
+    const dialog = await openDeleteDialog()
+    await userEvent.click(within(dialog).getByRole('button', { name: UI_STRINGS.en.collection.deleteCancel }))
+
+    expect(screen.getByAltText('One')).toBeInTheDocument()
+    const stored = await getRecord(await openDbOrThrow(), 'thumbs', 's1')
+    expect(stored.ok && stored.value !== null).toBe(true)
+  })
+
+  it('tombstones the source on confirm and refreshes the grid', async () => {
+    await seed([source({ id: 's1', caption: 'One' })])
+    renderScreen()
+
+    const dialog = await openDeleteDialog()
+    await userEvent.click(within(dialog).getByRole('button', { name: UI_STRINGS.en.collection.deleteConfirm }))
+
+    expect(await screen.findByText(EMPTY_TEXT)).toBeInTheDocument()
+    const db = await openDbOrThrow()
+    const stored = await getRecord(db, 'sources', 's1')
+    if (!stored.ok || stored.value === null) throw new Error('expected the tombstone')
+    expect(stored.value.deleted).toBe(true)
+    await expect(getRecord(db, 'thumbs', 's1')).resolves.toEqual({ ok: true, value: null })
   })
 })
 

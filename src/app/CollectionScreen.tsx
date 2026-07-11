@@ -1,8 +1,12 @@
-import { useEffect, useRef, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import type { UiStrings } from '../content/strings'
+import { formatBytes } from '../domain/format'
 import { useCollection } from '../hooks/useCollection'
+import { useDeleteSource } from '../hooks/useDeleteSource'
 import { useImportFiles } from '../hooks/useImportFiles'
+import { useStorageEstimate } from '../hooks/useStorageEstimate'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 import type { FileRejection } from '../media/importFiles'
 
@@ -25,6 +29,9 @@ export function CollectionScreen(): ReactElement {
   const strings = useUiStrings()
   const collection = useCollection()
   const { importState, importFrom } = useImportFiles()
+  const { deleteState, deleteById } = useDeleteSource()
+  const estimate = useStorageEstimate()
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -52,17 +59,31 @@ export function CollectionScreen(): ReactElement {
     content = (
       <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
         {collection.sources.map((source) => (
-          <li
-            key={source.id}
-            className="aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)]"
-          >
-            {source.thumbUrl !== null && (
-              <img
-                src={source.thumbUrl}
-                alt={source.caption ?? ''}
-                className="h-full w-full object-cover"
-              />
-            )}
+          <li key={source.id}>
+            <div className="aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)]">
+              {source.thumbUrl !== null && (
+                <img
+                  src={source.thumbUrl}
+                  alt={source.caption ?? ''}
+                  className="h-full w-full object-cover"
+                />
+              )}
+            </div>
+            <div className="mt-1 flex items-center justify-between px-0.5">
+              <span className="text-xs text-[var(--color-zen-text-soft)]">
+                {formatBytes(source.bytes)}
+              </span>
+              <button
+                type="button"
+                aria-label={strings.collection.deleteLabel}
+                onClick={() => {
+                  setPendingDelete(source.id)
+                }}
+                className="rounded px-1 text-sm leading-none text-[var(--color-zen-muted)] hover:text-[var(--color-destructive)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-destructive)]"
+              >
+                ×
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -109,7 +130,31 @@ export function CollectionScreen(): ReactElement {
           ))}
         </ul>
       )}
+      {deleteState.status === 'error' && (
+        <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">
+          {strings.collection.deleteFailed}
+        </p>
+      )}
       <div className="mt-6">{content}</div>
+      {estimate !== null && (
+        <p className="mt-6 text-xs text-[var(--color-zen-muted)]">
+          {strings.collection.storageGauge(formatBytes(estimate.usage), formatBytes(estimate.quota))}
+        </p>
+      )}
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={strings.collection.deleteTitle}
+        body={strings.collection.deleteBody}
+        confirmLabel={strings.collection.deleteConfirm}
+        cancelLabel={strings.collection.deleteCancel}
+        onConfirm={() => {
+          if (pendingDelete !== null) deleteById(pendingDelete)
+          setPendingDelete(null)
+        }}
+        onCancel={() => {
+          setPendingDelete(null)
+        }}
+      />
     </div>
   )
 }

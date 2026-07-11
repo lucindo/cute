@@ -4,9 +4,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Tasks 1–4 done and committed on branch `dev`; image import manually verified in a real browser (2026-07-11). Storage: `cute-db` v1, five stores behind `Result` wrappers, atomic `writeMany`. Import: pure pipeline (`src/domain/image.ts`, `src/media/importImage.ts`) + batch orchestration (`src/media/importFiles.ts`) + Collection grid and picker/drag-drop/paste surface (`useCollection`, `useImportFiles`, `cute:collection-changed` refresh event). Lint/tests(56)/build green.
+**State:** Tasks 1–5 done and committed on branch `dev`; image and video import manually verified in a real browser (2026-07-11). Storage: `cute-db` v1, five stores behind `Result` wrappers, atomic `writeMany`. Import: image pipeline (`src/domain/image.ts`, `src/media/importImage.ts`) + video probe pipeline (`src/media/importVideo.ts` — off-DOM `<video>` probe, poster-frame thumb, bytes as-is) + batch orchestration (`src/media/importFiles.ts`) + Collection grid and picker/drag-drop/paste surface (`useCollection`, `useImportFiles`, `cute:collection-changed` refresh event). Lint/tests(60)/build green.
 
-**Next:** Task 5 — video import: probe validates decodability via an off-DOM `<video>`, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint. Swap the `video/*` unsupported-type branch in `importFiles` and widen the picker `accept`.
+**Next:** Task 6 — collection grid completion: per-source file size, storage gauge, delete with confirmation (tombstone keeps the source record, removes blob/thumb, preserves hold events).
 
 **Open questions:** none blocking.
 
@@ -21,7 +21,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] App shell: Practice/Collection switcher routes between placeholder screens; EN/PT-BR strings infra wired
 - [x] Storage foundation: IndexedDB stores (sources, blobs, thumbs, sessions, hold events) behind typed Result wrappers; `cute:`-prefixed localStorage prefs with HRV key-collision audit; `storage.persist()` requested on first run
 - [x] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
-- [ ] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
+- [x] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [ ] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
 - [ ] Tags & captions: seeded tag list, create/rename/delete, multi-select assign/remove on sources, optional caption editing
 - [ ] Session setup: duration stepper (1–30, default 5, persisted), tag filter, start blocked on empty pool with Collection guidance

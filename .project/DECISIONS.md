@@ -50,3 +50,9 @@ Decisions resolved during design discussion and the grill interview. One entry p
 - **Deploy/desktop:** HRV's `deploy.yml` (multi-version Pages + versions.json) and `desktop.yml` (Pake wrapping the live URL) reused with name/URL swapped, per original scope.
 - **Deferred beyond v1:** named presets, merge-on-import backup, custom background track, recency-weighted aww formula, charts, Android PWA share-target, Fullscreen API enhancement, optional end chime.
 - **Envelope storage ported without HRV's migration ladder.** `readEnvelope` keeps the forward-compat spread and `writeEnvelope` keeps the cross-tab downgrade guard, but `migrateEnvelope` is omitted until the first real schema change (STATE_VERSION starts at 1, no legacy data exists). *Rationale: the guard is live safety; the ladder is dead code until there's something to migrate.*
+
+## Implementation (storage & import build-out)
+
+- **`holdEvents` ships without secondary indexes.** Stats and aww-factor read the full event set anyway; a `bySource`/`bySession` index would be speculative. Adding one later is a routine DB version bump. *Rationale: no consumer issues per-source queries; full scans of years of small event records are milliseconds.*
+- **Only *animated* GIF/WebP pass through as-is; static ones re-encode like any still.** Animation is detected by byte inspection at import (GIF: block walk counting image descriptors; WebP: VP8X animation flag). *Rationale: canvas re-encode would freeze animations to frame 1, while static GIF/WebP still gain the WebP re-encode savings.*
+- **All IndexedDB writes go through `writeMany` — an all-or-nothing multi-store batch.** Import (source+blob+thumb) and tombstoning (source update + blob/thumb delete) commit in one transaction or not at all. *Rationale: a half-applied import or delete is the worst corruption class; one primitive makes atomicity the default.*

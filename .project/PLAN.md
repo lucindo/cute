@@ -4,15 +4,16 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Tasks 1–4 done and committed on branch `dev`. Image import complete end-to-end: pure pipeline (`src/domain/image.ts` animation detection + dimension math; `src/media/importImage.ts` decode→≤2000px→WebP/JPEG re-encode behind injectable codec seams; animated GIF/WebP passthrough with poster thumb), batch orchestration (`src/media/importFiles.ts`, sequential, per-file rejection, atomic source+blob+thumb writes), Collection grid (`useCollection` + object-URL lifecycle, `cute:collection-changed` refresh event), and the import surface (picker/drag-drop/paste in `CollectionScreen`, `useImportFiles`, rejection hints in strings). Lint/tests(56)/build green.
+**State:** Tasks 1–4 done and committed on branch `dev`; image import manually verified in a real browser (2026-07-11). Storage: `cute-db` v1, five stores behind `Result` wrappers, atomic `writeMany`. Import: pure pipeline (`src/domain/image.ts`, `src/media/importImage.ts`) + batch orchestration (`src/media/importFiles.ts`) + Collection grid and picker/drag-drop/paste surface (`useCollection`, `useImportFiles`, `cute:collection-changed` refresh event). Lint/tests(56)/build green.
 
-**Next:** Task 5 — video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint. (`importFiles` currently rejects `video/*` as unsupported — swap in the video path there.)
+**Next:** Task 5 — video import: probe validates decodability via an off-DOM `<video>`, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint. Swap the `video/*` unsupported-type branch in `importFiles` and widen the picker `accept`.
 
 **Open questions:** none blocking.
 
 **Watch:**
 - PT-BR copy pending native-speaker review before release (SPEC OQ-1); swipe slop threshold to tune on device (SPEC OQ-2).
 - `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
+- `PROJECT.md` hooks row lags (`useCollection`/`useImportFiles` not listed) — fold into the next `/ds-project-map` run.
 
 ## Roadmap
 

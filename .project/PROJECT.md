@@ -36,6 +36,7 @@ Layout mirrors HRV: pure logic in `src/domain/`, storage wrappers in
 | `src/content/strings.ts` | Typed EN/PT-BR UI-string catalog — all copy lives here, never inline in components. |
 | `src/domain/` | Pure logic: `settings.ts` (locale ids + validation), `result.ts` (`Result`/`ok`/`err`). |
 | `src/hooks/` | `useLocale` (locale orchestration, cross-/same-tab pref sync), `useUiStringsContext` (strings context). |
+| `src/media/` | Import pipelines: `importImage.ts` (decode → ≤2000px re-encode + thumb, animated passthrough), `importFiles.ts` (batch orchestration, per-file rejection). |
 | `src/storage/` | `storage.ts` (localStorage envelope `cute:state:v1`), `prefs.ts` (coerce-and-fallback prefs), `db.ts` (IndexedDB `cute-db` v1: `sources`/`blobs`/`thumbs`/`sessions`/`holdEvents` behind `Result` wrappers, atomic `writeMany`), `persistence.ts` (`navigator.storage.persist()`). Barrel `index.ts`. |
 | `src/styles/theme.css` | Mono Zen palette, light + dark, as `--color-zen-*` Tailwind tokens; dialog fade, shadows, page gradient. |
 | `src/index.css` | Tailwind entry, font, base layer. |

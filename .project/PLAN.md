@@ -6,7 +6,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 **State:** Task 7 (Tags & captions) fully done, all committed on `dev`. This session: caption editing in the item sheet; the sheet became a **staged editor** (draft caption+tags, persist on Save via atomic `updateSource`, discard-confirm on close); tag manager moved into a bottom sheet (`TagManagerSheet`); **bulk select-mode tagging removed entirely** (Select button, `applyToSources`/`createAndAssign`, `applyTagToSources`, strings, tests). New: `useSaveSource`, `useTags.create`. Toolbar is now Import + Edit tags. User-verified live earlier this session. Lint/tests(101)/build green.
 
-**Next:** Session setup — duration stepper (1–30, default 5, persisted as last-used), tag filter, Start blocked on empty pool with Collection guidance.
+**Next:** UI re-anchor to HRV primitives — drift caught in review (hand-rolled UI diverged from HRV: weak centering, flat cards, crude rows; only `PageShell` was ported). Port `SegmentedControl` / `TopAppBar` / `SettingsRow` / `SettingsStepper` / `SectionCard` and rebuild the shell, collection toolbar, and tag surfaces on them, then Session setup.
 
 **Open questions:** none blocking.
 
@@ -26,6 +26,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [x] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
 - [x] Tags & captions: seeded tag list, create/rename/delete, per-item tag assign + caption editing in a staged item sheet; tag manager in a sheet. (Bulk multi-select assign dropped — SPEC FR-15, see DECISIONS.)
+- [ ] UI re-anchor to HRV primitives: port the HRV primitive vocabulary (`TopAppBar`, `SegmentedControl`, `SettingsRow`/`SettingsStepper`, `SectionCard`) and rebuild the drifted shell / collection toolbar / tag surfaces on it, retiring hand-rolled equivalents (`ModeToggle`) — centered, carded, HRV-faithful
 - [ ] Session setup: duration stepper (1–30, default 5, persisted), tag filter, start blocked on empty pool with Collection guidance
 - [ ] Session domain logic (pure, unit-tested): shuffle-bag order with no boundary repeat, wall-clock timer, overtime, hold-event recording, back/forward history
 - [ ] Session surface: CSS full-viewport takeover, media display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)

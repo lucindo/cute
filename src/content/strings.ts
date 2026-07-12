@@ -26,6 +26,9 @@ export interface UiStrings {
       readonly label: string
       readonly allHint: string
     }
+    readonly start: string
+    readonly emptyCollection: string
+    readonly emptyFilter: string
   }
   readonly collection: {
     readonly empty: string
@@ -95,6 +98,9 @@ const EN: UiStrings = {
       label: 'Filter by tag',
       allHint: 'All sources',
     },
+    start: 'Start',
+    emptyCollection: 'Your collection is empty. Add photos or videos in the Collection to begin.',
+    emptyFilter: 'No sources match the selected tags.',
   },
   collection: {
     empty: 'Your collection is empty. Import photos or videos to begin.',
@@ -170,6 +176,9 @@ const PT_BR: UiStrings = {
       label: 'Filtrar por tag',
       allHint: 'Todas as fontes',
     },
+    start: 'Começar',
+    emptyCollection: 'Sua coleção está vazia. Adicione fotos ou vídeos na Coleção para começar.',
+    emptyFilter: 'Nenhuma fonte corresponde às tags selecionadas.',
   },
   collection: {
     empty: 'Sua coleção está vazia. Importe fotos ou vídeos para começar.',

@@ -77,6 +77,16 @@ describe('SessionView', () => {
     })
   })
 
+  it('opens the stop confirm from the overlay Stop button (not just hides the overlay)', async () => {
+    await seedSource('s1')
+    renderSession()
+
+    await userEvent.click(screen.getByRole('button', { name: S.stop }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText(S.stopTitle)).toBeInTheDocument()
+  })
+
   it('returns to setup when completion is dismissed', async () => {
     const onExit = vi.fn()
     await seedSource('s1')

@@ -40,6 +40,11 @@ export function SessionOverlay({ frame, clockLabel, onStop, strings }: SessionOv
       <button
         type="button"
         onClick={onStop}
+        // Keep the press off the takeover's gesture handler, else the bubbled
+        // pointerup toggles the overlay and unmounts this button before onClick.
+        onPointerDown={(e) => {
+          e.stopPropagation()
+        }}
         className="pointer-events-auto rounded-full bg-black/40 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-md transition hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 motion-reduce:transition-none"
       >
         {strings.stop}

@@ -110,6 +110,12 @@ export function back(s: RunningSession): RunningSession {
   return { ...s, cursor: s.cursor - 1 }
 }
 
+// Abandon an active press without recording it — the gesture moved past the
+// slop threshold and became a swipe before the hold threshold (FR-30).
+export function cancelPress(s: RunningSession): RunningSession {
+  return s.hold === null ? s : { ...s, hold: null }
+}
+
 // End any active hold up to `at`, recording it if it crossed the threshold.
 function releaseHold(s: RunningSession, at: number): RunningSession {
   return s.hold === null ? s : pressEnd(s, at).session

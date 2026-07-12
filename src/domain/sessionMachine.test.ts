@@ -4,6 +4,7 @@ import type { Rng } from './shuffleBag'
 import {
   advance,
   back,
+  cancelPress,
   currentSource,
   hide,
   HOLD_THRESHOLD_MS,
@@ -81,6 +82,12 @@ describe('holds (FR-28/29, AC-12/13)', () => {
   it('ignores a second press-start while already holding', () => {
     const s = pressStart(start(), 1000)
     expect(pressStart(s, 1500).hold?.startedAt).toBe(1000)
+  })
+
+  it('cancels an active press without recording it (swipe)', () => {
+    const s = cancelPress(pressStart(start(), 1000))
+    expect(s.hold).toBeNull()
+    expect(s.holds).toHaveLength(0)
   })
 })
 

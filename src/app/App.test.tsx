@@ -27,6 +27,18 @@ describe('App', () => {
     expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
   })
 
+  it('opens Settings from the gear and returns via back', async () => {
+    render(<App />)
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Duration' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
+  })
+
   it('renders PT-BR strings when the persisted locale is pt-BR', () => {
     window.localStorage.setItem(
       STATE_KEY,

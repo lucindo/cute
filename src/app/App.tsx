@@ -3,6 +3,9 @@ import { useCallback, useRef, useState, type ReactElement } from 'react'
 import { CollectionScreen } from './CollectionScreen'
 import { PracticeScreen } from './PracticeScreen'
 import { SessionView } from './SessionView'
+import { SettingsScreen } from './SettingsScreen'
+import { GearIcon } from '../components/icons/GearIcon'
+import { IconButton } from '../components/primitives/IconButton'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import { PageShell } from '../components/primitives/PageShell'
 import { TopAppBar } from '../components/primitives/TopAppBar'
@@ -11,10 +14,12 @@ import type { SessionRequest } from '../hooks/useSession'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
 
 type AppMode = 'practice' | 'collection'
+type AppView = 'shell' | 'settings' | 'stats'
 
 export function App(): ReactElement {
   const { uiStrings } = useLocale()
   const [mode, setMode] = useState<AppMode>('practice')
+  const [view, setView] = useState<AppView>('shell')
   const [sessionRequest, setSessionRequest] = useState<SessionRequest | null>(null)
 
   // One persistent <video> for the whole app (SPEC FR-35): it must outlive the
@@ -47,9 +52,35 @@ export function App(): ReactElement {
         hidden={!videoActive}
         className="pointer-events-none fixed inset-0 z-10 h-full w-full bg-black object-contain"
       />
-      {sessionRequest === null ? (
+      {sessionRequest !== null ? (
+        <SessionView
+          request={sessionRequest}
+          videoRef={videoRef}
+          setVideoActive={setVideoActive}
+          onExit={() => {
+            setSessionRequest(null)
+          }}
+        />
+      ) : view === 'settings' ? (
+        <SettingsScreen
+          onBack={() => {
+            setView('shell')
+          }}
+        />
+      ) : (
         <PageShell width="practice">
-          <TopAppBar title={uiStrings.shell.appTitle} />
+          <TopAppBar
+            title={uiStrings.shell.appTitle}
+            leading={
+              <IconButton
+                icon={<GearIcon />}
+                label={uiStrings.shell.settings}
+                onClick={() => {
+                  setView('settings')
+                }}
+              />
+            }
+          />
           <div className="mb-8 w-full">
             <SegmentedControl<AppMode>
               options={[
@@ -67,15 +98,6 @@ export function App(): ReactElement {
             <CollectionScreen />
           )}
         </PageShell>
-      ) : (
-        <SessionView
-          request={sessionRequest}
-          videoRef={videoRef}
-          setVideoActive={setVideoActive}
-          onExit={() => {
-            setSessionRequest(null)
-          }}
-        />
       )}
     </UiStringsProvider>
   )

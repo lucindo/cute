@@ -9,6 +9,7 @@ import type { SeededTagId } from '../domain/tags'
 export interface UiStrings {
   readonly shell: {
     readonly appTitle: string
+    readonly settings: string
     readonly modeToggle: {
       readonly label: string
       readonly practiceName: string
@@ -97,11 +98,16 @@ export interface UiStrings {
     readonly deleteConfirm: string
     readonly actionFailed: string
   }
+  readonly settings: {
+    readonly title: string
+    readonly back: string
+  }
 }
 
 const EN: UiStrings = {
   shell: {
     appTitle: 'Cute Baby Meditation',
+    settings: 'Settings',
     modeToggle: {
       label: 'App mode',
       practiceName: 'Practice',
@@ -195,11 +201,16 @@ const EN: UiStrings = {
     deleteConfirm: 'Delete',
     actionFailed: 'Could not update tags. Please try again.',
   },
+  settings: {
+    title: 'Settings',
+    back: 'Back',
+  },
 }
 
 const PT_BR: UiStrings = {
   shell: {
     appTitle: 'Cute Baby Meditation',
+    settings: 'Configurações',
     modeToggle: {
       label: 'Modo do app',
       practiceName: 'Prática',
@@ -292,6 +303,10 @@ const PT_BR: UiStrings = {
     deleteBody: 'A tag é removida de todas as mídias. Nenhuma foto ou vídeo é excluído.',
     deleteConfirm: 'Excluir',
     actionFailed: 'Não foi possível atualizar as tags. Tente novamente.',
+  },
+  settings: {
+    title: 'Configurações',
+    back: 'Voltar',
   },
 }
 

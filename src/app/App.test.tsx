@@ -15,16 +15,16 @@ describe('App', () => {
 
   it('starts in Practice mode and switches to Collection and back', async () => {
     render(<App />)
-    expect(screen.getByText('The practice will live here.')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('radio', { name: 'Collection' }))
     expect(
       await screen.findByText('Your collection is empty. Import photos or videos to begin.'),
     ).toBeInTheDocument()
-    expect(screen.queryByText('The practice will live here.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Duration' })).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('radio', { name: 'Practice' }))
-    expect(screen.getByText('The practice will live here.')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
   })
 
   it('renders PT-BR strings when the persisted locale is pt-BR', () => {
@@ -34,7 +34,7 @@ describe('App', () => {
     )
     render(<App />)
     expect(screen.getByRole('radio', { name: 'Prática' })).toBeInTheDocument()
-    expect(screen.getByText('A prática vai morar aqui.')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Duração' })).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('pt-BR')
   })
 })

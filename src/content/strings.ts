@@ -16,7 +16,12 @@ export interface UiStrings {
     }
   }
   readonly practice: {
-    readonly placeholder: string
+    readonly duration: string
+    readonly minUnit: string
+    readonly stepper: {
+      readonly decrease: string
+      readonly increase: string
+    }
   }
   readonly collection: {
     readonly empty: string
@@ -76,7 +81,12 @@ const EN: UiStrings = {
     },
   },
   practice: {
-    placeholder: 'The practice will live here.',
+    duration: 'Duration',
+    minUnit: 'min',
+    stepper: {
+      decrease: 'Decrease',
+      increase: 'Increase',
+    },
   },
   collection: {
     empty: 'Your collection is empty. Import photos or videos to begin.',
@@ -142,7 +152,12 @@ const PT_BR: UiStrings = {
     },
   },
   practice: {
-    placeholder: 'A prática vai morar aqui.',
+    duration: 'Duração',
+    minUnit: 'min',
+    stepper: {
+      decrease: 'Diminuir',
+      increase: 'Aumentar',
+    },
   },
   collection: {
     empty: 'Sua coleção está vazia. Importe fotos ou vídeos para começar.',

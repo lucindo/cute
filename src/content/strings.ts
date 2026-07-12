@@ -22,6 +22,10 @@ export interface UiStrings {
       readonly decrease: string
       readonly increase: string
     }
+    readonly filter: {
+      readonly label: string
+      readonly allHint: string
+    }
   }
   readonly collection: {
     readonly empty: string
@@ -86,6 +90,10 @@ const EN: UiStrings = {
     stepper: {
       decrease: 'Decrease',
       increase: 'Increase',
+    },
+    filter: {
+      label: 'Filter by tag',
+      allHint: 'All sources',
     },
   },
   collection: {
@@ -157,6 +165,10 @@ const PT_BR: UiStrings = {
     stepper: {
       decrease: 'Diminuir',
       increase: 'Aumentar',
+    },
+    filter: {
+      label: 'Filtrar por tag',
+      allHint: 'Todas as fontes',
     },
   },
   collection: {

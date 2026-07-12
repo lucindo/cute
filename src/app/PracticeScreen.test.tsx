@@ -36,3 +36,14 @@ describe('PracticeScreen duration', () => {
     expect(loadPrefs().sessionDurationMin).toBe(6)
   })
 })
+
+describe('PracticeScreen tag filter', () => {
+  it('renders seeded tag chips and toggles selection', async () => {
+    renderPractice()
+    const kittens = await screen.findByRole('button', { name: 'Kittens' })
+    expect(kittens).toHaveAttribute('aria-pressed', 'false')
+
+    await userEvent.click(kittens)
+    expect(kittens).toHaveAttribute('aria-pressed', 'true')
+  })
+})

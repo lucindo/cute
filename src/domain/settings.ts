@@ -18,3 +18,9 @@ export const DEFAULT_THEME: ThemeId = 'system'
 export function isValidTheme(raw: unknown): raw is ThemeId {
   return typeof raw === 'string' && (THEMES as readonly string[]).includes(raw)
 }
+
+// Collapse the tri-state pref to the concrete attribute the stylesheet reads.
+export function resolveTheme(theme: ThemeId, systemPrefersDark: boolean): 'light' | 'dark' {
+  if (theme === 'system') return systemPrefersDark ? 'dark' : 'light'
+  return theme
+}

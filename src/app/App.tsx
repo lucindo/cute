@@ -10,6 +10,7 @@ import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import { PageShell } from '../components/primitives/PageShell'
 import { TopAppBar } from '../components/primitives/TopAppBar'
 import { useLocale } from '../hooks/useLocale'
+import { useTheme } from '../hooks/useTheme'
 import type { SessionRequest } from '../hooks/useSession'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
 
@@ -18,6 +19,7 @@ type AppView = 'shell' | 'settings' | 'stats'
 
 export function App(): ReactElement {
   const { uiStrings } = useLocale()
+  useTheme()
   const [mode, setMode] = useState<AppMode>('practice')
   const [view, setView] = useState<AppView>('shell')
   const [sessionRequest, setSessionRequest] = useState<SessionRequest | null>(null)

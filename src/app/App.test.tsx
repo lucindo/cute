@@ -39,6 +39,15 @@ describe('App', () => {
     expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
   })
 
+  it('applies the persisted theme to data-theme', () => {
+    window.localStorage.setItem(
+      STATE_KEY,
+      JSON.stringify({ version: 1, prefs: { theme: 'dark' } }),
+    )
+    render(<App />)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+  })
+
   it('renders PT-BR strings when the persisted locale is pt-BR', () => {
     window.localStorage.setItem(
       STATE_KEY,

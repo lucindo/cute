@@ -5,6 +5,7 @@ import {
   DEFAULT_SESSION_DURATION,
   isValidSessionDuration,
   SESSION_DURATIONS,
+  sourceMatchesFilter,
 } from './session'
 
 describe('SESSION_DURATIONS', () => {
@@ -40,5 +41,21 @@ describe('coerceSessionDuration', () => {
     expect(coerceSessionDuration(0)).toBe(DEFAULT_SESSION_DURATION)
     expect(coerceSessionDuration(99)).toBe(DEFAULT_SESSION_DURATION)
     expect(coerceSessionDuration('junk')).toBe(DEFAULT_SESSION_DURATION)
+  })
+})
+
+describe('sourceMatchesFilter', () => {
+  it('matches every source when the filter is empty, untagged included', () => {
+    expect(sourceMatchesFilter(['seed:kittens'], [])).toBe(true)
+    expect(sourceMatchesFilter([], [])).toBe(true)
+  })
+
+  it('matches on any selected tag (OR), not all', () => {
+    expect(sourceMatchesFilter(['seed:kittens'], ['seed:kittens', 'seed:puppies'])).toBe(true)
+  })
+
+  it('excludes a source that carries none of the selected tags', () => {
+    expect(sourceMatchesFilter(['seed:babies'], ['seed:kittens'])).toBe(false)
+    expect(sourceMatchesFilter([], ['seed:kittens'])).toBe(false)
   })
 })

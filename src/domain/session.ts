@@ -23,3 +23,12 @@ export function isValidSessionDuration(raw: unknown): raw is number {
 export function coerceSessionDuration(raw: unknown): number {
   return isValidSessionDuration(raw) ? raw : DEFAULT_SESSION_DURATION
 }
+
+// A source is in the session pool when the filter is empty (all sources,
+// untagged included — SPEC FR-24) or it carries at least one selected tag (OR).
+export function sourceMatchesFilter(
+  sourceTags: readonly string[],
+  filter: readonly string[],
+): boolean {
+  return filter.length === 0 || filter.some((id) => sourceTags.includes(id))
+}

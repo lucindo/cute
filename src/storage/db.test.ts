@@ -1,10 +1,10 @@
 import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
 
+import { SEEDED_TAG_IDS } from '../domain/tags'
 import {
   DB_NAME,
   DB_VERSION,
-  SEEDED_TAG_IDS,
   getAllRecords,
   getRecord,
   openDb,

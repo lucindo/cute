@@ -4,6 +4,7 @@
 // PT-BR values pending native-speaker review before release.
 
 import type { LocaleId } from '../domain/settings'
+import type { SeededTagId } from '../domain/tags'
 
 export interface UiStrings {
   readonly shell: {
@@ -37,6 +38,9 @@ export interface UiStrings {
       readonly encodeFailed: string
       readonly storageFailed: string
     }
+  }
+  readonly tags: {
+    readonly seeded: Readonly<Record<SeededTagId, string>>
   }
 }
 
@@ -73,6 +77,15 @@ const EN: UiStrings = {
       storageFailed: 'Could not save — device storage may be full.',
     },
   },
+  tags: {
+    seeded: {
+      'seed:babies': 'Babies',
+      'seed:kittens': 'Kittens',
+      'seed:puppies': 'Puppies',
+      'seed:family': 'Family',
+      'seed:bhakti': 'Bhakti',
+    },
+  },
 }
 
 const PT_BR: UiStrings = {
@@ -106,6 +119,15 @@ const PT_BR: UiStrings = {
       undecodableVideo: 'Não foi possível reproduzir este vídeo. Converter para MP4 (H.264) pode ajudar.',
       encodeFailed: 'Não foi possível processar esta imagem.',
       storageFailed: 'Não foi possível salvar — o armazenamento do aparelho pode estar cheio.',
+    },
+  },
+  tags: {
+    seeded: {
+      'seed:babies': 'Bebês',
+      'seed:kittens': 'Gatinhos',
+      'seed:puppies': 'Filhotes',
+      'seed:family': 'Família',
+      'seed:bhakti': 'Bhakti',
     },
   },
 }

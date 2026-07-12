@@ -3,6 +3,7 @@
 // Result — nothing throws, nothing is silently swallowed.
 
 import { err, ok, type Result } from '../domain/result'
+import { SEEDED_TAG_IDS } from '../domain/tags'
 
 // The origin (lucindo.github.io) is shared with HRV Breathing; the name must
 // stay app-unique.
@@ -49,14 +50,6 @@ export interface HoldEventRecord {
   startedAt: number
   durationMs: number
 }
-
-export const SEEDED_TAG_IDS = [
-  'seed:babies',
-  'seed:kittens',
-  'seed:puppies',
-  'seed:family',
-  'seed:bhakti',
-] as const
 
 export interface TagRecord {
   id: string

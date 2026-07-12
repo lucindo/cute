@@ -1,4 +1,4 @@
-export { DB_NAME, DB_VERSION, getAllRecords, getRecord, openDb, writeMany } from './db'
+export { DB_NAME, DB_VERSION, SEEDED_TAG_IDS, getAllRecords, getRecord, openDb, writeMany } from './db'
 export type {
   DbDeps,
   HoldEventRecord,
@@ -9,6 +9,7 @@ export type {
   SourceType,
   StorageError,
   StoreName,
+  TagRecord,
   WriteOp,
 } from './db'
 export { deleteSource } from './sources'

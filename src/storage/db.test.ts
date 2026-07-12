@@ -2,7 +2,9 @@ import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
 
 import {
+  DB_NAME,
   DB_VERSION,
+  SEEDED_TAG_IDS,
   getAllRecords,
   getRecord,
   openDb,
@@ -42,13 +44,52 @@ function makeSession(id: string): SessionRecord {
   }
 }
 
+// Replicates the shipped v1 schema so upgrade rungs can be exercised.
+function openV1(factory: IDBFactory): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = factory.open(DB_NAME, 1)
+    request.onupgradeneeded = () => {
+      for (const name of ['sources', 'blobs', 'thumbs', 'sessions', 'holdEvents']) {
+        request.result.createObjectStore(name, { keyPath: 'id' })
+      }
+    }
+    request.onsuccess = () => { resolve(request.result) }
+    request.onerror = () => { reject(new Error(request.error?.message ?? 'v1 open failed')) }
+  })
+}
+
 describe('openDb', () => {
-  it('creates all five stores at the current version', async () => {
+  it('creates all six stores at the current version', async () => {
     const db = await freshDb()
     expect(db.version).toBe(DB_VERSION)
     expect([...db.objectStoreNames].sort()).toEqual(
-      ['blobs', 'holdEvents', 'sessions', 'sources', 'thumbs'].sort(),
+      ['blobs', 'holdEvents', 'sessions', 'sources', 'tags', 'thumbs'].sort(),
     )
+  })
+
+  it('seeds the default tags with null names', async () => {
+    const db = await freshDb()
+    const tags = await getAllRecords(db, 'tags')
+    if (!tags.ok) throw new Error('expected ok')
+    expect(tags.value.map((t) => t.id).sort()).toEqual([...SEEDED_TAG_IDS].sort())
+    expect(tags.value.every((t) => t.name === null)).toBe(true)
+  })
+
+  it('upgrades a v1 database, seeding tags and keeping existing data', async () => {
+    const factory = new IDBFactory()
+    const v1 = await openV1(factory)
+    const written = await writeMany(v1, [{ op: 'put', store: 'sources', record: makeSource('s1') }])
+    expect(written.ok).toBe(true)
+    v1.close()
+
+    const opened = await openDb({ factory })
+    if (!opened.ok) throw new Error(`openDb failed: ${opened.error.message}`)
+    const db = opened.value
+    expect(db.version).toBe(DB_VERSION)
+    await expect(getRecord(db, 'sources', 's1')).resolves.toEqual({ ok: true, value: makeSource('s1') })
+    const tags = await getAllRecords(db, 'tags')
+    if (!tags.ok) throw new Error('expected ok')
+    expect(tags.value.map((t) => t.id).sort()).toEqual([...SEEDED_TAG_IDS].sort())
   })
 })
 

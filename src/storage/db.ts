@@ -7,7 +7,7 @@ import { err, ok, type Result } from '../domain/result'
 // The origin (lucindo.github.io) is shared with HRV Breathing; the name must
 // stay app-unique.
 export const DB_NAME = 'cute-db'
-export const DB_VERSION = 1
+export const DB_VERSION = 2
 
 export type SourceType = 'image' | 'video'
 
@@ -50,17 +50,33 @@ export interface HoldEventRecord {
   durationMs: number
 }
 
+export const SEEDED_TAG_IDS = [
+  'seed:babies',
+  'seed:kittens',
+  'seed:puppies',
+  'seed:family',
+  'seed:bhakti',
+] as const
+
+export interface TagRecord {
+  id: string
+  // null = seeded and never renamed: the display name localizes via strings.ts
+  // (SPEC AC-21). Renaming sets a literal name, freezing it across locales.
+  name: string | null
+}
+
 interface StoreRecordMap {
   sources: SourceRecord
   blobs: MediaBlobRecord
   thumbs: MediaBlobRecord
   sessions: SessionRecord
   holdEvents: HoldEventRecord
+  tags: TagRecord
 }
 
 export type StoreName = keyof StoreRecordMap
 
-const STORE_NAMES = ['sources', 'blobs', 'thumbs', 'sessions', 'holdEvents'] as const
+const V1_STORE_NAMES = ['sources', 'blobs', 'thumbs', 'sessions', 'holdEvents'] as const
 
 // Plain serializable shape (not the live DOMException) so errors can cross
 // worker/postMessage boundaries and be asserted in tests.
@@ -94,11 +110,21 @@ export function openDb(deps: DbDeps = {}): Promise<Result<IDBDatabase, StorageEr
   return new Promise((resolve) => {
     try {
       const request = factory.open(DB_NAME, DB_VERSION)
-      request.onupgradeneeded = () => {
-        // v1 only ever creates from scratch; the first real schema change adds
-        // a versioned upgrade ladder here (mirrors the localStorage decision).
-        for (const name of STORE_NAMES) {
-          request.result.createObjectStore(name, { keyPath: 'id' })
+      request.onupgradeneeded = (event) => {
+        // Versioned ladder: each rung runs at most once per database, inside
+        // the atomic versionchange transaction.
+        if (event.oldVersion < 1) {
+          for (const name of V1_STORE_NAMES) {
+            request.result.createObjectStore(name, { keyPath: 'id' })
+          }
+        }
+        if (event.oldVersion < 2) {
+          const tags = request.result.createObjectStore('tags', { keyPath: 'id' })
+          // Seeding here rather than at app startup means a deleted seed
+          // never respawns (SPEC FR-13/FR-14).
+          for (const id of SEEDED_TAG_IDS) {
+            tags.put({ id, name: null } satisfies TagRecord)
+          }
         }
       }
       request.onsuccess = () => { resolve(ok(request.result)) }

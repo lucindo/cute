@@ -15,15 +15,22 @@ export interface UserPrefs {
   locale: LocaleId
   // Last-used session duration in minutes (SPEC FR-23).
   sessionDurationMin: number
+  // In-session video sound, default on (SPEC FR-35).
+  videoSound: boolean
 }
 
 export const DEFAULT_PREFS: UserPrefs = {
   locale: DEFAULT_LOCALE,
   sessionDurationMin: DEFAULT_SESSION_DURATION,
+  videoSound: true,
 }
 
 export function coerceLocale(raw: unknown): LocaleId {
   return isValidLocale(raw) ? raw : DEFAULT_LOCALE
+}
+
+export function coerceVideoSound(raw: unknown): boolean {
+  return typeof raw === 'boolean' ? raw : true
 }
 
 export function coercePrefs(raw: unknown): UserPrefs {
@@ -31,6 +38,7 @@ export function coercePrefs(raw: unknown): UserPrefs {
   return {
     locale: coerceLocale(r.locale),
     sessionDurationMin: coerceSessionDuration(r.sessionDurationMin),
+    videoSound: coerceVideoSound(r.videoSound),
   }
 }
 

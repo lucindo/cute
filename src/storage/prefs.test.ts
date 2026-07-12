@@ -11,23 +11,33 @@ describe('coercePrefs', () => {
   })
 
   it('falls back to the default locale on an invalid value', () => {
-    expect(coercePrefs({ locale: 'fr' })).toEqual({ locale: 'en', sessionDurationMin: 5 })
+    expect(coercePrefs({ locale: 'fr' })).toEqual({ locale: 'en', sessionDurationMin: 5, videoSound: true })
   })
 
   it('accepts a valid locale', () => {
-    expect(coercePrefs({ locale: 'pt-BR' })).toEqual({ locale: 'pt-BR', sessionDurationMin: 5 })
+    expect(coercePrefs({ locale: 'pt-BR' })).toEqual({
+      locale: 'pt-BR',
+      sessionDurationMin: 5,
+      videoSound: true,
+    })
   })
 
   it('keeps a valid session duration and falls back on an invalid one', () => {
     expect(coercePrefs({ locale: 'en', sessionDurationMin: 12 }).sessionDurationMin).toBe(12)
     expect(coercePrefs({ locale: 'en', sessionDurationMin: 99 }).sessionDurationMin).toBe(5)
   })
+
+  it('defaults video sound on and keeps an explicit boolean', () => {
+    expect(coercePrefs({ locale: 'en' }).videoSound).toBe(true)
+    expect(coercePrefs({ videoSound: 'yes' }).videoSound).toBe(true)
+    expect(coercePrefs({ videoSound: false }).videoSound).toBe(false)
+  })
 })
 
 describe('loadPrefs / savePrefs', () => {
   it('round-trips prefs', () => {
-    savePrefs({ locale: 'pt-BR', sessionDurationMin: 12 })
-    expect(loadPrefs()).toEqual({ locale: 'pt-BR', sessionDurationMin: 12 })
+    savePrefs({ locale: 'pt-BR', sessionDurationMin: 12, videoSound: false })
+    expect(loadPrefs()).toEqual({ locale: 'pt-BR', sessionDurationMin: 12, videoSound: false })
   })
 
   it('returns defaults when the envelope is absent', () => {
@@ -39,6 +49,6 @@ describe('loadPrefs / savePrefs', () => {
       STATE_KEY,
       JSON.stringify({ version: 1, prefs: { locale: 'pt-BR', ghost: true } }),
     )
-    expect(loadPrefs()).toEqual({ locale: 'pt-BR', sessionDurationMin: 5 })
+    expect(loadPrefs()).toEqual({ locale: 'pt-BR', sessionDurationMin: 5, videoSound: true })
   })
 })

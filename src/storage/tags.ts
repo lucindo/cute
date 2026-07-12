@@ -2,6 +2,7 @@
 // rename touches one record; delete strips the id from every source — live
 // and tombstoned — in the same transaction as the record removal.
 
+import { newId } from '../domain/id'
 import { err, ok, type Result } from '../domain/result'
 import {
   getAllRecords,
@@ -18,7 +19,7 @@ export async function createTag(
 ): Promise<Result<TagRecord, StorageError>> {
   const trimmed = name.trim()
   if (trimmed === '') return err({ name: 'InvalidName', message: 'tag name is empty' })
-  const record: TagRecord = { id: crypto.randomUUID(), name: trimmed }
+  const record: TagRecord = { id: newId(), name: trimmed }
   const written = await writeMany(db, [{ op: 'put', store: 'tags', record }])
   if (!written.ok) return written
   return ok(record)

@@ -4,6 +4,7 @@
 
 import { processImageFile, type ImageCodecDeps, type ImportRejection } from './importImage'
 import { processVideoFile, type VideoProbeDeps } from './importVideo'
+import { newId } from '../domain/id'
 import { writeMany, type SourceRecord, type SourceType, type StorageError } from '../storage'
 
 export type FileRejection =
@@ -52,7 +53,7 @@ export async function importFiles(
     }
     const { blob, thumb } = processed.value
     const source: SourceRecord = {
-      id: crypto.randomUUID(),
+      id: newId(),
       type: kind,
       mimeType: blob.type,
       bytes: blob.size,

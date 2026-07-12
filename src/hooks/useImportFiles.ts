@@ -52,7 +52,22 @@ export function useImportFiles(): UseImportFiles {
       if (outcome.imported.length > 0) {
         window.dispatchEvent(new Event(COLLECTION_CHANGED_EVENT))
       }
-    })()
+    })().catch((cause: unknown) => {
+      // An unexpected throw must never strand the UI in 'importing' — surface
+      // it as a whole-batch rejection instead.
+      setImportState({
+        status: 'done',
+        imported: 0,
+        rejected: files.map((file) => ({
+          name: file.name,
+          rejection: {
+            reason: 'storage-failed',
+            error: { name: 'UnknownError', message: String(cause) },
+          },
+        })),
+      })
+      busy.current = false
+    })
   }, [])
 
   return { importState, importFrom }

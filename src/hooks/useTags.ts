@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { COLLECTION_CHANGED_EVENT } from './useCollection'
 import type { Result } from '../domain/result'
 import {
+  applyTagToSources,
   createTag,
   deleteTag,
   getAllRecords,
@@ -33,9 +34,10 @@ export type TagActionState =
 export interface UseTags {
   tagsState: TagsState
   actionState: TagActionState
-  create: (name: string) => void
   rename: (id: string, name: string) => void
   remove: (id: string) => void
+  applyToSources: (tagId: string, sourceIds: readonly string[], mode: 'add' | 'remove') => void
+  createAndAssign: (name: string, sourceIds: readonly string[]) => void
 }
 
 export function useTags(): UseTags {
@@ -104,12 +106,6 @@ export function useTags(): UseTags {
     [],
   )
 
-  const create = useCallback(
-    (name: string): void => {
-      mutate((db) => createTag(db, name), false)
-    },
-    [mutate],
-  )
   const rename = useCallback(
     (id: string, name: string): void => {
       mutate((db) => renameTag(db, id, name), false)
@@ -122,6 +118,24 @@ export function useTags(): UseTags {
     },
     [mutate],
   )
+  const applyToSources = useCallback(
+    (tagId: string, sourceIds: readonly string[], mode: 'add' | 'remove'): void => {
+      mutate((db) => applyTagToSources(db, tagId, sourceIds, mode), true)
+    },
+    [mutate],
+  )
+  const createAndAssign = useCallback(
+    (name: string, sourceIds: readonly string[]): void => {
+      // Two transactions; a failed assign leaves an unassigned tag, which is
+      // harmless and visible.
+      mutate(async (db) => {
+        const created = await createTag(db, name)
+        if (!created.ok) return created
+        return applyTagToSources(db, created.value.id, sourceIds, 'add')
+      }, true)
+    },
+    [mutate],
+  )
 
-  return { tagsState, actionState, create, rename, remove }
+  return { tagsState, actionState, rename, remove, applyToSources, createAndAssign }
 }

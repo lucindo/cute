@@ -37,6 +37,33 @@ export async function renameTag(
   return writeMany(db, [{ op: 'put', store: 'tags', record: { id, name: trimmed } }])
 }
 
+export async function applyTagToSources(
+  db: IDBDatabase,
+  tagId: string,
+  sourceIds: readonly string[],
+  mode: 'add' | 'remove',
+): Promise<Result<void, StorageError>> {
+  const tag = await getRecord(db, 'tags', tagId)
+  if (!tag.ok) return tag
+  if (tag.value === null) return err({ name: 'NotFound', message: `no tag with id ${tagId}` })
+  const ids = new Set(sourceIds)
+  const sources = await getAllRecords(db, 'sources')
+  if (!sources.ok) return sources
+  // Unknown source ids are skipped: a selection can outlive a source deleted
+  // in another tab.
+  const updates = sources.value
+    .filter((s) => ids.has(s.id) && s.tags.includes(tagId) !== (mode === 'add'))
+    .map((s): WriteOp => ({
+      op: 'put',
+      store: 'sources',
+      record: {
+        ...s,
+        tags: mode === 'add' ? [...s.tags, tagId] : s.tags.filter((t) => t !== tagId),
+      },
+    }))
+  return writeMany(db, updates)
+}
+
 export async function deleteTag(
   db: IDBDatabase,
   id: string,

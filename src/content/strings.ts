@@ -31,6 +31,9 @@ export interface UiStrings {
     readonly deleteConfirm: string
     readonly deleteCancel: string
     readonly deleteFailed: string
+    readonly select: string
+    readonly selectDone: string
+    readonly selectedCount: (count: number) => string
     readonly rejection: {
       readonly unsupportedType: string
       readonly undecodable: string
@@ -41,6 +44,18 @@ export interface UiStrings {
   }
   readonly tags: {
     readonly seeded: Readonly<Record<SeededTagId, string>>
+    readonly edit: string
+    readonly empty: string
+    readonly newTagPlaceholder: string
+    readonly add: string
+    readonly rename: string
+    readonly save: string
+    readonly cancel: string
+    readonly delete: string
+    readonly deleteTitle: string
+    readonly deleteBody: string
+    readonly deleteConfirm: string
+    readonly actionFailed: string
   }
 }
 
@@ -69,6 +84,9 @@ const EN: UiStrings = {
     deleteConfirm: 'Delete',
     deleteCancel: 'Cancel',
     deleteFailed: 'Could not delete. Please try again.',
+    select: 'Select',
+    selectDone: 'Done',
+    selectedCount: (count) => (count === 1 ? '1 selected' : `${String(count)} selected`),
     rejection: {
       unsupportedType: 'Not a supported image or video type.',
       undecodable: 'Could not read this image. Converting it to JPEG may help.',
@@ -85,6 +103,18 @@ const EN: UiStrings = {
       'seed:family': 'Family',
       'seed:bhakti': 'Bhakti',
     },
+    edit: 'Edit tags',
+    empty: 'No tags yet.',
+    newTagPlaceholder: 'New tag',
+    add: 'Add',
+    rename: 'Rename',
+    save: 'Save',
+    cancel: 'Cancel',
+    delete: 'Delete',
+    deleteTitle: 'Delete this tag?',
+    deleteBody: 'The tag is removed from all media. No photos or videos are deleted.',
+    deleteConfirm: 'Delete',
+    actionFailed: 'Could not update tags. Please try again.',
   },
 }
 
@@ -113,6 +143,9 @@ const PT_BR: UiStrings = {
     deleteConfirm: 'Excluir',
     deleteCancel: 'Cancelar',
     deleteFailed: 'Não foi possível excluir. Tente novamente.',
+    select: 'Selecionar',
+    selectDone: 'Concluir',
+    selectedCount: (count) => (count === 1 ? '1 selecionado' : `${String(count)} selecionados`),
     rejection: {
       unsupportedType: 'Tipo de imagem ou vídeo não suportado.',
       undecodable: 'Não foi possível ler esta imagem. Converter para JPEG pode ajudar.',
@@ -129,6 +162,18 @@ const PT_BR: UiStrings = {
       'seed:family': 'Família',
       'seed:bhakti': 'Bhakti',
     },
+    edit: 'Editar tags',
+    empty: 'Nenhuma tag ainda.',
+    newTagPlaceholder: 'Nova tag',
+    add: 'Adicionar',
+    rename: 'Renomear',
+    save: 'Salvar',
+    cancel: 'Cancelar',
+    delete: 'Excluir',
+    deleteTitle: 'Excluir esta tag?',
+    deleteBody: 'A tag é removida de todas as mídias. Nenhuma foto ou vídeo é excluído.',
+    deleteConfirm: 'Excluir',
+    actionFailed: 'Não foi possível atualizar as tags. Tente novamente.',
   },
 }
 

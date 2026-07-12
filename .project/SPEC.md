@@ -60,11 +60,11 @@ One role: **the practitioner**. Goals:
 
 - **FR-13:** The app SHALL seed the tag list with: Babies, Kittens, Puppies, Family, Bhakti (localized).
 - **FR-14:** The user SHALL be able to create tags; the user SHOULD be able to rename and delete tags (delete removes the tag from all sources after confirmation).
-- **FR-15:** The Collection SHALL support multi-selecting sources and assigning/removing tags on the selection.
+- **FR-15:** The Collection SHALL let the user assign/remove tags on a source through its item sheet. *(Bulk multi-select assignment was dropped — see DECISIONS.)*
 - **FR-16:** Each source MAY have an optional user-editable caption.
 - **FR-17:** The Collection SHALL sort by newest-first (default) and by aww factor; each source card SHALL show raw stats (hold count, total hold time).
 - **FR-18:** Deleting a source SHALL remove its media blob and thumbnail but retain a tombstone record (caption, type, tags, deleted flag); its hold events SHALL be retained. Deletion SHALL require confirmation.
-- **FR-19:** The Collection SHALL display total storage usage via `navigator.storage.estimate()` and per-source file size.
+- **FR-19:** The Collection SHALL display total storage usage (summed from stored source + thumbnail bytes) and per-source file size; `navigator.storage.estimate()` supplies the quota shown alongside. *(Usage is computed from our own records — `estimate()` lags blob writes; see DECISIONS.)*
 
 ### Backup
 
@@ -140,7 +140,7 @@ One role: **the practitioner**. Goals:
 - **AC-3:** Given an animated GIF, when imported, then its stored bytes are unchanged and it animates in a session. *(FR-8.a)*
 - **AC-4:** Given an undecodable file among a batch of 5, when imported, then a visible error names that file with a hint and the other 4 import successfully. *(FR-10)*
 - **AC-5:** Given a playable video, when imported, then a poster-frame thumbnail exists and the stored bytes are unchanged. *(FR-9)*
-- **AC-6:** Given 3 selected sources, when the user assigns tag "Babies", then all 3 carry the tag; given a new tag name typed, then it is created and assigned. *(FR-13, FR-14, FR-15)*
+- **AC-6:** Given a source's item sheet, when the user assigns tag "Babies" and saves, then the source carries the tag; given a new tag name typed, then it is created and staged for assignment. *(FR-13, FR-14, FR-15)*
 - **AC-7:** Given sources with recorded holds, when sorting by aww factor, then order is descending lifetime total hold time and each card shows hold count + total time. *(FR-17)*
 - **AC-8:** Given a source with hold events, when deleted (confirmed), then its blob and thumbnail are gone from IndexedDB, its events remain, and lifetime totals in Stats are unchanged. *(FR-18)*
 - **AC-9:** Given a populated library, when the user exports and then restores the zip on a cleared profile (confirming), then Collection, tags, sessions, events, and stats are identical. *(FR-20, FR-21)*

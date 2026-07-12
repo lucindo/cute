@@ -11,8 +11,6 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 **Open questions:** none blocking.
 
 **Watch:**
-- `PROJECT.md` map broadly stale — added `useSaveSource`, `TagManagerSheet`, `updateSource`; removed `useSetCaption`, `applyTagToSources`, select-mode; `SourceSheet` now a staged editor. Run `/ds-project-map`.
-- SPEC stale: **FR-15 bulk multi-select removed** (see DECISIONS); plus prior FR-19 (`estimate()` for usage) and media-as-bytes-not-Blobs.
 - PT-BR copy pending native review (SPEC OQ-1) — now also caption/save/discard strings (Legenda, Salvar, Descartar, Continuar editando, seeded names Bebês/Gatinhos/Filhotes/Família/Bhakti); swipe slop threshold to tune (SPEC OQ-2).
 - Nested delete-confirm inside `TagManagerSheet` only lightly verified — jsdom `<dialog>` polyfill can't model the top layer; sanity-check deleting a tag from the manager sheet on device.
 - iOS video probe waits for `loadeddata` with no timeout — untested on iPhone; add play-nudge + timeout if a video import hangs.

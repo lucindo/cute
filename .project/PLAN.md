@@ -4,19 +4,20 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Task 7 done except captions, all committed on `dev`: db v3 (`tags` store seeded in the upgrade; media stored as ArrayBuffer+type after the WebKit blob bug), tag ops + `useTags`, per-item bottom sheet (`SourceSheet` on the shared `Sheet` primitive) for tag/delete actions, Select mode for bulk assign, `TagManager` rename/delete. Import fixed twice for phones (uuid fallback on insecure origins; bytes-not-blobs) — user-verified working on a real iPhone (2026-07-12). Lint/tests(94)/build green.
+**State:** Task 7 (Tags & captions) fully done, all committed on `dev`. This session: caption editing in the item sheet; the sheet became a **staged editor** (draft caption+tags, persist on Save via atomic `updateSource`, discard-confirm on close); tag manager moved into a bottom sheet (`TagManagerSheet`); **bulk select-mode tagging removed entirely** (Select button, `applyToSources`/`createAndAssign`, `applyTagToSources`, strings, tests). New: `useSaveSource`, `useTags.create`. Toolbar is now Import + Edit tags. User-verified live earlier this session. Lint/tests(101)/build green.
 
-**Next:** Task 7 final slice — caption editing in the item sheet (field under the preview → source record → feeds thumbnail alt).
+**Next:** Session setup — duration stepper (1–30, default 5, persisted as last-used), tag filter, Start blocked on empty pool with Collection guidance.
 
 **Open questions:** none blocking.
 
 **Watch:**
-- PT-BR copy pending native-speaker review before release (SPEC OQ-1) — now also tag/selection strings ("tag" anglicism, "N selecionados" plural, seeded names Bebês/Gatinhos/Filhotes/Família/Bhakti); swipe slop threshold to tune on device (SPEC OQ-2).
-- iOS video probe: `probeVideo` waits for `loadeddata` with no timeout — untested on a real iPhone; if a video import hangs there, add a play-nudge + timeout.
+- `PROJECT.md` map broadly stale — added `useSaveSource`, `TagManagerSheet`, `updateSource`; removed `useSetCaption`, `applyTagToSources`, select-mode; `SourceSheet` now a staged editor. Run `/ds-project-map`.
+- SPEC stale: **FR-15 bulk multi-select removed** (see DECISIONS); plus prior FR-19 (`estimate()` for usage) and media-as-bytes-not-Blobs.
+- PT-BR copy pending native review (SPEC OQ-1) — now also caption/save/discard strings (Legenda, Salvar, Descartar, Continuar editando, seeded names Bebês/Gatinhos/Filhotes/Família/Bhakti); swipe slop threshold to tune (SPEC OQ-2).
+- Nested delete-confirm inside `TagManagerSheet` only lightly verified — jsdom `<dialog>` polyfill can't model the top layer; sanity-check deleting a tag from the manager sheet on device.
+- iOS video probe waits for `loadeddata` with no timeout — untested on iPhone; add play-nudge + timeout if a video import hangs.
 - DB v3 upgrade clears pre-release media stores — existing dev collections come up empty once; tags/renames survive.
-- `PROJECT.md` map stale again (Sheet/SourceSheet/TagAssignPanel/TagManager components, useTags hook, domain `tags.ts`/`id.ts`, storage `tags.ts`) — run `/ds-project-map`.
-- SPEC stale on two points: FR-19 (`estimate()` for usage) and media payloads now bytes, not Blobs (see DECISIONS).
-- `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push. Project verify skill lives untracked at `.claude/skills/verify/SKILL.md` (`.claude/` is gitignored).
+- `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — unconfirmed; flag before first push. Verify skill untracked at `.claude/skills/verify/SKILL.md` (`.claude/` gitignored).
 
 ## Roadmap
 
@@ -26,7 +27,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
 - [x] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [x] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
-- [~] Tags & captions: seeded tag list, create/rename/delete, multi-select assign/remove on sources, optional caption editing — done except caption editing
+- [x] Tags & captions: seeded tag list, create/rename/delete, per-item tag assign + caption editing in a staged item sheet; tag manager in a sheet. (Bulk multi-select assign dropped — SPEC FR-15, see DECISIONS.)
 - [ ] Session setup: duration stepper (1–30, default 5, persisted), tag filter, start blocked on empty pool with Collection guidance
 - [ ] Session domain logic (pure, unit-tested): shuffle-bag order with no boundary repeat, wall-clock timer, overtime, hold-event recording, back/forward history
 - [ ] Session surface: CSS full-viewport takeover, media display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)

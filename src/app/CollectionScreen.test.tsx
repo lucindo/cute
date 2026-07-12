@@ -307,6 +307,17 @@ describe('CollectionScreen tags', () => {
     expect(stored.value.tags).toEqual([sunset.id])
   })
 
+  it('opens the tag manager in a sheet and closes it', async () => {
+    renderScreen()
+    await userEvent.click(await screen.findByRole('button', { name: T.edit }))
+
+    const sheet = screen.getByRole('dialog', { name: T.edit })
+    expect(within(sheet).getByRole('button', { name: `${T.rename} Babies` })).toBeInTheDocument()
+
+    await userEvent.click(within(sheet).getByRole('button', { name: UI_STRINGS.en.collection.close }))
+    expect(screen.queryByRole('dialog', { name: T.edit })).not.toBeInTheDocument()
+  })
+
   it('renames a seeded tag from the manager', async () => {
     renderScreen()
     await userEvent.click(await screen.findByRole('button', { name: T.edit }))

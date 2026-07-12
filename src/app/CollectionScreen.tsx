@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
 import { TagAssignPanel } from '../components/TagAssignPanel'
-import { TagManager } from '../components/TagManager'
+import { TagManagerSheet } from '../components/TagManagerSheet'
 import type { UiStrings } from '../content/strings'
 import { formatBytes } from '../domain/format'
 import { useCollection } from '../hooks/useCollection'
@@ -170,9 +170,9 @@ export function CollectionScreen(): ReactElement {
         {tagsState.status === 'ready' && (
           <button
             type="button"
-            aria-expanded={managing}
+            aria-haspopup="dialog"
             onClick={() => {
-              setManaging((was) => !was)
+              setManaging(true)
               setSelecting(false)
               setSelected(new Set())
             }}
@@ -182,11 +182,6 @@ export function CollectionScreen(): ReactElement {
           </button>
         )}
       </div>
-      {managing && tagsState.status === 'ready' && (
-        <div className="mt-4">
-          <TagManager tags={tagsState.tags} onRename={rename} onDelete={remove} />
-        </div>
-      )}
       {selecting && tagsState.status === 'ready' && collection.status === 'ready' && (
         <div className="mt-4">
           <p className="mb-2 text-sm text-[var(--color-zen-text-soft)]">
@@ -246,6 +241,15 @@ export function CollectionScreen(): ReactElement {
         }}
         onClose={() => {
           setOpenSourceId(null)
+        }}
+      />
+      <TagManagerSheet
+        open={managing}
+        tags={tagsState.status === 'ready' ? tagsState.tags : []}
+        onRename={rename}
+        onDelete={remove}
+        onClose={() => {
+          setManaging(false)
         }}
       />
       <ConfirmDialog

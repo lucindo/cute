@@ -6,7 +6,7 @@ import { formatBytes } from '../domain/format'
 import { useCollection } from '../hooks/useCollection'
 import { useDeleteSource } from '../hooks/useDeleteSource'
 import { useImportFiles } from '../hooks/useImportFiles'
-import { useStorageEstimate } from '../hooks/useStorageEstimate'
+import { useStorageQuota } from '../hooks/useStorageQuota'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 import type { FileRejection } from '../media/importFiles'
 
@@ -30,7 +30,7 @@ export function CollectionScreen(): ReactElement {
   const collection = useCollection()
   const { importState, importFrom } = useImportFiles()
   const { deleteState, deleteById } = useDeleteSource()
-  const estimate = useStorageEstimate()
+  const quota = useStorageQuota()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -136,9 +136,11 @@ export function CollectionScreen(): ReactElement {
         </p>
       )}
       <div className="mt-6">{content}</div>
-      {estimate !== null && (
+      {collection.status === 'ready' && (
         <p className="mt-6 text-xs text-[var(--color-zen-muted)]">
-          {strings.collection.storageGauge(formatBytes(estimate.usage), formatBytes(estimate.quota))}
+          {quota !== null
+            ? strings.collection.storageGauge(formatBytes(collection.totalBytes), formatBytes(quota))
+            : strings.collection.storageUsed(formatBytes(collection.totalBytes))}
         </p>
       )}
       <ConfirmDialog

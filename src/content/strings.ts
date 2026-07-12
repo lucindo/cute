@@ -23,6 +23,7 @@ export interface UiStrings {
     readonly importButton: string
     readonly importing: string
     readonly storageGauge: (used: string, total: string) => string
+    readonly storageUsed: (used: string) => string
     readonly deleteLabel: string
     readonly deleteTitle: string
     readonly deleteBody: string
@@ -57,6 +58,7 @@ const EN: UiStrings = {
     importButton: 'Import media',
     importing: 'Importing…',
     storageGauge: (used, total) => `Using ${used} of ${total}`,
+    storageUsed: (used) => `Using ${used}`,
     deleteLabel: 'Delete',
     deleteTitle: 'Remove from collection?',
     deleteBody: 'The file is deleted from this device. Practice history is kept.',
@@ -91,6 +93,7 @@ const PT_BR: UiStrings = {
     importButton: 'Importar mídia',
     importing: 'Importando…',
     storageGauge: (used, total) => `Usando ${used} de ${total}`,
+    storageUsed: (used) => `Usando ${used}`,
     deleteLabel: 'Excluir',
     deleteTitle: 'Remover da coleção?',
     deleteBody: 'O arquivo é apagado deste aparelho. O histórico de prática é mantido.',

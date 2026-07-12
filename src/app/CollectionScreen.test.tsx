@@ -128,16 +128,24 @@ describe('CollectionScreen delete & storage', () => {
     expect(await screen.findByText('2.4 MB')).toBeInTheDocument()
   })
 
-  it('shows the storage gauge when an estimate is available', async () => {
+  it('sums usage from records and shows quota when available', async () => {
     Object.defineProperty(navigator, 'storage', {
-      value: { estimate: () => Promise.resolve({ usage: 1_000_000, quota: 2_000_000_000 }) },
+      value: { estimate: () => Promise.resolve({ quota: 2_000_000_000 }) },
       configurable: true,
     })
+    // 2_400_000 source bytes + the 1-byte seeded thumb.
+    await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
     renderScreen()
     expect(
-      await screen.findByText(UI_STRINGS.en.collection.storageGauge('1.0 MB', '2.0 GB')),
+      await screen.findByText(UI_STRINGS.en.collection.storageGauge('2.4 MB', '2.0 GB')),
     ).toBeInTheDocument()
     Reflect.deleteProperty(navigator, 'storage')
+  })
+
+  it('shows usage alone when no quota estimate exists', async () => {
+    await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
+    renderScreen()
+    expect(await screen.findByText(UI_STRINGS.en.collection.storageUsed('2.4 MB'))).toBeInTheDocument()
   })
 
   it('keeps the source when deletion is cancelled', async () => {

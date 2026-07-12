@@ -14,7 +14,9 @@ export type CollectionSource = SourceRecord & { thumbUrl: string | null }
 export type CollectionState =
   | { status: 'loading' }
   | { status: 'error'; error: StorageError }
-  | { status: 'ready'; sources: CollectionSource[] }
+  // totalBytes sums live sources + their thumbs from our own records —
+  // navigator.storage.estimate() lags far behind IndexedDB blob writes.
+  | { status: 'ready'; sources: CollectionSource[]; totalBytes: number }
 
 export function useCollection(): CollectionState {
   const [state, setState] = useState<CollectionState>({ status: 'loading' })
@@ -51,16 +53,20 @@ export function useCollection(): CollectionState {
         return
       }
       const thumbById = new Map(thumbs.value.map((t) => [t.id, t.blob]))
-      const next = sources.value
+      const live = sources.value
         .filter((s) => !s.deleted)
         .sort((a, b) => b.createdAt - a.createdAt)
-        .map((s): CollectionSource => {
-          const blob = thumbById.get(s.id)
-          return { ...s, thumbUrl: blob === undefined ? null : URL.createObjectURL(blob) }
-        })
+      const next = live.map((s): CollectionSource => {
+        const blob = thumbById.get(s.id)
+        return { ...s, thumbUrl: blob === undefined ? null : URL.createObjectURL(blob) }
+      })
+      const totalBytes = live.reduce(
+        (sum, s) => sum + s.bytes + (thumbById.get(s.id)?.size ?? 0),
+        0,
+      )
       const stale = liveUrls
       liveUrls = next.map((s) => s.thumbUrl).filter((u): u is string => u !== null)
-      setState({ status: 'ready', sources: next })
+      setState({ status: 'ready', sources: next, totalBytes })
       for (const url of stale) URL.revokeObjectURL(url)
     }
 

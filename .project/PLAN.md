@@ -4,17 +4,19 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Tasks 1–6 done and committed on branch `dev`; video import and the completed collection grid (per-source sizes, storage gauge, confirmed delete) verified in a real browser (2026-07-11). Media: image + video import pipelines (`src/media/`), tombstone delete (`src/storage/sources.ts`), `ConfirmDialog` ported from HRV (`src/components/`), gauge sums own records with `estimate()` quota only (`useCollection.totalBytes`, `useStorageQuota`). Lint/tests(69)/build green.
+**State:** Task 7 done except captions, all committed on `dev`: db v3 (`tags` store seeded in the upgrade; media stored as ArrayBuffer+type after the WebKit blob bug), tag ops + `useTags`, per-item bottom sheet (`SourceSheet` on the shared `Sheet` primitive) for tag/delete actions, Select mode for bulk assign, `TagManager` rename/delete. Import fixed twice for phones (uuid fallback on insecure origins; bytes-not-blobs) — user-verified working on a real iPhone (2026-07-12). Lint/tests(94)/build green.
 
-**Next:** Task 7 — tags & captions: seeded localized tag list (Babies, Kittens, Puppies, Family, Bhakti), create/rename/delete tags, multi-select assign/remove on sources, optional caption editing.
+**Next:** Task 7 final slice — caption editing in the item sheet (field under the preview → source record → feeds thumbnail alt).
 
 **Open questions:** none blocking.
 
 **Watch:**
-- PT-BR copy pending native-speaker review before release (SPEC OQ-1) — now includes delete dialog, gauge, and video rejection strings; swipe slop threshold to tune on device (SPEC OQ-2).
-- `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
-- `PROJECT.md` map is stale beyond a one-liner (importVideo, sources.ts, format.ts, ConfirmDialog, four hooks) — run `/ds-project-map`.
-- SPEC FR-19 names `estimate()` for usage; implementation now sums own records (see DECISIONS) — SPEC.md stale on this point.
+- PT-BR copy pending native-speaker review before release (SPEC OQ-1) — now also tag/selection strings ("tag" anglicism, "N selecionados" plural, seeded names Bebês/Gatinhos/Filhotes/Família/Bhakti); swipe slop threshold to tune on device (SPEC OQ-2).
+- iOS video probe: `probeVideo` waits for `loadeddata` with no timeout — untested on a real iPhone; if a video import hangs there, add a play-nudge + timeout.
+- DB v3 upgrade clears pre-release media stores — existing dev collections come up empty once; tags/renames survive.
+- `PROJECT.md` map stale again (Sheet/SourceSheet/TagAssignPanel/TagManager components, useTags hook, domain `tags.ts`/`id.ts`, storage `tags.ts`) — run `/ds-project-map`.
+- SPEC stale on two points: FR-19 (`estimate()` for usage) and media payloads now bytes, not Blobs (see DECISIONS).
+- `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push. Project verify skill lives untracked at `.claude/skills/verify/SKILL.md` (`.claude/` is gitignored).
 
 ## Roadmap
 
@@ -24,7 +26,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
 - [x] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [x] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
-- [ ] Tags & captions: seeded tag list, create/rename/delete, multi-select assign/remove on sources, optional caption editing
+- [~] Tags & captions: seeded tag list, create/rename/delete, multi-select assign/remove on sources, optional caption editing — done except caption editing
 - [ ] Session setup: duration stepper (1–30, default 5, persisted), tag filter, start blocked on empty pool with Collection guidance
 - [ ] Session domain logic (pure, unit-tested): shuffle-bag order with no boundary repeat, wall-clock timer, overtime, hold-event recording, back/forward history
 - [ ] Session surface: CSS full-viewport takeover, media display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)

@@ -31,13 +31,13 @@ Layout mirrors HRV: pure logic in `src/domain/`, storage wrappers in
 
 | Path | Holds |
 |------|-------|
-| `src/app/` | `App.tsx` — strings provider + Practice/Collection mode state; placeholder `PracticeScreen`/`CollectionScreen`. |
-| `src/components/` | `ModeToggle` (mode switcher); `primitives/PageShell` (width-capped page frame). |
+| `src/app/` | `App.tsx` — strings provider + Practice/Collection mode state; `CollectionScreen` (import UI + thumbnail grid + storage gauge + delete flow); placeholder `PracticeScreen`. |
+| `src/components/` | `ModeToggle` (mode switcher); `ConfirmDialog` (`<dialog>`-based confirm, ported from HRV); `primitives/PageShell` (width-capped page frame). |
 | `src/content/strings.ts` | Typed EN/PT-BR UI-string catalog — all copy lives here, never inline in components. |
-| `src/domain/` | Pure logic: `settings.ts` (locale ids + validation), `result.ts` (`Result`/`ok`/`err`). |
-| `src/hooks/` | `useLocale` (locale orchestration, cross-/same-tab pref sync), `useUiStringsContext` (strings context). |
-| `src/media/` | Import pipelines: `importImage.ts` (decode → ≤2000px re-encode + thumb, animated passthrough), `importFiles.ts` (batch orchestration, per-file rejection). |
-| `src/storage/` | `storage.ts` (localStorage envelope `cute:state:v1`), `prefs.ts` (coerce-and-fallback prefs), `db.ts` (IndexedDB `cute-db` v1: `sources`/`blobs`/`thumbs`/`sessions`/`holdEvents` behind `Result` wrappers, atomic `writeMany`), `persistence.ts` (`navigator.storage.persist()`). Barrel `index.ts`. |
+| `src/domain/` | Pure logic: `settings.ts` (locale ids + validation), `result.ts` (`Result`/`ok`/`err`), `image.ts` (fit-within sizing, animated GIF/WebP byte detection), `format.ts` (`formatBytes`). |
+| `src/hooks/` | `useLocale` (locale orchestration, cross-/same-tab pref sync), `useUiStringsContext` (strings context), `useCollection` (live source list + thumb URLs + own-bytes total, refreshes on `cute:collection-changed`), `useImportFiles` (batch import state), `useDeleteSource` (confirm + tombstone delete state), `useStorageQuota` (quota via `navigator.storage.estimate()`). |
+| `src/media/` | Import pipelines: `importImage.ts` (decode → ≤2000px re-encode + thumb, animated passthrough), `importVideo.ts` (decodability probe + poster-frame thumbnail, bytes as-is), `importFiles.ts` (batch orchestration, per-file rejection). |
+| `src/storage/` | `storage.ts` (localStorage envelope `cute:state:v1`), `prefs.ts` (coerce-and-fallback prefs), `db.ts` (IndexedDB `cute-db` v1: `sources`/`blobs`/`thumbs`/`sessions`/`holdEvents` behind `Result` wrappers, atomic `writeMany`), `sources.ts` (tombstone delete: blob+thumb removed, record kept), `persistence.ts` (`navigator.storage.persist()`). Barrel `index.ts`. |
 | `src/styles/theme.css` | Mono Zen palette, light + dark, as `--color-zen-*` Tailwind tokens; dialog fade, shadows, page gradient. |
 | `src/index.css` | Tailwind entry, font, base layer. |
 | `public/` | `favicon.svg` (placeholder heart). |

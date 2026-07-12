@@ -4,6 +4,7 @@ import { CollectionScreen } from './CollectionScreen'
 import { PracticeScreen } from './PracticeScreen'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import { PageShell } from '../components/primitives/PageShell'
+import { TopAppBar } from '../components/primitives/TopAppBar'
 import { useLocale } from '../hooks/useLocale'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
 
@@ -16,9 +17,7 @@ export function App(): ReactElement {
   return (
     <UiStringsProvider value={uiStrings}>
       <PageShell width="practice">
-        <h1 className="mb-6 text-2xl font-semibold text-[var(--color-zen-accent-strong)]">
-          {uiStrings.shell.appTitle}
-        </h1>
+        <TopAppBar title={uiStrings.shell.appTitle} />
         <div className="mb-8 w-full">
           <SegmentedControl<AppMode>
             options={[

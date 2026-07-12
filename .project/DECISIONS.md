@@ -72,3 +72,7 @@ Decisions resolved during design discussion and the grill interview. One entry p
 ## UI fidelity
 
 - **Port HRV's primitive vocabulary; don't hand-roll UI.** Cute reuses HRV "wholesale", but the early UI ported only `PageShell` and hand-rolled the rest (bespoke `ModeToggle`, a generic `Sheet`, inline-Tailwind rows). It drifted visibly from HRV — weak centering, flat cards, crude rows. Standing rule: build each screen from the HRV analogue's primitives (`TopAppBar`, `SegmentedControl`, `SettingsRow`/`SettingsStepper`, `SectionCard`, `IconButton`, …) in `.reference/hrv/src`, swapping `--color-breathing-*` tokens for `--color-zen-*`. Legitimate divergence is allowed only where cute has surface HRV lacks (media collection, tags). *Rationale: HRV's look & feel is a consistent system of primitives; reimplementing them ad-hoc yields a different-looking app and re-derives solved problems.*
+
+## Implementation (session setup)
+
+- **Q: How is the session-setup screen laid out?** → **Inline controls on the Practice screen, not HRV's `SetupCard` → editor-`Sheet` pattern.** The duration stepper (and the coming tag filter + Start) sit directly on the Practice screen, built from ported HRV primitives (`SettingsStepper`, `SegmentedControl`). *Rationale: HRV's summary-card-opens-a-sheet indirection earns its keep with ~5 practice settings; cute has 2, so a card+sheet would cargo-cult the pattern — inline is simpler and still HRV-faithful at the primitive level.*

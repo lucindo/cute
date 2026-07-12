@@ -4,13 +4,15 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Task 7 (Tags & captions) fully done, all committed on `dev`. This session: caption editing in the item sheet; the sheet became a **staged editor** (draft caption+tags, persist on Save via atomic `updateSource`, discard-confirm on close); tag manager moved into a bottom sheet (`TagManagerSheet`); **bulk select-mode tagging removed entirely** (Select button, `applyToSources`/`createAndAssign`, `applyTagToSources`, strings, tests). New: `useSaveSource`, `useTags.create`. Toolbar is now Import + Edit tags. User-verified live earlier this session. Lint/tests(101)/build green.
+**State:** UI re-anchor to HRV primitives **done**, committed on `dev` — retired `ModeToggle` for a full-width `SegmentedControl`; ported `TopAppBar` (header), `SettingsRow` (tag-manager rows), `SettingsStepper`; centered the collection toolbar. Fixed the drift the user flagged (weak centering, flat cards, crude rows). Task 8 (Session setup) started: duration stepper (FR-23) live on the Practice screen, seeded from and persisted to a new `sessionDurationMin` pref via `domain/session.ts` + `useSessionDuration`. Lint/tests(117)/build green. User's own visual pass on the new UI still pending.
 
-**Next:** UI re-anchor to HRV primitives — drift caught in review (hand-rolled UI diverged from HRV: weak centering, flat cards, crude rows; only `PageShell` was ported). Port `SegmentedControl` / `TopAppBar` / `SettingsRow` / `SettingsStepper` / `SectionCard` and rebuild the shell, collection toolbar, and tag surfaces on them, then Session setup.
+**Next:** Task 8 tag filter (FR-24) — a `TagFilter` chip control (multi-select; empty selection = all sources incl. untagged), session-local (not persisted). Then Start + empty-pool guard (FR-25/AC-1).
 
 **Open questions:** none blocking.
 
 **Watch:**
+- `PROJECT.md` map stale again — new primitives `SegmentedControl`/`TopAppBar` (in `components/primitives/`), `SettingsRow`/`SettingsStepper` (in `components/`), hook `useSessionDuration`, `domain/session.ts`; `ModeToggle` removed. Run `/ds-project-map`.
+- Standing UI rule now recorded (DECISIONS §UI fidelity): port HRV primitives from `.reference/hrv`, don't hand-roll. `SectionCard` not yet ported — deferred until a surface needs it.
 - PT-BR copy pending native review (SPEC OQ-1) — now also caption/save/discard strings (Legenda, Salvar, Descartar, Continuar editando, seeded names Bebês/Gatinhos/Filhotes/Família/Bhakti); swipe slop threshold to tune (SPEC OQ-2).
 - Nested delete-confirm inside `TagManagerSheet` only lightly verified — jsdom `<dialog>` polyfill can't model the top layer; sanity-check deleting a tag from the manager sheet on device.
 - iOS video probe waits for `loadeddata` with no timeout — untested on iPhone; add play-nudge + timeout if a video import hangs.
@@ -26,8 +28,8 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
 - [x] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
 - [x] Tags & captions: seeded tag list, create/rename/delete, per-item tag assign + caption editing in a staged item sheet; tag manager in a sheet. (Bulk multi-select assign dropped — SPEC FR-15, see DECISIONS.)
-- [ ] UI re-anchor to HRV primitives: port the HRV primitive vocabulary (`TopAppBar`, `SegmentedControl`, `SettingsRow`/`SettingsStepper`, `SectionCard`) and rebuild the drifted shell / collection toolbar / tag surfaces on it, retiring hand-rolled equivalents (`ModeToggle`) — centered, carded, HRV-faithful
-- [ ] Session setup: duration stepper (1–30, default 5, persisted), tag filter, start blocked on empty pool with Collection guidance
+- [x] UI re-anchor to HRV primitives: ported `SegmentedControl`, `TopAppBar`, `SettingsRow`, `SettingsStepper`; rebuilt shell / collection toolbar / tag rows on them; retired `ModeToggle`. (`SectionCard` deferred until a surface needs it.)
+- [~] Session setup: duration stepper done (1–30, default 5, persisted — FR-23); tag filter (FR-24) and empty-pool Start guard (FR-25) remain
 - [ ] Session domain logic (pure, unit-tested): shuffle-bag order with no boundary repeat, wall-clock timer, overtime, hold-event recording, back/forward history
 - [ ] Session surface: CSS full-viewport takeover, media display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)
 - [ ] Session overlay: countdown + overtime, clock, stop-with-confirm, subtle hold indicator, legible over arbitrary media

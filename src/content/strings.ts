@@ -53,6 +53,11 @@ export interface UiStrings {
     readonly importing: string
     readonly storageGauge: (used: string, total: string) => string
     readonly storageUsed: (used: string) => string
+    readonly sortLabel: string
+    readonly sortRecent: string
+    readonly sortAww: string
+    // Per-card lifetime hold stats: count + total held time (FR-17).
+    readonly holdStat: (count: number, held: string) => string
     readonly deleteLabel: string
     readonly deleteTitle: string
     readonly deleteBody: string
@@ -141,6 +146,10 @@ const EN: UiStrings = {
     importing: 'Importing…',
     storageGauge: (used, total) => `Using ${used} of ${total}`,
     storageUsed: (used) => `Using ${used}`,
+    sortLabel: 'Sort',
+    sortRecent: 'Recent',
+    sortAww: 'Aww',
+    holdStat: (count, held) => `♥ ${String(count)} · ${held}`,
     deleteLabel: 'Delete',
     deleteTitle: 'Remove from collection?',
     deleteBody: 'The file is deleted from this device. Practice history is kept.',
@@ -235,6 +244,10 @@ const PT_BR: UiStrings = {
     importing: 'Importando…',
     storageGauge: (used, total) => `Usando ${used} de ${total}`,
     storageUsed: (used) => `Usando ${used}`,
+    sortLabel: 'Ordenar',
+    sortRecent: 'Recentes',
+    sortAww: 'Aww',
+    holdStat: (count, held) => `♥ ${String(count)} · ${held}`,
     deleteLabel: 'Excluir',
     deleteTitle: 'Remover da coleção?',
     deleteBody: 'O arquivo é apagado deste aparelho. O histórico de prática é mantido.',

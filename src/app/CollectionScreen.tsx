@@ -3,8 +3,9 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
 import { TagManagerSheet } from '../components/TagManagerSheet'
+import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import type { UiStrings } from '../content/strings'
-import { formatBytes } from '../domain/format'
+import { formatBytes, formatDuration } from '../domain/format'
 import { useCollection } from '../hooks/useCollection'
 import { useDeleteSource } from '../hooks/useDeleteSource'
 import { useImportFiles } from '../hooks/useImportFiles'
@@ -40,6 +41,8 @@ export function CollectionScreen(): ReactElement {
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [managing, setManaging] = useState(false)
   const [openSourceId, setOpenSourceId] = useState<string | null>(null)
+  // Session-local like the practice tag filter — a sort is a per-visit choice.
+  const [sortMode, setSortMode] = useState<'recent' | 'aww'>('recent')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -64,9 +67,15 @@ export function CollectionScreen(): ReactElement {
   } else if (collection.status === 'ready' && collection.sources.length === 0) {
     content = <p className="text-sm text-[var(--color-zen-text-soft)]">{strings.collection.empty}</p>
   } else if (collection.status === 'ready') {
+    // Aww sort is a stable re-order of the newest-first base by descending
+    // lifetime held time (FR-17/AC-7); ties keep newest-first.
+    const ordered =
+      sortMode === 'aww'
+        ? [...collection.sources].sort((a, b) => b.totalHeldMs - a.totalHeldMs)
+        : collection.sources
     content = (
       <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
-        {collection.sources.map((source) => (
+        {ordered.map((source) => (
           <li key={source.id}>
             <button
               type="button"
@@ -87,6 +96,14 @@ export function CollectionScreen(): ReactElement {
                   />
                 )}
               </div>
+              <p
+                // Supplementary visual metadata; the tile is named by its
+                // caption, so keep the stat out of the button's accessible name.
+                aria-hidden="true"
+                className="mt-1 text-center text-[11px] tabular-nums text-[var(--color-zen-text-soft)]"
+              >
+                {strings.collection.holdStat(source.holdCount, formatDuration(source.totalHeldMs))}
+              </p>
             </button>
           </li>
         ))}
@@ -165,6 +182,19 @@ export function CollectionScreen(): ReactElement {
         <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">
           {strings.collection.saveFailed}
         </p>
+      )}
+      {collection.status === 'ready' && collection.sources.length > 0 && (
+        <div className="mt-6 flex justify-center">
+          <SegmentedControl<'recent' | 'aww'>
+            options={[
+              { id: 'recent', label: strings.collection.sortRecent },
+              { id: 'aww', label: strings.collection.sortAww },
+            ]}
+            value={sortMode}
+            onChange={setSortMode}
+            ariaLabel={strings.collection.sortLabel}
+          />
+        </div>
       )}
       <div className="mt-6">{content}</div>
       {collection.status === 'ready' && (

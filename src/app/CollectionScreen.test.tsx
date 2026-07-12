@@ -79,6 +79,35 @@ describe('CollectionScreen', () => {
     expect(screen.queryByAltText('Gone')).not.toBeInTheDocument()
   })
 
+  it('sorts by aww factor and shows per-card hold stats', async () => {
+    // A is newer; B is older but has more lifetime held time.
+    await seed([
+      source({ id: 'a', caption: 'A', createdAt: 200 }),
+      source({ id: 'b', caption: 'B', createdAt: 100 }),
+    ])
+    const db = await openDbOrThrow()
+    const holds: WriteOp[] = [
+      { op: 'put', store: 'holdEvents', record: { id: 'h1', sessionId: 's', sourceId: 'a', startedAt: 0, durationMs: 1000 } },
+      { op: 'put', store: 'holdEvents', record: { id: 'h2', sessionId: 's', sourceId: 'b', startedAt: 0, durationMs: 5000 } },
+    ]
+    if (!(await writeMany(db, holds)).ok) throw new Error('seed holds failed')
+    db.close()
+
+    const C = UI_STRINGS.en.collection
+    renderScreen()
+
+    // Default (Recent): newest-first.
+    await screen.findByAltText('A')
+    expect(screen.getAllByRole('img').map((img) => img.getAttribute('alt'))).toEqual(['A', 'B'])
+    // Per-card stats render for both tiles.
+    expect(screen.getByText(C.holdStat(1, '0:01'))).toBeInTheDocument()
+    expect(screen.getByText(C.holdStat(1, '0:05'))).toBeInTheDocument()
+
+    // Aww: B (5s held) outranks A (1s).
+    await userEvent.click(screen.getByRole('radio', { name: C.sortAww }))
+    expect(screen.getAllByRole('img').map((img) => img.getAttribute('alt'))).toEqual(['B', 'A'])
+  })
+
   it('shows the load error when IndexedDB is unavailable', async () => {
     Object.defineProperty(globalThis, 'indexedDB', {
       value: undefined,

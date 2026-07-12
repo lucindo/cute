@@ -14,6 +14,8 @@ export interface SettingsStepperProps<T extends string | number> {
   formatValue?: (value: T) => string
   onChange(this: void, value: T): void
   strings: SettingsStepperStrings
+  /** Omit the top divider — for the first/only row in a card. */
+  noBorder?: boolean
 }
 
 // Stepper row (ported from HRV): label left / [− value +] right, 32px round
@@ -25,6 +27,7 @@ export function SettingsStepper<T extends string | number>({
   formatValue = String,
   onChange,
   strings,
+  noBorder = false,
 }: SettingsStepperProps<T>): ReactElement {
   const selectedIndex = options.indexOf(value)
   const canDecrease = selectedIndex > 0
@@ -39,7 +42,12 @@ export function SettingsStepper<T extends string | number>({
     'grid size-8 place-items-center rounded-full border border-[var(--color-border-soft)] bg-transparent text-lg leading-none text-[var(--color-zen-text)] transition hover:bg-[var(--color-zen-bg-soft)] active:bg-[var(--color-zen-bg-soft)] disabled:cursor-not-allowed disabled:opacity-45 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2'
 
   return (
-    <SettingsRow label={label} ariaLabel={label} className="flex items-center justify-between">
+    <SettingsRow
+      label={label}
+      ariaLabel={label}
+      noBorder={noBorder}
+      className="flex items-center justify-between"
+    >
       <div className="flex items-center gap-2">
         <button
           type="button"

@@ -21,7 +21,7 @@ export function TagFilter({ tags, selected, onToggle }: TagFilterProps): ReactEl
 
   return (
     <div>
-      <div className="mb-2 text-sm font-medium text-[var(--color-zen-text)]">
+      <div className="mb-3 text-[15px] font-normal text-[var(--color-zen-text)]">
         {strings.practice.filter.label}
       </div>
       <ul className="flex flex-wrap gap-2">

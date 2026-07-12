@@ -30,6 +30,20 @@ export interface UiStrings {
     readonly emptyCollection: string
     readonly emptyFilter: string
   }
+  readonly session: {
+    readonly stop: string
+    readonly stopTitle: string
+    readonly stopConfirm: string
+    readonly stopCancel: string
+    readonly completion: {
+      readonly title: string
+      readonly duration: string
+      readonly holds: string
+      readonly totalHeld: string
+      readonly longest: string
+      readonly done: string
+    }
+  }
   readonly collection: {
     readonly empty: string
     readonly loadError: string
@@ -101,6 +115,20 @@ const EN: UiStrings = {
     start: 'Start',
     emptyCollection: 'Your collection is empty. Add photos or videos in the Collection to begin.',
     emptyFilter: 'No sources match the selected tags.',
+  },
+  session: {
+    stop: 'Stop',
+    stopTitle: 'Stop this session?',
+    stopConfirm: 'Stop',
+    stopCancel: 'Keep going',
+    completion: {
+      title: 'Session complete',
+      duration: 'Duration',
+      holds: 'Holds',
+      totalHeld: 'Total held',
+      longest: 'Longest hold',
+      done: 'Done',
+    },
   },
   collection: {
     empty: 'Your collection is empty. Import photos or videos to begin.',
@@ -179,6 +207,20 @@ const PT_BR: UiStrings = {
     start: 'Começar',
     emptyCollection: 'Sua coleção está vazia. Adicione fotos ou vídeos na Coleção para começar.',
     emptyFilter: 'Nenhuma fonte corresponde às tags selecionadas.',
+  },
+  session: {
+    stop: 'Parar',
+    stopTitle: 'Parar esta sessão?',
+    stopConfirm: 'Parar',
+    stopCancel: 'Continuar',
+    completion: {
+      title: 'Sessão concluída',
+      duration: 'Duração',
+      holds: 'Retenções',
+      totalHeld: 'Tempo retido',
+      longest: 'Maior retenção',
+      done: 'Concluir',
+    },
   },
   collection: {
     empty: 'Sua coleção está vazia. Importe fotos ou vídeos para começar.',

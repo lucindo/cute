@@ -2,10 +2,11 @@ import '@testing-library/jest-dom/vitest'
 
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { PracticeScreen } from './PracticeScreen'
 import { UI_STRINGS } from '../content/strings'
+import type { SessionRequest } from '../hooks/useSession'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
 import {
   loadPrefs,
@@ -16,10 +17,10 @@ import {
   type WriteOp,
 } from '../storage'
 
-function renderPractice() {
+function renderPractice(onStart: (request: SessionRequest) => void = vi.fn()) {
   return render(
     <UiStringsProvider value={UI_STRINGS.en}>
-      <PracticeScreen />
+      <PracticeScreen onStart={onStart} />
     </UiStringsProvider>,
   )
 }
@@ -91,11 +92,18 @@ describe('PracticeScreen start guard', () => {
     expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled()
   })
 
-  it('enables Start when a source is available', async () => {
+  it('enables Start when a source is available and launches with the matched pool', async () => {
+    const onStart = vi.fn()
     await seed([source('s1', ['seed:kittens'])])
-    renderPractice()
+    renderPractice(onStart)
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Start' })).toBeEnabled()
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Start' }))
+    expect(onStart).toHaveBeenCalledWith({
+      sourceIds: ['s1'],
+      plannedMinutes: 5,
+      tagFilter: [],
     })
   })
 

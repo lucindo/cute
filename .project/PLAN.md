@@ -4,16 +4,17 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Tasks 1–5 done and committed on branch `dev`; image and video import manually verified in a real browser (2026-07-11). Storage: `cute-db` v1, five stores behind `Result` wrappers, atomic `writeMany`. Import: image pipeline (`src/domain/image.ts`, `src/media/importImage.ts`) + video probe pipeline (`src/media/importVideo.ts` — off-DOM `<video>` probe, poster-frame thumb, bytes as-is) + batch orchestration (`src/media/importFiles.ts`) + Collection grid and picker/drag-drop/paste surface (`useCollection`, `useImportFiles`, `cute:collection-changed` refresh event). Lint/tests(60)/build green.
+**State:** Tasks 1–6 done and committed on branch `dev`; video import and the completed collection grid (per-source sizes, storage gauge, confirmed delete) verified in a real browser (2026-07-11). Media: image + video import pipelines (`src/media/`), tombstone delete (`src/storage/sources.ts`), `ConfirmDialog` ported from HRV (`src/components/`), gauge sums own records with `estimate()` quota only (`useCollection.totalBytes`, `useStorageQuota`). Lint/tests(69)/build green.
 
-**Next:** Task 6 — collection grid completion: per-source file size, storage gauge, delete with confirmation (tombstone keeps the source record, removes blob/thumb, preserves hold events).
+**Next:** Task 7 — tags & captions: seeded localized tag list (Babies, Kittens, Puppies, Family, Bhakti), create/rename/delete tags, multi-select assign/remove on sources, optional caption editing.
 
 **Open questions:** none blocking.
 
 **Watch:**
-- PT-BR copy pending native-speaker review before release (SPEC OQ-1); swipe slop threshold to tune on device (SPEC OQ-2).
+- PT-BR copy pending native-speaker review before release (SPEC OQ-1) — now includes delete dialog, gauge, and video rejection strings; swipe slop threshold to tune on device (SPEC OQ-2).
 - `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — user hasn't confirmed; flag before first push.
-- `PROJECT.md` hooks row lags (`useCollection`/`useImportFiles` not listed) — fold into the next `/ds-project-map` run.
+- `PROJECT.md` map is stale beyond a one-liner (importVideo, sources.ts, format.ts, ConfirmDialog, four hooks) — run `/ds-project-map`.
+- SPEC FR-19 names `estimate()` for usage; implementation now sums own records (see DECISIONS) — SPEC.md stale on this point.
 
 ## Roadmap
 
@@ -22,7 +23,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Storage foundation: IndexedDB stores (sources, blobs, thumbs, sessions, hold events) behind typed Result wrappers; `cute:`-prefixed localStorage prefs with HRV key-collision audit; `storage.persist()` requested on first run
 - [x] Image import: picker, drag-drop, and paste produce re-encoded (≤2000px) sources with thumbnails, untagged, visible in grid; animated GIF/WebP stored as-is; per-file rejection with hint, batch survives
 - [x] Video import: probe validates decodability, poster frame becomes thumbnail, bytes stored as-is; undecodable rejected with format hint
-- [ ] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
+- [x] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
 - [ ] Tags & captions: seeded tag list, create/rename/delete, multi-select assign/remove on sources, optional caption editing
 - [ ] Session setup: duration stepper (1–30, default 5, persisted), tag filter, start blocked on empty pool with Collection guidance
 - [ ] Session domain logic (pure, unit-tested): shuffle-bag order with no boundary repeat, wall-clock timer, overtime, hold-event recording, back/forward history

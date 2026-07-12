@@ -4,20 +4,17 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** UI re-anchor to HRV primitives **done**, committed on `dev` — retired `ModeToggle` for a full-width `SegmentedControl`; ported `TopAppBar` (header), `SettingsRow` (tag-manager rows), `SettingsStepper`; centered the collection toolbar. Fixed the drift the user flagged (weak centering, flat cards, crude rows). Task 8 (Session setup) started: duration stepper (FR-23) live on the Practice screen, seeded from and persisted to a new `sessionDurationMin` pref via `domain/session.ts` + `useSessionDuration`. Lint/tests(117)/build green. User's own visual pass on the new UI still pending.
+**State:** Task 8 (Session setup) **done** on `dev`: duration stepper + session-local `TagFilter` (OR, empty = all incl. untagged) + empty-pool Start guard, grouped in a now-ported `SectionCard`. The full **session runtime** is live and runnable end-to-end — pure `sessionMachine`/`shuffleBag` domain (wall-clock, tick-driven completion), `useSession` orchestration (tick loop, media load from IndexedDB, persistence, wake lock), `SessionView` full-viewport takeover with pointer + keyboard gesture grammar, `SessionOverlay` (countdown/overtime/clock/stop-confirm/pulsing hold glow), `CompletionScreen` summary; session + hold events persist on completion. User-tested on desktop: Stop-button bug fixed, hold indicator upgraded to a slow pulse. Lint / tests (154) / build green.
 
-**Next:** Task 8 tag filter (FR-24) — a `TagFilter` chip control (multi-select; empty selection = all sources incl. untagged), session-local (not persisted). Then Start + empty-pool guard (FR-25/AC-1).
+**Next:** Session video playback (FR-35) — sound-on default + iOS first-unmute via a single persistent `<video>` unlocked at the Start gesture (currently muted autoplay+loop only). Then lifecycle-edge device verification, then Aww factor / Stats.
 
 **Open questions:** none blocking.
 
 **Watch:**
-- `PROJECT.md` map stale again — new primitives `SegmentedControl`/`TopAppBar` (in `components/primitives/`), `SettingsRow`/`SettingsStepper` (in `components/`), hook `useSessionDuration`, `domain/session.ts`; `ModeToggle` removed. Run `/ds-project-map`.
-- Standing UI rule now recorded (DECISIONS §UI fidelity): port HRV primitives from `.reference/hrv`, don't hand-roll. `SectionCard` not yet ported — deferred until a surface needs it.
-- PT-BR copy pending native review (SPEC OQ-1) — now also caption/save/discard strings (Legenda, Salvar, Descartar, Continuar editando, seeded names Bebês/Gatinhos/Filhotes/Família/Bhakti); swipe slop threshold to tune (SPEC OQ-2).
-- Nested delete-confirm inside `TagManagerSheet` only lightly verified — jsdom `<dialog>` polyfill can't model the top layer; sanity-check deleting a tag from the manager sheet on device.
-- iOS video probe waits for `loadeddata` with no timeout — untested on iPhone; add play-nudge + timeout if a video import hangs.
-- DB v3 upgrade clears pre-release media stores — existing dev collections come up empty once; tags/renames survive.
-- `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` per HRV convention — unconfirmed; flag before first push. Verify skill untracked at `.claude/skills/verify/SKILL.md` (`.claude/` gitignored).
+- `PROJECT.md` map broadly stale — many new session files (`domain/shuffleBag.ts`, `domain/sessionMachine.ts`, `hooks/useSession.ts`, `hooks/useWakeLock.ts`, `hooks/useSessionDuration.ts`, `storage/sessions.ts`, `app/SessionView.tsx`, `app/CompletionScreen.tsx`, `components/SessionOverlay.tsx`, `components/TagFilter.tsx`, `components/SettingsRow.tsx`, `components/SettingsStepper.tsx`, `components/primitives/SectionCard.tsx`/`SegmentedControl.tsx`/`TopAppBar.tsx`); `ModeToggle` removed. Run `/ds-project-map`.
+- Pointer gestures (hold/tap/swipe, 10px slop) only manually verifiable — jsdom can't do pointer capture; the integration test covers the keyboard path. Verify hold/tap/swipe on a real touch device; tune slop (SPEC OQ-2).
+- Session persistence is best-effort (no error surface); a fresh DB connection opens per source navigation — consolidate in the perf pass. Possible media micro-flicker on rapid nav (old object URL revoked before new loads).
+- Carry-over: iOS video-import probe waits for `loadeddata` with no timeout (untested on iPhone); nested delete-confirm device check; DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
 
 ## Roadmap
 
@@ -29,13 +26,13 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Collection grid: thumbnail-only rendering, per-source file size, storage gauge, delete with confirmation leaves tombstone and preserves hold events
 - [x] Tags & captions: seeded tag list, create/rename/delete, per-item tag assign + caption editing in a staged item sheet; tag manager in a sheet. (Bulk multi-select assign dropped — SPEC FR-15, see DECISIONS.)
 - [x] UI re-anchor to HRV primitives: ported `SegmentedControl`, `TopAppBar`, `SettingsRow`, `SettingsStepper`; rebuilt shell / collection toolbar / tag rows on them; retired `ModeToggle`. (`SectionCard` deferred until a surface needs it.)
-- [~] Session setup: duration stepper done (1–30, default 5, persisted — FR-23); tag filter (FR-24) and empty-pool Start guard (FR-25) remain
-- [ ] Session domain logic (pure, unit-tested): shuffle-bag order with no boundary repeat, wall-clock timer, overtime, hold-event recording, back/forward history
-- [ ] Session surface: CSS full-viewport takeover, media display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)
-- [ ] Session overlay: countdown + overtime, clock, stop-with-confirm, subtle hold indicator, legible over arbitrary media
-- [ ] Session video playback: single persistent element, autoplay + loop, sound toggle (default on), unmuted first play works on iOS
-- [ ] Session lifecycle edges: timer expiry mid-hold waits for release with overtime; backgrounding truncates hold and resumes on wall clock; stop saves endReason `stopped`; wake lock held (progressive)
-- [ ] Completion screen: duration incl. overtime, hold count, total held time, longest hold
+- [x] Session setup: duration stepper (FR-23), session-local `TagFilter` (FR-24, OR/empty=all), empty-pool Start guard (FR-25/AC-1); grouped in a ported `SectionCard`
+- [x] Session domain logic (pure, unit-tested): `shuffleBag` (boundary-guarded), `sessionMachine` — wall-clock timer, overtime, hold-event recording, back/forward history
+- [x] Session surface: CSS full-viewport takeover, image/video display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)
+- [x] Session overlay: countdown + overtime, clock, stop-with-confirm, pulsing hold indicator, legible over arbitrary media
+- [~] Session video playback: muted autoplay + loop done; single-persistent-element + sound toggle (default on) + iOS unmuted first play (FR-35) remain
+- [~] Session lifecycle edges: timer-expiry-mid-hold + overtime, backgrounding truncates hold, stop saves `stopped`, wake lock held — all done; on-device verification remains
+- [x] Completion screen: duration incl. overtime, hold count, total held time, longest hold
 - [ ] Aww factor: Collection sorts by lifetime total hold time; cards show hold count + total time
 - [ ] Stats page: lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
 - [ ] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched

@@ -6,7 +6,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 **State:** Task 8 (Session setup) **done** on `dev`: duration stepper + session-local `TagFilter` (OR, empty = all incl. untagged) + empty-pool Start guard, grouped in a now-ported `SectionCard`. The full **session runtime** is live and runnable end-to-end — pure `sessionMachine`/`shuffleBag` domain (wall-clock, tick-driven completion), `useSession` orchestration (tick loop, media load from IndexedDB, persistence, wake lock), `SessionView` full-viewport takeover with pointer + keyboard gesture grammar, `SessionOverlay` (countdown/overtime/clock/stop-confirm/pulsing hold glow), `CompletionScreen` summary; session + hold events persist on completion. User-tested on desktop: Stop-button bug fixed, hold indicator upgraded to a slow pulse. Lint / tests (154) / build green.
 
-**Next:** Session video playback (FR-35) — sound-on default + iOS first-unmute via a single persistent `<video>` unlocked at the Start gesture (currently muted autoplay+loop only). Then lifecycle-edge device verification, then Aww factor / Stats.
+**Next:** Aww factor (FR-17/AC-7) — Collection adds an aww-factor sort (descending lifetime total hold time) alongside newest-first; each card shows hold count + total held time. (FR-35 video sound landed: persistent gesture-unlocked `<video>`, sound-on default pref, overlay toggle; iOS unmute is a device-verify carry-over.) Lifecycle-edge device verification also still pending.
 
 **Open questions:** none blocking.
 
@@ -30,7 +30,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Session domain logic (pure, unit-tested): `shuffleBag` (boundary-guarded), `sessionMachine` — wall-clock timer, overtime, hold-event recording, back/forward history
 - [x] Session surface: CSS full-viewport takeover, image/video display, gesture grammar — hold ≥300ms records, tap toggles overlay, swipe navigates; keyboard map (Space/←/→/Esc/O)
 - [x] Session overlay: countdown + overtime, clock, stop-with-confirm, pulsing hold indicator, legible over arbitrary media
-- [~] Session video playback: muted autoplay + loop done; single-persistent-element + sound toggle (default on) + iOS unmuted first play (FR-35) remain
+- [x] Session video playback (FR-35): single persistent, gesture-unlocked `<video>`; sound-on default (persisted pref) + in-session overlay toggle. iOS unmuted-first-play needs real-device verification
 - [~] Session lifecycle edges: timer-expiry-mid-hold + overtime, backgrounding truncates hold, stop saves `stopped`, wake lock held — all done; on-device verification remains
 - [x] Completion screen: duration incl. overtime, hold count, total held time, longest hold
 - [ ] Aww factor: Collection sorts by lifetime total hold time; cards show hold count + total time

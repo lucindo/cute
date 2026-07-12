@@ -12,7 +12,7 @@ export type {
   TagRecord,
   WriteOp,
 } from './db'
-export { deleteSource, setCaption } from './sources'
+export { deleteSource, updateSource } from './sources'
 export { applyTagToSources, createTag, deleteTag, renameTag } from './tags'
 export { requestPersistence } from './persistence'
 export type { PersistenceDeps } from './persistence'

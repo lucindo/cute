@@ -38,6 +38,9 @@ export interface UseTags {
   remove: (id: string) => void
   applyToSources: (tagId: string, sourceIds: readonly string[], mode: 'add' | 'remove') => void
   createAndAssign: (name: string, sourceIds: readonly string[]) => void
+  // Create a catalog tag and resolve its id (null on failure) so a caller can
+  // stage the assignment locally. Used by the per-item sheet's draft editor.
+  create: (name: string) => Promise<string | null>
 }
 
 export function useTags(): UseTags {
@@ -136,6 +139,21 @@ export function useTags(): UseTags {
     },
     [mutate],
   )
+  const create = useCallback(async (name: string): Promise<string | null> => {
+    const opened = await openDb()
+    if (!opened.ok) {
+      setActionState({ status: 'error', error: opened.error })
+      return null
+    }
+    const created = await createTag(opened.value, name)
+    opened.value.close()
+    if (!created.ok) {
+      setActionState({ status: 'error', error: created.error })
+      return null
+    }
+    window.dispatchEvent(new Event(TAGS_CHANGED_EVENT))
+    return created.value.id
+  }, [])
 
-  return { tagsState, actionState, rename, remove, applyToSources, createAndAssign }
+  return { tagsState, actionState, rename, remove, applyToSources, createAndAssign, create }
 }

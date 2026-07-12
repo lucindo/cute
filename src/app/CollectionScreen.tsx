@@ -9,7 +9,7 @@ import { formatBytes } from '../domain/format'
 import { useCollection } from '../hooks/useCollection'
 import { useDeleteSource } from '../hooks/useDeleteSource'
 import { useImportFiles } from '../hooks/useImportFiles'
-import { useSetCaption } from '../hooks/useSetCaption'
+import { useSaveSource } from '../hooks/useSaveSource'
 import { useStorageQuota } from '../hooks/useStorageQuota'
 import { useTags } from '../hooks/useTags'
 import { useUiStrings } from '../hooks/useUiStringsContext'
@@ -35,8 +35,9 @@ export function CollectionScreen(): ReactElement {
   const collection = useCollection()
   const { importState, importFrom } = useImportFiles()
   const { deleteState, deleteById } = useDeleteSource()
-  const { captionState, setCaptionFor } = useSetCaption()
-  const { tagsState, actionState, rename, remove, applyToSources, createAndAssign } = useTags()
+  const { saveState, saveSource } = useSaveSource()
+  const { tagsState, actionState, rename, remove, applyToSources, createAndAssign, create } =
+    useTags()
   const quota = useStorageQuota()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
   const [selecting, setSelecting] = useState(false)
@@ -222,9 +223,9 @@ export function CollectionScreen(): ReactElement {
           {strings.collection.deleteFailed}
         </p>
       )}
-      {captionState.status === 'error' && (
+      {saveState.status === 'error' && (
         <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">
-          {strings.collection.captionFailed}
+          {strings.collection.saveFailed}
         </p>
       )}
       <div className="mt-6">{content}</div>
@@ -238,13 +239,8 @@ export function CollectionScreen(): ReactElement {
       <SourceSheet
         source={openSource}
         tags={tagsState.status === 'ready' ? tagsState.tags : []}
-        onToggleTag={(tagId, mode) => {
-          if (openSourceId !== null) applyToSources(tagId, [openSourceId], mode)
-        }}
-        onCreateTag={(name) => {
-          if (openSourceId !== null) createAndAssign(name, [openSourceId])
-        }}
-        onSaveCaption={setCaptionFor}
+        onCreateTag={create}
+        onSave={saveSource}
         onRequestDelete={(id) => {
           setPendingDelete(id)
         }}

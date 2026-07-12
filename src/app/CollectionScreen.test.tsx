@@ -197,19 +197,28 @@ describe('CollectionScreen item sheet', () => {
     expect(within(sheet).getByRole('button', { name: 'Babies' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('toggles a tag for the open item', async () => {
+  it('stages a tag toggle and persists it on Save', async () => {
     await seed([source({ id: 'a', caption: 'A' })])
     renderScreen()
     await userEvent.click(await screen.findByRole('button', { name: 'A' }))
 
     await userEvent.click(await screen.findByRole('button', { name: 'Kittens' }))
-
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Kittens' })).toHaveAttribute('aria-pressed', 'true')
     })
-    const stored = await getRecord(await openDbOrThrow(), 'sources', 'a')
-    if (!stored.ok || stored.value === null) throw new Error('expected the source')
-    expect(stored.value.tags).toEqual(['seed:kittens'])
+
+    // Staged only — nothing written until Save.
+    const staged = await getRecord(await openDbOrThrow(), 'sources', 'a')
+    if (!staged.ok || staged.value === null) throw new Error('expected the source')
+    expect(staged.value.tags).toEqual([])
+
+    await userEvent.click(screen.getByRole('button', { name: UI_STRINGS.en.collection.save }))
+
+    await waitFor(async () => {
+      const stored = await getRecord(await openDbOrThrow(), 'sources', 'a')
+      if (!stored.ok || stored.value === null) throw new Error('expected the source')
+      expect(stored.value.tags).toEqual(['seed:kittens'])
+    })
   })
 
   it('closes on the close button', async () => {

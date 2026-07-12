@@ -2,7 +2,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
 
 import { getAllRecords, getRecord, openDb, writeMany, type SourceRecord } from './index'
-import { deleteSource, setCaption } from './sources'
+import { deleteSource, updateSource } from './sources'
 
 async function freshDb(): Promise<IDBDatabase> {
   const opened = await openDb({ factory: new IDBFactory() })
@@ -68,24 +68,24 @@ describe('deleteSource', () => {
   })
 })
 
-describe('setCaption', () => {
-  it('sets and reads back a caption', async () => {
+describe('updateSource', () => {
+  it('writes caption and tags in one update', async () => {
     const db = await freshDb()
     await seed(db)
 
-    const res = await setCaption(db, 's1', 'Sleepy pup')
+    const res = await updateSource(db, 's1', { caption: 'Sleepy pup', tags: ['babies', 'puppies'] })
     expect(res).toEqual({ ok: true, value: undefined })
 
     const source = await getRecord(db, 'sources', 's1')
     if (!source.ok || source.value === null) throw new Error('expected the source')
-    expect(source.value).toEqual({ ...SOURCE, caption: 'Sleepy pup' })
+    expect(source.value).toEqual({ ...SOURCE, caption: 'Sleepy pup', tags: ['babies', 'puppies'] })
   })
 
-  it('trims surrounding whitespace', async () => {
+  it('trims the caption', async () => {
     const db = await freshDb()
     await seed(db)
 
-    await setCaption(db, 's1', '  padded  ')
+    await updateSource(db, 's1', { caption: '  padded  ', tags: SOURCE.tags })
 
     const source = await getRecord(db, 'sources', 's1')
     if (!source.ok || source.value === null) throw new Error('expected the source')
@@ -96,19 +96,18 @@ describe('setCaption', () => {
     const db = await freshDb()
     await seed(db) // SOURCE starts with caption 'Cutie'
 
-    await setCaption(db, 's1', '   ')
+    await updateSource(db, 's1', { caption: '   ', tags: SOURCE.tags })
 
     const source = await getRecord(db, 'sources', 's1')
     if (!source.ok || source.value === null) throw new Error('expected the source')
     expect(source.value).not.toHaveProperty('caption')
-    expect(source.value.tags).toEqual(['babies'])
   })
 
   it('errs on an unknown id', async () => {
     const db = await freshDb()
     await seed(db)
 
-    const res = await setCaption(db, 'nope', 'x')
+    const res = await updateSource(db, 'nope', { caption: 'x', tags: [] })
     expect(res.ok).toBe(false)
     if (res.ok) throw new Error('expected err')
     expect(res.error.name).toBe('NotFound')

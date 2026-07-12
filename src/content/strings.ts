@@ -35,7 +35,12 @@ export interface UiStrings {
     readonly close: string
     readonly caption: string
     readonly captionPlaceholder: string
-    readonly captionFailed: string
+    readonly save: string
+    readonly saveFailed: string
+    readonly discardTitle: string
+    readonly discardBody: string
+    readonly discardConfirm: string
+    readonly discardCancel: string
     readonly select: string
     readonly selectDone: string
     readonly selectedCount: (count: number) => string
@@ -93,7 +98,12 @@ const EN: UiStrings = {
     close: 'Close',
     caption: 'Caption',
     captionPlaceholder: 'Add a caption…',
-    captionFailed: 'Could not save the caption. Please try again.',
+    save: 'Save',
+    saveFailed: 'Could not save your changes. Please try again.',
+    discardTitle: 'Discard changes?',
+    discardBody: 'Your edits to this item will be lost.',
+    discardConfirm: 'Discard',
+    discardCancel: 'Keep editing',
     select: 'Select',
     selectDone: 'Done',
     selectedCount: (count) => (count === 1 ? '1 selected' : `${String(count)} selected`),
@@ -157,7 +167,12 @@ const PT_BR: UiStrings = {
     close: 'Fechar',
     caption: 'Legenda',
     captionPlaceholder: 'Adicionar uma legenda…',
-    captionFailed: 'Não foi possível salvar a legenda. Tente novamente.',
+    save: 'Salvar',
+    saveFailed: 'Não foi possível salvar suas alterações. Tente novamente.',
+    discardTitle: 'Descartar alterações?',
+    discardBody: 'Suas edições neste item serão perdidas.',
+    discardConfirm: 'Descartar',
+    discardCancel: 'Continuar editando',
     select: 'Selecionar',
     selectDone: 'Concluir',
     selectedCount: (count) => (count === 1 ? '1 selecionado' : `${String(count)} selecionados`),

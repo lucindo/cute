@@ -61,10 +61,11 @@ export async function importFiles(
       tags: [],
       deleted: false,
     }
+    const [bytes, thumbBytes] = await Promise.all([blob.arrayBuffer(), thumb.arrayBuffer()])
     const written = await writeMany(db, [
       { op: 'put', store: 'sources', record: source },
-      { op: 'put', store: 'blobs', record: { id: source.id, blob } },
-      { op: 'put', store: 'thumbs', record: { id: source.id, blob: thumb } },
+      { op: 'put', store: 'blobs', record: { id: source.id, type: blob.type, bytes } },
+      { op: 'put', store: 'thumbs', record: { id: source.id, type: thumb.type, bytes: thumbBytes } },
     ])
     if (!written.ok) {
       outcome.rejected.push({

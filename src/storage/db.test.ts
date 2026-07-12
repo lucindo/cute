@@ -9,7 +9,7 @@ import {
   getRecord,
   openDb,
   writeMany,
-  type MediaBlobRecord,
+  type MediaBytesRecord,
   type SessionRecord,
   type SourceRecord,
 } from './db'
@@ -75,10 +75,13 @@ describe('openDb', () => {
     expect(tags.value.every((t) => t.name === null)).toBe(true)
   })
 
-  it('upgrades a v1 database, seeding tags and keeping existing data', async () => {
+  it('upgrades a v1 database, seeding tags and clearing pre-v3 media', async () => {
     const factory = new IDBFactory()
     const v1 = await openV1(factory)
-    const written = await writeMany(v1, [{ op: 'put', store: 'sources', record: makeSource('s1') }])
+    const written = await writeMany(v1, [
+      { op: 'put', store: 'sources', record: makeSource('s1') },
+      { op: 'put', store: 'sessions', record: makeSession('keep') },
+    ])
     expect(written.ok).toBe(true)
     v1.close()
 
@@ -86,7 +89,10 @@ describe('openDb', () => {
     if (!opened.ok) throw new Error(`openDb failed: ${opened.error.message}`)
     const db = opened.value
     expect(db.version).toBe(DB_VERSION)
-    await expect(getRecord(db, 'sources', 's1')).resolves.toEqual({ ok: true, value: makeSource('s1') })
+    // Pre-v3 media stored Blob values WebKit can't persist — cleared, not migrated.
+    await expect(getRecord(db, 'sources', 's1')).resolves.toEqual({ ok: true, value: null })
+    // Non-media data survives.
+    await expect(getRecord(db, 'sessions', 'keep')).resolves.toEqual({ ok: true, value: makeSession('keep') })
     const tags = await getAllRecords(db, 'tags')
     if (!tags.ok) throw new Error('expected ok')
     expect(tags.value.map((t) => t.id).sort()).toEqual([...SEEDED_TAG_IDS].sort())
@@ -110,19 +116,17 @@ describe('getRecord', () => {
     expect(read).toEqual({ ok: true, value: null })
   })
 
-  it('round-trips a media blob record', async () => {
+  it('round-trips a media bytes record with content intact', async () => {
     const db = await freshDb()
-    const record: MediaBlobRecord = { id: 's1', blob: new Blob(['aww'], { type: 'image/webp' }) }
+    const bytes = new Uint8Array([1, 2, 3]).buffer
+    const record: MediaBytesRecord = { id: 's1', type: 'image/webp', bytes }
     const written = await writeMany(db, [{ op: 'put', store: 'blobs', record }])
     expect(written.ok).toBe(true)
 
-    // Blob CONTENT fidelity is a browser IndexedDB guarantee that
-    // fake-indexeddb + jsdom cannot emulate (jsdom Blobs degrade under Node's
-    // structuredClone) — only the record round-trip is assertable here.
     const read = await getRecord(db, 'blobs', 's1')
-    if (!read.ok || read.value === null) throw new Error('expected stored blob record')
-    expect(read.value.id).toBe('s1')
-    expect(read.value.blob).toBeDefined()
+    if (!read.ok || read.value === null) throw new Error('expected stored bytes record')
+    expect(read.value.type).toBe('image/webp')
+    expect([...new Uint8Array(read.value.bytes)]).toEqual([1, 2, 3])
   })
 })
 
@@ -152,7 +156,7 @@ describe('writeMany', () => {
     const db = await freshDb()
     await writeMany(db, [
       { op: 'put', store: 'sources', record: makeSource('s1') },
-      { op: 'put', store: 'blobs', record: { id: 's1', blob: new Blob(['x']) } },
+      { op: 'put', store: 'blobs', record: { id: 's1', type: 'image/webp', bytes: new ArrayBuffer(1) } },
     ])
 
     const written = await writeMany(db, [
@@ -171,7 +175,7 @@ describe('writeMany', () => {
     const db = await freshDb()
     // Reason: a record missing its 'id' keyPath is only constructible past the
     // compiler with a cast; it triggers the runtime DataError under test.
-    const missingKey = { blob: new Blob(['x']) } as unknown as MediaBlobRecord
+    const missingKey = { type: 'image/webp', bytes: new ArrayBuffer(1) } as unknown as MediaBytesRecord
 
     const written = await writeMany(db, [
       { op: 'put', store: 'sources', record: makeSource('s1') },

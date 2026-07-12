@@ -47,7 +47,11 @@ async function seed(records: SourceRecord[]): Promise<void> {
   for (const record of records) {
     ops.push({ op: 'put', store: 'sources', record })
     if (!record.deleted) {
-      ops.push({ op: 'put', store: 'thumbs', record: { id: record.id, blob: new Blob(['t']) } })
+      ops.push({
+        op: 'put',
+        store: 'thumbs',
+        record: { id: record.id, type: 'image/webp', bytes: new ArrayBuffer(1) },
+      })
     }
   }
   const written = await writeMany(opened.value, ops)

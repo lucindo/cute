@@ -52,16 +52,22 @@ export function useCollection(): CollectionState {
         setState({ status: 'error', error: thumbs.error })
         return
       }
-      const thumbById = new Map(thumbs.value.map((t) => [t.id, t.blob]))
+      const thumbById = new Map(thumbs.value.map((t) => [t.id, t]))
       const live = sources.value
         .filter((s) => !s.deleted)
         .sort((a, b) => b.createdAt - a.createdAt)
       const next = live.map((s): CollectionSource => {
-        const blob = thumbById.get(s.id)
-        return { ...s, thumbUrl: blob === undefined ? null : URL.createObjectURL(blob) }
+        const thumb = thumbById.get(s.id)
+        return {
+          ...s,
+          thumbUrl:
+            thumb === undefined
+              ? null
+              : URL.createObjectURL(new Blob([thumb.bytes], { type: thumb.type })),
+        }
       })
       const totalBytes = live.reduce(
-        (sum, s) => sum + s.bytes + (thumbById.get(s.id)?.size ?? 0),
+        (sum, s) => sum + s.bytes + (thumbById.get(s.id)?.bytes.byteLength ?? 0),
         0,
       )
       const stale = liveUrls

@@ -2,7 +2,7 @@ export { DB_NAME, DB_VERSION, getAllRecords, getRecord, openDb, writeMany } from
 export type {
   DbDeps,
   HoldEventRecord,
-  MediaBlobRecord,
+  MediaBytesRecord,
   SessionEndReason,
   SessionRecord,
   SourceRecord,

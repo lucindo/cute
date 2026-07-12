@@ -8,7 +8,7 @@ import { SEEDED_TAG_IDS } from '../domain/tags'
 // The origin (lucindo.github.io) is shared with HRV Breathing; the name must
 // stay app-unique.
 export const DB_NAME = 'cute-db'
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 
 export type SourceType = 'image' | 'video'
 
@@ -25,9 +25,13 @@ export interface SourceRecord {
   deleted: boolean
 }
 
-export interface MediaBlobRecord {
+// Raw bytes + MIME type, not a Blob: WebKit's IndexedDB fails or hangs when
+// storing Blob values ("Error preparing Blob/File data to be stored"), while
+// ArrayBuffers persist reliably. Blobs are rebuilt on read.
+export interface MediaBytesRecord {
   id: string // same id as the owning SourceRecord
-  blob: Blob
+  type: string
+  bytes: ArrayBuffer
 }
 
 export type SessionEndReason = 'completed' | 'stopped'
@@ -60,8 +64,8 @@ export interface TagRecord {
 
 interface StoreRecordMap {
   sources: SourceRecord
-  blobs: MediaBlobRecord
-  thumbs: MediaBlobRecord
+  blobs: MediaBytesRecord
+  thumbs: MediaBytesRecord
   sessions: SessionRecord
   holdEvents: HoldEventRecord
   tags: TagRecord
@@ -117,6 +121,17 @@ export function openDb(deps: DbDeps = {}): Promise<Result<IDBDatabase, StorageEr
           // never respawns (SPEC FR-13/FR-14).
           for (const id of SEEDED_TAG_IDS) {
             tags.put({ id, name: null } satisfies TagRecord)
+          }
+        }
+        if (event.oldVersion > 0 && event.oldVersion < 3) {
+          // v2 stored Blob values, which WebKit can fail to persist; v3 moved
+          // to raw bytes. Pre-release, so clear the media stores instead of
+          // migrating (Blob reads are async and can't run inside this tx).
+          const tx = request.transaction
+          if (tx !== null) {
+            for (const name of ['sources', 'blobs', 'thumbs'] as const) {
+              tx.objectStore(name).clear()
+            }
           }
         }
       }

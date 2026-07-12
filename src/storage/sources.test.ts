@@ -24,8 +24,8 @@ const SOURCE: SourceRecord = {
 async function seed(db: IDBDatabase): Promise<void> {
   const written = await writeMany(db, [
     { op: 'put', store: 'sources', record: SOURCE },
-    { op: 'put', store: 'blobs', record: { id: 's1', blob: new Blob(['media']) } },
-    { op: 'put', store: 'thumbs', record: { id: 's1', blob: new Blob(['thumb']) } },
+    { op: 'put', store: 'blobs', record: { id: 's1', type: 'image/webp', bytes: new ArrayBuffer(5) } },
+    { op: 'put', store: 'thumbs', record: { id: 's1', type: 'image/webp', bytes: new ArrayBuffer(5) } },
     {
       op: 'put',
       store: 'holdEvents',

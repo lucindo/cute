@@ -23,6 +23,8 @@ function source(overrides: Partial<CollectionSource> = {}): CollectionSource {
     caption: 'Cutie',
     deleted: false,
     thumbUrl: null,
+    holdCount: 0,
+    totalHeldMs: 0,
     ...overrides,
   }
 }

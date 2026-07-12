@@ -5,11 +5,17 @@
 
 import { useEffect, useState } from 'react'
 
+import { aggregateHoldStats } from '../domain/holdStats'
 import { getAllRecords, openDb, type SourceRecord, type StorageError } from '../storage'
 
 export const COLLECTION_CHANGED_EVENT = 'cute:collection-changed'
 
-export type CollectionSource = SourceRecord & { thumbUrl: string | null }
+// Lifetime hold stats (FR-17) join in here; both default 0 for never-held sources.
+export type CollectionSource = SourceRecord & {
+  thumbUrl: string | null
+  holdCount: number
+  totalHeldMs: number
+}
 
 export type CollectionState =
   | { status: 'loading' }
@@ -39,9 +45,10 @@ export function useCollection(): CollectionState {
         }
         db = opened.value
       }
-      const [sources, thumbs] = await Promise.all([
+      const [sources, thumbs, holds] = await Promise.all([
         getAllRecords(db, 'sources'),
         getAllRecords(db, 'thumbs'),
+        getAllRecords(db, 'holdEvents'),
       ])
       if (cancelled) return
       if (!sources.ok) {
@@ -52,18 +59,26 @@ export function useCollection(): CollectionState {
         setState({ status: 'error', error: thumbs.error })
         return
       }
+      if (!holds.ok) {
+        setState({ status: 'error', error: holds.error })
+        return
+      }
       const thumbById = new Map(thumbs.value.map((t) => [t.id, t]))
+      const holdStats = aggregateHoldStats(holds.value)
       const live = sources.value
         .filter((s) => !s.deleted)
         .sort((a, b) => b.createdAt - a.createdAt)
       const next = live.map((s): CollectionSource => {
         const thumb = thumbById.get(s.id)
+        const stats = holdStats.get(s.id)
         return {
           ...s,
           thumbUrl:
             thumb === undefined
               ? null
               : URL.createObjectURL(new Blob([thumb.bytes], { type: thumb.type })),
+          holdCount: stats?.count ?? 0,
+          totalHeldMs: stats?.totalMs ?? 0,
         }
       })
       const totalBytes = live.reduce(

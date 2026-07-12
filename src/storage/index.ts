@@ -13,6 +13,7 @@ export type {
   WriteOp,
 } from './db'
 export { deleteSource, updateSource } from './sources'
+export { saveCompletedSession } from './sessions'
 export { createTag, deleteTag, renameTag } from './tags'
 export { requestPersistence } from './persistence'
 export type { PersistenceDeps } from './persistence'

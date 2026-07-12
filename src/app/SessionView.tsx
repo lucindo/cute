@@ -26,7 +26,7 @@ export interface SessionViewProps {
 
 export function SessionView({ request, videoRef, setVideoActive, onExit }: SessionViewProps): ReactElement {
   const strings = useUiStrings()
-  const { soundOn } = useVideoSound()
+  const { soundOn, setSoundOn } = useVideoSound()
   const {
     state,
     frame,
@@ -175,6 +175,10 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
         <SessionOverlay
           frame={frame}
           clockLabel={clockLabel}
+          muted={!soundOn}
+          onToggleSound={() => {
+            setSoundOn(!soundOn)
+          }}
           onStop={() => {
             setConfirmStop(true)
           }}

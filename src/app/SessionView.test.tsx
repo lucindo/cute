@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { SessionView } from './SessionView'
 import { UI_STRINGS } from '../content/strings'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
-import { getAllRecords, openDb, writeMany, type SourceRecord, type WriteOp } from '../storage'
+import { getAllRecords, loadPrefs, openDb, writeMany, type SourceRecord, type WriteOp } from '../storage'
 
 const S = UI_STRINGS.en.session
 
@@ -87,6 +87,19 @@ describe('SessionView', () => {
 
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText(S.stopTitle)).toBeInTheDocument()
+  })
+
+  it('toggles video sound from the overlay and persists the pref', async () => {
+    await seedSource('s1')
+    renderSession()
+
+    const toggle = screen.getByRole('button', { name: S.mute })
+    expect(toggle).toHaveAttribute('aria-pressed', 'false')
+
+    await userEvent.click(toggle)
+
+    expect(screen.getByRole('button', { name: S.unmute })).toHaveAttribute('aria-pressed', 'true')
+    expect(loadPrefs().videoSound).toBe(false)
   })
 
   it('returns to setup when completion is dismissed', async () => {

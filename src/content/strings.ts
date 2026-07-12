@@ -35,6 +35,8 @@ export interface UiStrings {
     readonly stopTitle: string
     readonly stopConfirm: string
     readonly stopCancel: string
+    readonly mute: string
+    readonly unmute: string
     readonly completion: {
       readonly title: string
       readonly duration: string
@@ -121,6 +123,8 @@ const EN: UiStrings = {
     stopTitle: 'Stop this session?',
     stopConfirm: 'Stop',
     stopCancel: 'Keep going',
+    mute: 'Mute',
+    unmute: 'Unmute',
     completion: {
       title: 'Session complete',
       duration: 'Duration',
@@ -213,6 +217,8 @@ const PT_BR: UiStrings = {
     stopTitle: 'Parar esta sessão?',
     stopConfirm: 'Parar',
     stopCancel: 'Continuar',
+    mute: 'Silenciar',
+    unmute: 'Ativar som',
     completion: {
       title: 'Sessão concluída',
       duration: 'Duração',

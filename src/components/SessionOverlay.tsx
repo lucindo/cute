@@ -1,5 +1,7 @@
 import type { ReactElement } from 'react'
 
+import { SpeakerIcon } from './icons/SpeakerIcon'
+import { SpeakerMutedIcon } from './icons/SpeakerMutedIcon'
 import type { UiStrings } from '../content/strings'
 import { formatDuration } from '../domain/format'
 import type { SessionFrame } from '../domain/sessionMachine'
@@ -7,6 +9,8 @@ import type { SessionFrame } from '../domain/sessionMachine'
 export interface SessionOverlayProps {
   frame: SessionFrame
   clockLabel: string
+  muted: boolean
+  onToggleSound(this: void): void
   onStop(this: void): void
   strings: UiStrings['session']
 }
@@ -16,9 +20,17 @@ export interface SessionOverlayProps {
 // media. The container is click-through except the Stop button, so taps on the
 // media still reach the surface (toggle overlay / hold). A subtle ring on the
 // time pill signals a hold in progress.
-export function SessionOverlay({ frame, clockLabel, onStop, strings }: SessionOverlayProps): ReactElement {
+export function SessionOverlay({
+  frame,
+  clockLabel,
+  muted,
+  onToggleSound,
+  onStop,
+  strings,
+}: SessionOverlayProps): ReactElement {
   const overtime = frame.overtimeMs > 0
   const time = overtime ? `+${formatDuration(frame.overtimeMs)}` : formatDuration(frame.remainingMs)
+  const soundLabel = muted ? strings.unmute : strings.mute
 
   return (
     <div
@@ -36,18 +48,38 @@ export function SessionOverlay({ frame, clockLabel, onStop, strings }: SessionOv
       >
         {time}
       </span>
-      <button
-        type="button"
-        onClick={onStop}
-        // Keep the press off the takeover's gesture handler, else the bubbled
-        // pointerup toggles the overlay and unmounts this button before onClick.
-        onPointerDown={(e) => {
-          e.stopPropagation()
-        }}
-        className="pointer-events-auto rounded-full bg-black/40 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-md transition hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 motion-reduce:transition-none"
-      >
-        {strings.stop}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={muted}
+          aria-label={soundLabel}
+          title={soundLabel}
+          onClick={onToggleSound}
+          // Keep the press off the takeover's gesture handler (D-84).
+          onPointerDown={(e) => {
+            e.stopPropagation()
+          }}
+          className="pointer-events-auto grid place-items-center rounded-full bg-black/40 p-2 text-white/90 backdrop-blur-md transition hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 motion-reduce:transition-none"
+        >
+          {muted ? (
+            <SpeakerMutedIcon width={20} height={20} />
+          ) : (
+            <SpeakerIcon width={20} height={20} />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onStop}
+          // Keep the press off the takeover's gesture handler, else the bubbled
+          // pointerup toggles the overlay and unmounts this button before onClick.
+          onPointerDown={(e) => {
+            e.stopPropagation()
+          }}
+          className="pointer-events-auto rounded-full bg-black/40 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-md transition hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 motion-reduce:transition-none"
+        >
+          {strings.stop}
+        </button>
+      </div>
     </div>
   )
 }

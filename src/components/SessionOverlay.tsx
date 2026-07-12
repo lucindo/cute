@@ -29,11 +29,10 @@ export function SessionOverlay({ frame, clockLabel, onStop, strings }: SessionOv
         {clockLabel}
       </span>
       <span
-        className="rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
-        style={{
-          color: overtime ? '#e8b84b' : '#ffffff',
-          boxShadow: frame.holdActive ? '0 0 0 2px rgba(255,255,255,0.55)' : 'none',
-        }}
+        className={`rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md${
+          frame.holdActive ? ' hold-pulse' : ''
+        }`}
+        style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >
         {time}
       </span>

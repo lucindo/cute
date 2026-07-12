@@ -82,6 +82,27 @@ dialog.modal-fade[open]::backdrop {
   }
 }
 
+/* Hold-in-progress indicator (SPEC FR-33): a slow breathing glow on the session
+   overlay's time pill while a hold records. Reduced motion gets a solid ring. */
+@keyframes hold-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.7);
+  }
+}
+.hold-pulse {
+  animation: hold-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hold-pulse {
+    animation: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  }
+}
+
 /* Page background gradient — mobile uses a circle-at-top wash; desktop (≥sm)
    switches to a positioned wider-canvas variant. A custom property so shells
    can apply it via Tailwind arbitrary value without per-breakpoint class

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { SourceSheet } from '../components/SourceSheet'
 import { TagAssignPanel } from '../components/TagAssignPanel'
 import { TagManager } from '../components/TagManager'
 import type { UiStrings } from '../content/strings'
@@ -39,6 +40,7 @@ export function CollectionScreen(): ReactElement {
   const [selecting, setSelecting] = useState(false)
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
   const [managing, setManaging] = useState(false)
+  const [openSourceId, setOpenSourceId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -76,61 +78,46 @@ export function CollectionScreen(): ReactElement {
     content = (
       <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
         {collection.sources.map((source) => {
-          const isSelected = selected.has(source.id)
-          const thumb = (
-            <div
-              className={`aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)] ${
-                isSelected ? 'ring-2 ring-[var(--color-zen-accent)]' : ''
-              }`}
-            >
-              {source.thumbUrl !== null && (
-                <img
-                  src={source.thumbUrl}
-                  alt={source.caption ?? ''}
-                  className="h-full w-full object-cover"
-                />
-              )}
-            </div>
-          )
+          const isSelected = selecting && selected.has(source.id)
           return (
             <li key={source.id}>
-              {selecting ? (
-                <button
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => {
-                    toggleSelected(source.id)
-                  }}
-                  className="block w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
+              <button
+                type="button"
+                aria-pressed={selecting ? isSelected : undefined}
+                // Content (the thumbnail's alt) names captioned tiles; the
+                // fallback keeps uncaptioned tiles reachable by name.
+                aria-label={source.caption === undefined ? strings.collection.openItem : undefined}
+                onClick={() => {
+                  if (selecting) toggleSelected(source.id)
+                  else setOpenSourceId(source.id)
+                }}
+                className="block w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
+              >
+                <div
+                  className={`aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)] ${
+                    isSelected ? 'ring-2 ring-[var(--color-zen-accent)]' : ''
+                  }`}
                 >
-                  {thumb}
-                </button>
-              ) : (
-                <>
-                  {thumb}
-                  <div className="mt-1 flex items-center justify-between px-0.5">
-                    <span className="text-xs text-[var(--color-zen-text-soft)]">
-                      {formatBytes(source.bytes)}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label={strings.collection.deleteLabel}
-                      onClick={() => {
-                        setPendingDelete(source.id)
-                      }}
-                      className="rounded px-1 text-sm leading-none text-[var(--color-zen-muted)] hover:text-[var(--color-destructive)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-destructive)]"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </>
-              )}
+                  {source.thumbUrl !== null && (
+                    <img
+                      src={source.thumbUrl}
+                      alt={source.caption ?? ''}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+              </button>
             </li>
           )
         })}
       </ul>
     )
   }
+
+  const openSource =
+    collection.status === 'ready'
+      ? (collection.sources.find((s) => s.id === openSourceId) ?? null)
+      : null
 
   return (
     <div
@@ -241,6 +228,22 @@ export function CollectionScreen(): ReactElement {
             : strings.collection.storageUsed(formatBytes(collection.totalBytes))}
         </p>
       )}
+      <SourceSheet
+        source={openSource}
+        tags={tagsState.status === 'ready' ? tagsState.tags : []}
+        onToggleTag={(tagId, mode) => {
+          if (openSourceId !== null) applyToSources(tagId, [openSourceId], mode)
+        }}
+        onCreateTag={(name) => {
+          if (openSourceId !== null) createAndAssign(name, [openSourceId])
+        }}
+        onRequestDelete={(id) => {
+          setPendingDelete(id)
+        }}
+        onClose={() => {
+          setOpenSourceId(null)
+        }}
+      />
       <ConfirmDialog
         open={pendingDelete !== null}
         title={strings.collection.deleteTitle}
@@ -250,6 +253,7 @@ export function CollectionScreen(): ReactElement {
         onConfirm={() => {
           if (pendingDelete !== null) deleteById(pendingDelete)
           setPendingDelete(null)
+          setOpenSourceId(null)
         }}
         onCancel={() => {
           setPendingDelete(null)

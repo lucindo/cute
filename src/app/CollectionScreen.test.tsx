@@ -117,14 +117,17 @@ describe('CollectionScreen', () => {
 describe('CollectionScreen delete & storage', () => {
   const DELETE_LABEL = UI_STRINGS.en.collection.deleteLabel
 
+  // The delete flow lives in the item sheet: tap the tile, then Delete.
   async function openDeleteDialog(): Promise<HTMLElement> {
-    await userEvent.click(await screen.findByRole('button', { name: DELETE_LABEL }))
-    return screen.getByRole('dialog')
+    await userEvent.click(await screen.findByRole('button', { name: 'One' }))
+    await userEvent.click(screen.getByRole('button', { name: DELETE_LABEL }))
+    return screen.getByRole('dialog', { name: UI_STRINGS.en.collection.deleteTitle })
   }
 
-  it('shows per-source file size', async () => {
+  it('shows the file size in the item sheet', async () => {
     await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
     renderScreen()
+    await userEvent.click(await screen.findByRole('button', { name: 'One' }))
     expect(await screen.findByText('2.4 MB')).toBeInTheDocument()
   })
 
@@ -155,7 +158,8 @@ describe('CollectionScreen delete & storage', () => {
     const dialog = await openDeleteDialog()
     await userEvent.click(within(dialog).getByRole('button', { name: UI_STRINGS.en.collection.deleteCancel }))
 
-    expect(screen.getByAltText('One')).toBeInTheDocument()
+    // Tile plus the still-open sheet preview.
+    expect(screen.getAllByAltText('One').length).toBeGreaterThan(0)
     const stored = await getRecord(await openDbOrThrow(), 'thumbs', 's1')
     expect(stored.ok && stored.value !== null).toBe(true)
   })
@@ -173,6 +177,45 @@ describe('CollectionScreen delete & storage', () => {
     if (!stored.ok || stored.value === null) throw new Error('expected the tombstone')
     expect(stored.value.deleted).toBe(true)
     await expect(getRecord(db, 'thumbs', 's1')).resolves.toEqual({ ok: true, value: null })
+  })
+})
+
+describe('CollectionScreen item sheet', () => {
+  it('opens on tile tap with preview, size, and tag chips', async () => {
+    await seed([source({ id: 'a', caption: 'A', bytes: 1_200_000, tags: ['seed:babies'] })])
+    renderScreen()
+
+    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+
+    const sheet = screen.getByRole('dialog', { name: 'A' })
+    expect(within(sheet).getByAltText('A')).toBeInTheDocument()
+    expect(within(sheet).getByText('1.2 MB')).toBeInTheDocument()
+    expect(within(sheet).getByRole('button', { name: 'Babies' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('toggles a tag for the open item', async () => {
+    await seed([source({ id: 'a', caption: 'A' })])
+    renderScreen()
+    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Kittens' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Kittens' })).toHaveAttribute('aria-pressed', 'true')
+    })
+    const stored = await getRecord(await openDbOrThrow(), 'sources', 'a')
+    if (!stored.ok || stored.value === null) throw new Error('expected the source')
+    expect(stored.value.tags).toEqual(['seed:kittens'])
+  })
+
+  it('closes on the close button', async () => {
+    await seed([source({ id: 'a', caption: 'A' })])
+    renderScreen()
+    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+
+    await userEvent.click(screen.getByRole('button', { name: UI_STRINGS.en.collection.close }))
+
+    expect(screen.queryByRole('dialog', { name: 'A' })).not.toBeInTheDocument()
   })
 })
 

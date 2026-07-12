@@ -31,6 +31,8 @@ export interface UiStrings {
     readonly deleteConfirm: string
     readonly deleteCancel: string
     readonly deleteFailed: string
+    readonly openItem: string
+    readonly close: string
     readonly select: string
     readonly selectDone: string
     readonly selectedCount: (count: number) => string
@@ -84,6 +86,8 @@ const EN: UiStrings = {
     deleteConfirm: 'Delete',
     deleteCancel: 'Cancel',
     deleteFailed: 'Could not delete. Please try again.',
+    openItem: 'Open item',
+    close: 'Close',
     select: 'Select',
     selectDone: 'Done',
     selectedCount: (count) => (count === 1 ? '1 selected' : `${String(count)} selected`),
@@ -143,6 +147,8 @@ const PT_BR: UiStrings = {
     deleteConfirm: 'Excluir',
     deleteCancel: 'Cancelar',
     deleteFailed: 'Não foi possível excluir. Tente novamente.',
+    openItem: 'Abrir item',
+    close: 'Fechar',
     select: 'Selecionar',
     selectDone: 'Concluir',
     selectedCount: (count) => (count === 1 ? '1 selecionado' : `${String(count)} selecionados`),

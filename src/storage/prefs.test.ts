@@ -11,15 +11,28 @@ describe('coercePrefs', () => {
   })
 
   it('falls back to the default locale on an invalid value', () => {
-    expect(coercePrefs({ locale: 'fr' })).toEqual({ locale: 'en', sessionDurationMin: 5, videoSound: true })
+    expect(coercePrefs({ locale: 'fr' })).toEqual({
+      locale: 'en',
+      theme: 'system',
+      sessionDurationMin: 5,
+      videoSound: true,
+    })
   })
 
   it('accepts a valid locale', () => {
     expect(coercePrefs({ locale: 'pt-BR' })).toEqual({
       locale: 'pt-BR',
+      theme: 'system',
       sessionDurationMin: 5,
       videoSound: true,
     })
+  })
+
+  it('defaults theme to system and keeps a valid value', () => {
+    expect(coercePrefs({}).theme).toBe('system')
+    expect(coercePrefs({ theme: 'sepia' }).theme).toBe('system')
+    expect(coercePrefs({ theme: 'dark' }).theme).toBe('dark')
+    expect(coercePrefs({ theme: 'light' }).theme).toBe('light')
   })
 
   it('keeps a valid session duration and falls back on an invalid one', () => {
@@ -36,8 +49,13 @@ describe('coercePrefs', () => {
 
 describe('loadPrefs / savePrefs', () => {
   it('round-trips prefs', () => {
-    savePrefs({ locale: 'pt-BR', sessionDurationMin: 12, videoSound: false })
-    expect(loadPrefs()).toEqual({ locale: 'pt-BR', sessionDurationMin: 12, videoSound: false })
+    savePrefs({ locale: 'pt-BR', theme: 'dark', sessionDurationMin: 12, videoSound: false })
+    expect(loadPrefs()).toEqual({
+      locale: 'pt-BR',
+      theme: 'dark',
+      sessionDurationMin: 12,
+      videoSound: false,
+    })
   })
 
   it('returns defaults when the envelope is absent', () => {
@@ -49,6 +67,11 @@ describe('loadPrefs / savePrefs', () => {
       STATE_KEY,
       JSON.stringify({ version: 1, prefs: { locale: 'pt-BR', ghost: true } }),
     )
-    expect(loadPrefs()).toEqual({ locale: 'pt-BR', sessionDurationMin: 5, videoSound: true })
+    expect(loadPrefs()).toEqual({
+      locale: 'pt-BR',
+      theme: 'system',
+      sessionDurationMin: 5,
+      videoSound: true,
+    })
   })
 })

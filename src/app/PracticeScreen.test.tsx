@@ -53,7 +53,7 @@ describe('PracticeScreen duration', () => {
   })
 
   it('seeds from the last-used pref', () => {
-    savePrefs({ locale: 'en', sessionDurationMin: 12, videoSound: true })
+    savePrefs({ locale: 'en', theme: 'system', sessionDurationMin: 12, videoSound: true })
     renderPractice()
     expect(screen.getByText('12 min')).toBeInTheDocument()
   })

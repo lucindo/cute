@@ -122,7 +122,7 @@ export function CollectionScreen(): ReactElement {
           event.currentTarget.value = ''
         }}
       />
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <button
           type="button"
           disabled={importing}

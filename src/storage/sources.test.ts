@@ -2,7 +2,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
 
 import { getAllRecords, getRecord, openDb, writeMany, type SourceRecord } from './index'
-import { deleteSource } from './sources'
+import { deleteSource, setCaption } from './sources'
 
 async function freshDb(): Promise<IDBDatabase> {
   const opened = await openDb({ factory: new IDBFactory() })
@@ -65,5 +65,52 @@ describe('deleteSource', () => {
 
     const blob = await getRecord(db, 'blobs', 's1')
     expect(blob.ok && blob.value !== null).toBe(true)
+  })
+})
+
+describe('setCaption', () => {
+  it('sets and reads back a caption', async () => {
+    const db = await freshDb()
+    await seed(db)
+
+    const res = await setCaption(db, 's1', 'Sleepy pup')
+    expect(res).toEqual({ ok: true, value: undefined })
+
+    const source = await getRecord(db, 'sources', 's1')
+    if (!source.ok || source.value === null) throw new Error('expected the source')
+    expect(source.value).toEqual({ ...SOURCE, caption: 'Sleepy pup' })
+  })
+
+  it('trims surrounding whitespace', async () => {
+    const db = await freshDb()
+    await seed(db)
+
+    await setCaption(db, 's1', '  padded  ')
+
+    const source = await getRecord(db, 'sources', 's1')
+    if (!source.ok || source.value === null) throw new Error('expected the source')
+    expect(source.value.caption).toBe('padded')
+  })
+
+  it('clears the caption when given only whitespace', async () => {
+    const db = await freshDb()
+    await seed(db) // SOURCE starts with caption 'Cutie'
+
+    await setCaption(db, 's1', '   ')
+
+    const source = await getRecord(db, 'sources', 's1')
+    if (!source.ok || source.value === null) throw new Error('expected the source')
+    expect(source.value).not.toHaveProperty('caption')
+    expect(source.value.tags).toEqual(['babies'])
+  })
+
+  it('errs on an unknown id', async () => {
+    const db = await freshDb()
+    await seed(db)
+
+    const res = await setCaption(db, 'nope', 'x')
+    expect(res.ok).toBe(false)
+    if (res.ok) throw new Error('expected err')
+    expect(res.error.name).toBe('NotFound')
   })
 })

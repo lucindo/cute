@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useCallback, useRef, useState, type ReactElement } from 'react'
 
 import { CollectionScreen } from './CollectionScreen'
 import { PracticeScreen } from './PracticeScreen'
@@ -17,8 +17,36 @@ export function App(): ReactElement {
   const [mode, setMode] = useState<AppMode>('practice')
   const [sessionRequest, setSessionRequest] = useState<SessionRequest | null>(null)
 
+  // One persistent <video> for the whole app (SPEC FR-35): it must outlive the
+  // Practice→Session mount swap so the Start gesture can unlock it for unmuted
+  // iOS playback. SessionView drives its src/playback; App only owns visibility.
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [videoActive, setVideoActive] = useState(false)
+
+  const handleStart = useCallback((request: SessionRequest): void => {
+    const v = videoRef.current
+    // Prime the shared element inside the Start gesture so iOS grants it the
+    // user activation the first async-loaded video needs to play with sound.
+    if (v !== null) {
+      void v
+        .play()
+        .then(() => {
+          v.pause()
+        })
+        .catch(() => undefined)
+    }
+    setSessionRequest(request)
+  }, [])
+
   return (
     <UiStringsProvider value={uiStrings}>
+      <video
+        ref={videoRef}
+        playsInline
+        loop
+        hidden={!videoActive}
+        className="pointer-events-none fixed inset-0 z-10 h-full w-full bg-black object-contain"
+      />
       {sessionRequest === null ? (
         <PageShell width="practice">
           <TopAppBar title={uiStrings.shell.appTitle} />
@@ -34,7 +62,7 @@ export function App(): ReactElement {
             />
           </div>
           {mode === 'practice' ? (
-            <PracticeScreen onStart={setSessionRequest} />
+            <PracticeScreen onStart={handleStart} />
           ) : (
             <CollectionScreen />
           )}
@@ -42,6 +70,8 @@ export function App(): ReactElement {
       ) : (
         <SessionView
           request={sessionRequest}
+          videoRef={videoRef}
+          setVideoActive={setVideoActive}
           onExit={() => {
             setSessionRequest(null)
           }}

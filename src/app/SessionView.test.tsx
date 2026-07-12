@@ -37,6 +37,8 @@ function renderSession(onExit: () => void = vi.fn()) {
     <UiStringsProvider value={UI_STRINGS.en}>
       <SessionView
         request={{ sourceIds: ['s1'], plannedMinutes: 5, tagFilter: [] }}
+        videoRef={{ current: null }}
+        setVideoActive={vi.fn()}
         onExit={onExit}
       />
     </UiStringsProvider>,

@@ -1,21 +1,32 @@
-import { useEffect, useRef, useState, type PointerEvent, type ReactElement } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactElement,
+  type RefObject,
+} from 'react'
 
 import { CompletionScreen } from './CompletionScreen'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SessionOverlay } from '../components/SessionOverlay'
 import { useSession, type SessionRequest } from '../hooks/useSession'
 import { useUiStrings } from '../hooks/useUiStringsContext'
+import { useVideoSound } from '../hooks/useVideoSound'
 
 // Movement past this many pixels turns a press into a swipe, not a hold (FR-30).
 const SLOP_PX = 10
 
 export interface SessionViewProps {
   request: SessionRequest
+  videoRef: RefObject<HTMLVideoElement | null>
+  setVideoActive(this: void, active: boolean): void
   onExit(this: void): void
 }
 
-export function SessionView({ request, onExit }: SessionViewProps): ReactElement {
+export function SessionView({ request, videoRef, setVideoActive, onExit }: SessionViewProps): ReactElement {
   const strings = useUiStrings()
+  const { soundOn } = useVideoSound()
   const {
     state,
     frame,
@@ -78,6 +89,34 @@ export function SessionView({ request, onExit }: SessionViewProps): ReactElement
     }
   }, [running, confirmStop, pressStart, pressEnd, next, prev, toggleOverlay])
 
+  // Drive the shared App-level <video> (SPEC FR-35): swap src, apply the sound
+  // pref, and show/hide it as the current media and running state change.
+  const showVideo = running && media !== null && media.type === 'video'
+  useEffect(() => {
+    const v = videoRef.current
+    if (v === null) return
+    setVideoActive(showVideo)
+    if (showVideo) {
+      if (v.src !== media.url) v.src = media.url
+      v.muted = !soundOn
+      void v.play().catch(() => undefined)
+    } else {
+      v.pause()
+    }
+  }, [showVideo, media, soundOn, videoRef, setVideoActive])
+
+  // Hand the shared element back hidden and source-less when the session ends.
+  useEffect(() => {
+    const v = videoRef.current
+    return () => {
+      setVideoActive(false)
+      if (v === null) return
+      v.pause()
+      v.removeAttribute('src')
+      v.load()
+    }
+  }, [videoRef, setVideoActive])
+
   if (state.status === 'complete' && summary !== null) {
     return <CompletionScreen summary={summary} onDone={onExit} strings={strings.session.completion} />
   }
@@ -120,18 +159,18 @@ export function SessionView({ request, onExit }: SessionViewProps): ReactElement
 
   return (
     <div
-      className="fixed inset-0 touch-none select-none bg-black"
+      // Transparent above the z-10 App <video> so it shows through while a
+      // video plays; a black backdrop stands in for images and while loading.
+      className="fixed inset-0 z-20 touch-none select-none"
       onPointerDown={confirmStop ? undefined : onPointerDown}
       onPointerMove={confirmStop ? undefined : onPointerMove}
       onPointerUp={confirmStop ? undefined : onPointerUp}
       onPointerCancel={confirmStop ? undefined : onPointerCancel}
     >
-      {media !== null &&
-        (media.type === 'video' ? (
-          <video src={media.url} autoPlay loop muted playsInline className="h-full w-full object-contain" />
-        ) : (
-          <img src={media.url} alt="" className="h-full w-full object-contain" />
-        ))}
+      {!showVideo && <div className="absolute inset-0 bg-black" />}
+      {media !== null && media.type === 'image' && (
+        <img src={media.url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+      )}
       {overlayVisible && frame !== null && (
         <SessionOverlay
           frame={frame}

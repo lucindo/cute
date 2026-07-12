@@ -2,10 +2,12 @@ import { useState, type ReactElement } from 'react'
 
 import { CollectionScreen } from './CollectionScreen'
 import { PracticeScreen } from './PracticeScreen'
-import { ModeToggle, type AppMode } from '../components/ModeToggle'
+import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import { PageShell } from '../components/primitives/PageShell'
 import { useLocale } from '../hooks/useLocale'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
+
+type AppMode = 'practice' | 'collection'
 
 export function App(): ReactElement {
   const { uiStrings } = useLocale()
@@ -17,17 +19,15 @@ export function App(): ReactElement {
         <h1 className="mb-6 text-2xl font-semibold text-[var(--color-zen-accent-strong)]">
           {uiStrings.shell.appTitle}
         </h1>
-        <div className="mb-8 w-full max-w-[320px]">
-          <ModeToggle
-            active={mode}
-            onSwitch={setMode}
-            strings={{
-              label: uiStrings.shell.modeToggle.label,
-              modeNames: {
-                practice: uiStrings.shell.modeToggle.practiceName,
-                collection: uiStrings.shell.modeToggle.collectionName,
-              },
-            }}
+        <div className="mb-8 w-full">
+          <SegmentedControl<AppMode>
+            options={[
+              { id: 'practice', label: uiStrings.shell.modeToggle.practiceName },
+              { id: 'collection', label: uiStrings.shell.modeToggle.collectionName },
+            ]}
+            value={mode}
+            onChange={setMode}
+            ariaLabel={uiStrings.shell.modeToggle.label}
           />
         </div>
         {mode === 'practice' ? <PracticeScreen /> : <CollectionScreen />}

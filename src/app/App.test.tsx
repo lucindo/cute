@@ -17,13 +17,13 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByText('The practice will live here.')).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Collection' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Collection' }))
     expect(
       await screen.findByText('Your collection is empty. Import photos or videos to begin.'),
     ).toBeInTheDocument()
     expect(screen.queryByText('The practice will live here.')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Practice' }))
+    await userEvent.click(screen.getByRole('radio', { name: 'Practice' }))
     expect(screen.getByText('The practice will live here.')).toBeInTheDocument()
   })
 
@@ -33,7 +33,7 @@ describe('App', () => {
       JSON.stringify({ version: 1, prefs: { locale: 'pt-BR' } }),
     )
     render(<App />)
-    expect(screen.getByRole('button', { name: 'Prática' })).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Prática' })).toBeInTheDocument()
     expect(screen.getByText('A prática vai morar aqui.')).toBeInTheDocument()
     expect(document.documentElement.lang).toBe('pt-BR')
   })

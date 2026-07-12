@@ -33,6 +33,9 @@ export interface UiStrings {
     readonly deleteFailed: string
     readonly openItem: string
     readonly close: string
+    readonly caption: string
+    readonly captionPlaceholder: string
+    readonly captionFailed: string
     readonly select: string
     readonly selectDone: string
     readonly selectedCount: (count: number) => string
@@ -88,6 +91,9 @@ const EN: UiStrings = {
     deleteFailed: 'Could not delete. Please try again.',
     openItem: 'Open item',
     close: 'Close',
+    caption: 'Caption',
+    captionPlaceholder: 'Add a caption…',
+    captionFailed: 'Could not save the caption. Please try again.',
     select: 'Select',
     selectDone: 'Done',
     selectedCount: (count) => (count === 1 ? '1 selected' : `${String(count)} selected`),
@@ -149,6 +155,9 @@ const PT_BR: UiStrings = {
     deleteFailed: 'Não foi possível excluir. Tente novamente.',
     openItem: 'Abrir item',
     close: 'Fechar',
+    caption: 'Legenda',
+    captionPlaceholder: 'Adicionar uma legenda…',
+    captionFailed: 'Não foi possível salvar a legenda. Tente novamente.',
     select: 'Selecionar',
     selectDone: 'Concluir',
     selectedCount: (count) => (count === 1 ? '1 selecionado' : `${String(count)} selecionados`),

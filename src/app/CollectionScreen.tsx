@@ -9,6 +9,7 @@ import { formatBytes } from '../domain/format'
 import { useCollection } from '../hooks/useCollection'
 import { useDeleteSource } from '../hooks/useDeleteSource'
 import { useImportFiles } from '../hooks/useImportFiles'
+import { useSetCaption } from '../hooks/useSetCaption'
 import { useStorageQuota } from '../hooks/useStorageQuota'
 import { useTags } from '../hooks/useTags'
 import { useUiStrings } from '../hooks/useUiStringsContext'
@@ -34,6 +35,7 @@ export function CollectionScreen(): ReactElement {
   const collection = useCollection()
   const { importState, importFrom } = useImportFiles()
   const { deleteState, deleteById } = useDeleteSource()
+  const { captionState, setCaptionFor } = useSetCaption()
   const { tagsState, actionState, rename, remove, applyToSources, createAndAssign } = useTags()
   const quota = useStorageQuota()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
@@ -220,6 +222,11 @@ export function CollectionScreen(): ReactElement {
           {strings.collection.deleteFailed}
         </p>
       )}
+      {captionState.status === 'error' && (
+        <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">
+          {strings.collection.captionFailed}
+        </p>
+      )}
       <div className="mt-6">{content}</div>
       {collection.status === 'ready' && (
         <p className="mt-6 text-xs text-[var(--color-zen-muted)]">
@@ -237,6 +244,7 @@ export function CollectionScreen(): ReactElement {
         onCreateTag={(name) => {
           if (openSourceId !== null) createAndAssign(name, [openSourceId])
         }}
+        onSaveCaption={setCaptionFor}
         onRequestDelete={(id) => {
           setPendingDelete(id)
         }}

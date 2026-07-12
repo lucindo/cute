@@ -4,17 +4,26 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Task 8 (Session setup) **done** on `dev`: duration stepper + session-local `TagFilter` (OR, empty = all incl. untagged) + empty-pool Start guard, grouped in a now-ported `SectionCard`. The full **session runtime** is live and runnable end-to-end — pure `sessionMachine`/`shuffleBag` domain (wall-clock, tick-driven completion), `useSession` orchestration (tick loop, media load from IndexedDB, persistence, wake lock), `SessionView` full-viewport takeover with pointer + keyboard gesture grammar, `SessionOverlay` (countdown/overtime/clock/stop-confirm/pulsing hold glow), `CompletionScreen` summary; session + hold events persist on completion. User-tested on desktop: Stop-button bug fixed, hold indicator upgraded to a slow pulse. Lint / tests (154) / build green.
+**State:** FR-35 video sound and FR-17 aww factor both landed on `dev` (6 commits, `b233d02`→`f31e030`). Video: one persistent App-level `<video>` unlocked at the Start gesture, `videoSound` pref (default on) + overlay mute toggle; `SessionView` drives the shared element imperatively over a transparent `z-20` gesture surface. Aww: read-time `aggregateHoldStats` joined into `useCollection`, session-local aww-factor sort + per-card `♥ n · m:ss` stat (aria-hidden). Lint / 159 tests / build green.
 
-**Next:** Aww factor (FR-17/AC-7) — Collection adds an aww-factor sort (descending lifetime total hold time) alongside newest-first; each card shows hold count + total held time. (FR-35 video sound landed: persistent gesture-unlocked `<video>`, sound-on default pref, overlay toggle; iOS unmute is a device-verify carry-over.) Lifecycle-edge device verification also still pending.
+**Next:** Build the **Settings surface** (HRV parity minus the audio Feedback section) — the home for Theme/Language, with Statistics→Stats and About. Scope + confirmed choices in `DECISIONS.md` (settings surface — planned). Ordered steps, one per step-mode turn:
+1. Port primitives: `SettingsSectionHeader`, `IconButton`, `IconAnchor` + gear / `ChevronBack` / `ChevronRight` icons.
+2. Nav: `App` `view` state (`shell | settings | stats`) + gear in `TopAppBar` leading slot → skeleton `SettingsScreen` (back-wired).
+3. Theme system: `ThemeId` + `prefs.theme` + coercer; `useTheme` (apply + gated `system` matchMedia + cross/same-tab sync); update `index.html` pre-paint to read `cute:state:v1 → prefs.theme`; `PickerCardGrid` control (default `system`).
+4. Language: locale setter (write prefs + dispatch `cute:prefs-changed`), `SegmentedControl` control, display-name strings.
+5. About: add `src/vite-env.d.ts` (`__APP_VERSION__` / `_SHA` / `_DATE`), Version row + `Source →` (`github.com/lucindo/cute`).
+6. `domain/stats.ts` — pure `aggregateStats(sessions, holds, limit)` + tests.
+7. `useStats` hook (load + aggregate) + tests.
+8. `StatsScreen` UI + wire the Statistics row + strings.
 
-**Open questions:** none blocking.
+**Open questions:** none blocking. Source URL assumed `github.com/lucindo/cute` (repo has no remote yet — confirm before first push).
 
 **Watch:**
-- `PROJECT.md` map broadly stale — many new session files (`domain/shuffleBag.ts`, `domain/sessionMachine.ts`, `hooks/useSession.ts`, `hooks/useWakeLock.ts`, `hooks/useSessionDuration.ts`, `storage/sessions.ts`, `app/SessionView.tsx`, `app/CompletionScreen.tsx`, `components/SessionOverlay.tsx`, `components/TagFilter.tsx`, `components/SettingsRow.tsx`, `components/SettingsStepper.tsx`, `components/primitives/SectionCard.tsx`/`SegmentedControl.tsx`/`TopAppBar.tsx`); `ModeToggle` removed. Run `/ds-project-map`.
-- Pointer gestures (hold/tap/swipe, 10px slop) only manually verifiable — jsdom can't do pointer capture; the integration test covers the keyboard path. Verify hold/tap/swipe on a real touch device; tune slop (SPEC OQ-2).
-- Session persistence is best-effort (no error surface); a fresh DB connection opens per source navigation — consolidate in the perf pass. Possible media micro-flicker on rapid nav (old object URL revoked before new loads).
-- Carry-over: iOS video-import probe waits for `loadeddata` with no timeout (untested on iPhone); nested delete-confirm device check; DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
+- `PROJECT.md` map now stale beyond one-line fixes — new files this session (`hooks/useVideoSound.ts`, `components/icons/SpeakerIcon.tsx` + `SpeakerMutedIcon.tsx`, `domain/holdStats.ts`) and changed responsibilities (`App` owns the persistent `<video>`; `SessionView` drives it; `SessionOverlay` has the sound toggle; `useCollection` joins hold stats; `CollectionScreen` has aww sort + card stats). Prior session-runtime files also still unmapped. Run `/ds-project-map`.
+- Device verification pending: iOS unmuted-first-video (FR-35; fallback = blank-clip primer) and session lifecycle-edges (FR-38/39). Pointer gestures (hold/tap/swipe, 10px slop) still touch-device-only.
+- Aww per-card stats are `aria-hidden` — SR parity is an optional follow-up.
+- Session persistence is best-effort (no error surface); a fresh DB connection opens per source nav — consolidate in the perf pass. Possible media micro-flicker on rapid nav.
+- Carry-over: iOS video-import probe waits for `loadeddata` with no timeout; nested delete-confirm device check; DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
 
 ## Roadmap
 
@@ -33,8 +42,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Session video playback (FR-35): single persistent, gesture-unlocked `<video>`; sound-on default (persisted pref) + in-session overlay toggle. iOS unmuted-first-play needs real-device verification
 - [~] Session lifecycle edges: timer-expiry-mid-hold + overtime, backgrounding truncates hold, stop saves `stopped`, wake lock held — all done; on-device verification remains
 - [x] Completion screen: duration incl. overtime, hold count, total held time, longest hold
-- [ ] Aww factor: Collection sorts by lifetime total hold time; cards show hold count + total time
-- [ ] Stats page: lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
+- [x] Aww factor (FR-17/AC-7): Collection aww-factor sort (session-local, descending total held) alongside newest-first; each card shows hold count + total held time
+- [ ] Settings surface: HRV-style page (gear in TopAppBar leading slot; `shell|settings|stats` nav) — Statistics→Stats, Theme (net-new light/dark/system system + pre-paint), Language, About/version+Source; no audio Feedback section
+- [ ] Stats page (reached from Settings): read-time aggregate of lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
 - [ ] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
 - [ ] Learn/About: practice explanation, three video links, book credit, background-music note; PT-BR complete incl. seeded tags
 - [ ] PWA: offline after first load, installable, zero non-asset network requests

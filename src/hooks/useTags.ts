@@ -9,7 +9,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { COLLECTION_CHANGED_EVENT } from './useCollection'
 import type { Result } from '../domain/result'
 import {
-  applyTagToSources,
   createTag,
   deleteTag,
   getAllRecords,
@@ -36,8 +35,6 @@ export interface UseTags {
   actionState: TagActionState
   rename: (id: string, name: string) => void
   remove: (id: string) => void
-  applyToSources: (tagId: string, sourceIds: readonly string[], mode: 'add' | 'remove') => void
-  createAndAssign: (name: string, sourceIds: readonly string[]) => void
   // Create a catalog tag and resolve its id (null on failure) so a caller can
   // stage the assignment locally. Used by the per-item sheet's draft editor.
   create: (name: string) => Promise<string | null>
@@ -121,24 +118,6 @@ export function useTags(): UseTags {
     },
     [mutate],
   )
-  const applyToSources = useCallback(
-    (tagId: string, sourceIds: readonly string[], mode: 'add' | 'remove'): void => {
-      mutate((db) => applyTagToSources(db, tagId, sourceIds, mode), true)
-    },
-    [mutate],
-  )
-  const createAndAssign = useCallback(
-    (name: string, sourceIds: readonly string[]): void => {
-      // Two transactions; a failed assign leaves an unassigned tag, which is
-      // harmless and visible.
-      mutate(async (db) => {
-        const created = await createTag(db, name)
-        if (!created.ok) return created
-        return applyTagToSources(db, created.value.id, sourceIds, 'add')
-      }, true)
-    },
-    [mutate],
-  )
   const create = useCallback(async (name: string): Promise<string | null> => {
     const opened = await openDb()
     if (!opened.ok) {
@@ -155,5 +134,5 @@ export function useTags(): UseTags {
     return created.value.id
   }, [])
 
-  return { tagsState, actionState, rename, remove, applyToSources, createAndAssign, create }
+  return { tagsState, actionState, rename, remove, create }
 }

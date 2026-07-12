@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
-import { TagAssignPanel } from '../components/TagAssignPanel'
 import { TagManagerSheet } from '../components/TagManagerSheet'
 import type { UiStrings } from '../content/strings'
 import { formatBytes } from '../domain/format'
@@ -36,12 +35,9 @@ export function CollectionScreen(): ReactElement {
   const { importState, importFrom } = useImportFiles()
   const { deleteState, deleteById } = useDeleteSource()
   const { saveState, saveSource } = useSaveSource()
-  const { tagsState, actionState, rename, remove, applyToSources, createAndAssign, create } =
-    useTags()
+  const { tagsState, actionState, rename, remove, create } = useTags()
   const quota = useStorageQuota()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
-  const [selecting, setSelecting] = useState(false)
-  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
   const [managing, setManaging] = useState(false)
   const [openSourceId, setOpenSourceId] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -61,16 +57,6 @@ export function CollectionScreen(): ReactElement {
   }, [importFrom])
 
   const importing = importState.status === 'importing'
-  const hasSources = collection.status === 'ready' && collection.sources.length > 0
-
-  const toggleSelected = (id: string): void => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
 
   let content: ReactElement | null = null
   if (collection.status === 'error') {
@@ -80,39 +66,30 @@ export function CollectionScreen(): ReactElement {
   } else if (collection.status === 'ready') {
     content = (
       <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
-        {collection.sources.map((source) => {
-          const isSelected = selecting && selected.has(source.id)
-          return (
-            <li key={source.id}>
-              <button
-                type="button"
-                aria-pressed={selecting ? isSelected : undefined}
-                // Content (the thumbnail's alt) names captioned tiles; the
-                // fallback keeps uncaptioned tiles reachable by name.
-                aria-label={source.caption === undefined ? strings.collection.openItem : undefined}
-                onClick={() => {
-                  if (selecting) toggleSelected(source.id)
-                  else setOpenSourceId(source.id)
-                }}
-                className="block w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
-              >
-                <div
-                  className={`aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)] ${
-                    isSelected ? 'ring-2 ring-[var(--color-zen-accent)]' : ''
-                  }`}
-                >
-                  {source.thumbUrl !== null && (
-                    <img
-                      src={source.thumbUrl}
-                      alt={source.caption ?? ''}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                </div>
-              </button>
-            </li>
-          )
-        })}
+        {collection.sources.map((source) => (
+          <li key={source.id}>
+            <button
+              type="button"
+              // Content (the thumbnail's alt) names captioned tiles; the
+              // fallback keeps uncaptioned tiles reachable by name.
+              aria-label={source.caption === undefined ? strings.collection.openItem : undefined}
+              onClick={() => {
+                setOpenSourceId(source.id)
+              }}
+              className="block w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
+            >
+              <div className="aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)]">
+                {source.thumbUrl !== null && (
+                  <img
+                    src={source.thumbUrl}
+                    alt={source.caption ?? ''}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+            </button>
+          </li>
+        ))}
       </ul>
     )
   }
@@ -154,27 +131,12 @@ export function CollectionScreen(): ReactElement {
         >
           {importing ? strings.collection.importing : strings.collection.importButton}
         </button>
-        {hasSources && (
-          <button
-            type="button"
-            onClick={() => {
-              setSelecting((was) => !was)
-              setSelected(new Set())
-              setManaging(false)
-            }}
-            className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-medium text-[var(--color-zen-text)] hover:bg-[var(--color-zen-bg-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2"
-          >
-            {selecting ? strings.collection.selectDone : strings.collection.select}
-          </button>
-        )}
         {tagsState.status === 'ready' && (
           <button
             type="button"
             aria-haspopup="dialog"
             onClick={() => {
               setManaging(true)
-              setSelecting(false)
-              setSelected(new Set())
             }}
             className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-medium text-[var(--color-zen-text)] hover:bg-[var(--color-zen-bg-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2"
           >
@@ -182,25 +144,6 @@ export function CollectionScreen(): ReactElement {
           </button>
         )}
       </div>
-      {selecting && tagsState.status === 'ready' && collection.status === 'ready' && (
-        <div className="mt-4">
-          <p className="mb-2 text-sm text-[var(--color-zen-text-soft)]">
-            {strings.collection.selectedCount(selected.size)}
-          </p>
-          {selected.size > 0 && (
-            <TagAssignPanel
-              tags={tagsState.tags}
-              selectedSources={collection.sources.filter((s) => selected.has(s.id))}
-              onToggle={(tagId, mode) => {
-                applyToSources(tagId, [...selected], mode)
-              }}
-              onCreate={(name) => {
-                createAndAssign(name, [...selected])
-              }}
-            />
-          )}
-        </div>
-      )}
       {actionState.status === 'error' && (
         <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">{strings.tags.actionFailed}</p>
       )}

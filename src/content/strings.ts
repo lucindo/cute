@@ -41,9 +41,6 @@ export interface UiStrings {
     readonly discardBody: string
     readonly discardConfirm: string
     readonly discardCancel: string
-    readonly select: string
-    readonly selectDone: string
-    readonly selectedCount: (count: number) => string
     readonly rejection: {
       readonly unsupportedType: string
       readonly undecodable: string
@@ -104,9 +101,6 @@ const EN: UiStrings = {
     discardBody: 'Your edits to this item will be lost.',
     discardConfirm: 'Discard',
     discardCancel: 'Keep editing',
-    select: 'Select',
-    selectDone: 'Done',
-    selectedCount: (count) => (count === 1 ? '1 selected' : `${String(count)} selected`),
     rejection: {
       unsupportedType: 'Not a supported image or video type.',
       undecodable: 'Could not read this image. Converting it to JPEG may help.',
@@ -173,9 +167,6 @@ const PT_BR: UiStrings = {
     discardBody: 'Suas edições neste item serão perdidas.',
     discardConfirm: 'Descartar',
     discardCancel: 'Continuar editando',
-    select: 'Selecionar',
-    selectDone: 'Concluir',
-    selectedCount: (count) => (count === 1 ? '1 selecionado' : `${String(count)} selecionados`),
     rejection: {
       unsupportedType: 'Tipo de imagem ou vídeo não suportado.',
       undecodable: 'Não foi possível ler esta imagem. Converter para JPEG pode ajudar.',

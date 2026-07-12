@@ -235,76 +235,31 @@ describe('CollectionScreen item sheet', () => {
 describe('CollectionScreen tags', () => {
   const T = UI_STRINGS.en.tags
 
-  async function enterSelection(captions: string[]): Promise<void> {
-    await userEvent.click(await screen.findByRole('button', { name: UI_STRINGS.en.collection.select }))
-    for (const caption of captions) {
-      await userEvent.click(screen.getByRole('button', { name: caption }))
-    }
-  }
-
-  it('assigns a seeded tag to every selected source', async () => {
-    await seed([
-      source({ id: 'a', caption: 'A' }),
-      source({ id: 'b', caption: 'B' }),
-      source({ id: 'c', caption: 'C' }),
-    ])
-    renderScreen()
-    await enterSelection(['A', 'B', 'C'])
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Babies' }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Babies' })).toHaveAttribute('aria-pressed', 'true')
-    })
-    const sources = await getAllRecords(await openDbOrThrow(), 'sources')
-    if (!sources.ok) throw new Error('expected ok')
-    expect(sources.value.every((s) => s.tags.includes('seed:babies'))).toBe(true)
-  })
-
-  it('shows mixed coverage and toggles add-to-all then remove-from-all', async () => {
-    await seed([
-      source({ id: 'a', caption: 'A', tags: ['seed:kittens'] }),
-      source({ id: 'b', caption: 'B' }),
-    ])
-    renderScreen()
-    await enterSelection(['A', 'B'])
-
-    const chip = await screen.findByRole('button', { name: 'Kittens' })
-    expect(chip).toHaveAttribute('aria-pressed', 'mixed')
-
-    await userEvent.click(chip)
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Kittens' })).toHaveAttribute('aria-pressed', 'true')
-    })
-
-    await userEvent.click(screen.getByRole('button', { name: 'Kittens' }))
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Kittens' })).toHaveAttribute('aria-pressed', 'false')
-    })
-    const sources = await getAllRecords(await openDbOrThrow(), 'sources')
-    if (!sources.ok) throw new Error('expected ok')
-    expect(sources.value.every((s) => s.tags.length === 0)).toBe(true)
-  })
-
-  it('creates a typed tag and assigns it to the selection', async () => {
+  it('creates a tag from the item sheet and assigns it on Save', async () => {
     await seed([source({ id: 'a', caption: 'A' })])
     renderScreen()
-    await enterSelection(['A'])
+    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
 
     await userEvent.type(await screen.findByLabelText(T.newTagPlaceholder), 'Sunset')
     await userEvent.click(screen.getByRole('button', { name: T.add }))
 
+    // Created and staged: the new tag shows as a pressed chip on the item.
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Sunset' })).toHaveAttribute('aria-pressed', 'true')
     })
-    const db = await openDbOrThrow()
-    const tags = await getAllRecords(db, 'tags')
-    if (!tags.ok) throw new Error('expected ok')
-    const sunset = tags.value.find((t) => t.name === 'Sunset')
-    if (sunset === undefined) throw new Error('expected the created tag')
-    const stored = await getRecord(db, 'sources', 'a')
-    if (!stored.ok || stored.value === null) throw new Error('expected the source')
-    expect(stored.value.tags).toEqual([sunset.id])
+
+    await userEvent.click(screen.getByRole('button', { name: UI_STRINGS.en.collection.save }))
+
+    await waitFor(async () => {
+      const db = await openDbOrThrow()
+      const tags = await getAllRecords(db, 'tags')
+      if (!tags.ok) throw new Error('expected ok')
+      const sunset = tags.value.find((t) => t.name === 'Sunset')
+      if (sunset === undefined) throw new Error('expected the created tag')
+      const stored = await getRecord(db, 'sources', 'a')
+      if (!stored.ok || stored.value === null) throw new Error('expected the source')
+      expect(stored.value.tags).toEqual([sunset.id])
+    })
   })
 
   it('opens the tag manager in a sheet and closes it', async () => {

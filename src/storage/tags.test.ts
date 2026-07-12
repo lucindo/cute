@@ -2,7 +2,7 @@ import { IDBFactory } from 'fake-indexeddb'
 import { describe, expect, it } from 'vitest'
 
 import { getAllRecords, getRecord, openDb, writeMany, type SourceRecord } from './db'
-import { applyTagToSources, createTag, deleteTag, renameTag } from './tags'
+import { createTag, deleteTag, renameTag } from './tags'
 
 async function freshDb(): Promise<IDBDatabase> {
   const opened = await openDb({ factory: new IDBFactory() })
@@ -58,53 +58,6 @@ describe('renameTag', () => {
     expect(renamed.ok).toBe(false)
     if (renamed.ok) throw new Error('expected error')
     expect(renamed.error.name).toBe('NotFound')
-  })
-})
-
-describe('applyTagToSources', () => {
-  it('adds the tag to the given sources and skips ones that already have it', async () => {
-    const db = await freshDb()
-    await writeMany(db, [
-      { op: 'put', store: 'sources', record: makeSource('s1', []) },
-      { op: 'put', store: 'sources', record: makeSource('s2', ['seed:babies']) },
-      { op: 'put', store: 'sources', record: makeSource('s3', []) },
-    ])
-
-    const applied = await applyTagToSources(db, 'seed:babies', ['s1', 's2', 'gone'], 'add')
-    expect(applied.ok).toBe(true)
-
-    const sources = await getAllRecords(db, 'sources')
-    if (!sources.ok) throw new Error('expected ok')
-    const tagsById = new Map(sources.value.map((s) => [s.id, s.tags]))
-    expect(tagsById.get('s1')).toEqual(['seed:babies'])
-    expect(tagsById.get('s2')).toEqual(['seed:babies'])
-    expect(tagsById.get('s3')).toEqual([])
-  })
-
-  it('removes the tag only from the given sources', async () => {
-    const db = await freshDb()
-    await writeMany(db, [
-      { op: 'put', store: 'sources', record: makeSource('s1', ['seed:babies']) },
-      { op: 'put', store: 'sources', record: makeSource('s2', ['seed:babies']) },
-    ])
-
-    const applied = await applyTagToSources(db, 'seed:babies', ['s1'], 'remove')
-    expect(applied.ok).toBe(true)
-
-    const sources = await getAllRecords(db, 'sources')
-    if (!sources.ok) throw new Error('expected ok')
-    const tagsById = new Map(sources.value.map((s) => [s.id, s.tags]))
-    expect(tagsById.get('s1')).toEqual([])
-    expect(tagsById.get('s2')).toEqual(['seed:babies'])
-  })
-
-  it('errors on an unknown tag id', async () => {
-    const db = await freshDb()
-    await writeMany(db, [{ op: 'put', store: 'sources', record: makeSource('s1', []) }])
-    const applied = await applyTagToSources(db, 'nope', ['s1'], 'add')
-    expect(applied.ok).toBe(false)
-    if (applied.ok) throw new Error('expected error')
-    expect(applied.error.name).toBe('NotFound')
   })
 })
 

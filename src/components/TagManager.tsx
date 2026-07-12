@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from './ConfirmDialog'
+import { SettingsRow } from './SettingsRow'
 import { tagDisplayName } from '../domain/tags'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 import type { TagRecord } from '../storage'
@@ -13,6 +14,7 @@ export interface TagManagerProps {
 
 // Tag list with rename and confirmed delete (SPEC FR-14). Creation lives in
 // the assign panel, where a new tag is created and assigned in one gesture.
+// Rows use HRV's SettingsRow chrome (divider + 15px label) for fidelity.
 export function TagManager({ tags, onRename, onDelete }: TagManagerProps): ReactElement {
   const strings = useUiStrings()
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null)
@@ -30,12 +32,16 @@ export function TagManager({ tags, onRename, onDelete }: TagManagerProps): React
       {sorted.length === 0 && (
         <p className="text-sm text-[var(--color-zen-text-soft)]">{strings.tags.empty}</p>
       )}
-      <ul className="max-w-sm space-y-1">
+      <div>
         {sorted.map((tag) => {
           const name = tagDisplayName(tag, strings.tags.seeded)
-          return (
-            <li key={tag.id} className="flex items-center gap-2">
-              {editing?.id === tag.id ? (
+          if (editing?.id === tag.id) {
+            return (
+              <fieldset
+                key={tag.id}
+                aria-label={name}
+                className="flex items-center gap-2 border-t border-[var(--color-border-soft)] py-3"
+              >
                 <form
                   className="flex flex-1 items-center gap-2"
                   onSubmit={(event) => {
@@ -68,35 +74,42 @@ export function TagManager({ tags, onRename, onDelete }: TagManagerProps): React
                     {strings.tags.cancel}
                   </button>
                 </form>
-              ) : (
-                <>
-                  <span className="flex-1 text-left text-sm text-[var(--color-zen-text)]">{name}</span>
-                  <button
-                    type="button"
-                    aria-label={`${strings.tags.rename} ${name}`}
-                    className={actionButton}
-                    onClick={() => {
-                      setEditing({ id: tag.id, value: name })
-                    }}
-                  >
-                    {strings.tags.rename}
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={`${strings.tags.delete} ${name}`}
-                    className={`${actionButton} hover:text-[var(--color-destructive)]`}
-                    onClick={() => {
-                      setPendingDelete(tag.id)
-                    }}
-                  >
-                    {strings.tags.delete}
-                  </button>
-                </>
-              )}
-            </li>
+              </fieldset>
+            )
+          }
+          return (
+            <SettingsRow
+              key={tag.id}
+              label={name}
+              ariaLabel={name}
+              className="flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label={`${strings.tags.rename} ${name}`}
+                  className={actionButton}
+                  onClick={() => {
+                    setEditing({ id: tag.id, value: name })
+                  }}
+                >
+                  {strings.tags.rename}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`${strings.tags.delete} ${name}`}
+                  className={`${actionButton} hover:text-[var(--color-destructive)]`}
+                  onClick={() => {
+                    setPendingDelete(tag.id)
+                  }}
+                >
+                  {strings.tags.delete}
+                </button>
+              </div>
+            </SettingsRow>
           )
         })}
-      </ul>
+      </div>
       <ConfirmDialog
         open={pendingDelete !== null}
         title={strings.tags.deleteTitle}

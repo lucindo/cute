@@ -4,9 +4,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Performance pass **verified — no code changes needed.** A dev-only seeder (`cuteSeed(500)` on `window`, tree-shaken from prod, commit `b8d3268`) fills a 500-source synthetic library through the real `writeMany` path (distinct thumbs, ~1280px blobs, seeded tags, holds/sessions). Measured against NFR-1/NFR-2: grid mount+scroll, session transitions, aww-sort, tag filter, and Stats all meet ≤100ms interaction / ≤300ms transition. Scoped-but-unneeded optimizations left on the shelf: Tier 1 (grid `loading="lazy"`/`decoding="async"`), Tier 2 (persistent DB connection + next-source prefetch), Tier 3 (grid virtualization). Prior: PWA shipped (`b0da8f2`), offline + installable. Lint / 209 tests / build green.
+**State:** Docs + i18n finalized — **only Ship remains.** README shipped (`bb7f3ed`, privacy-first; Forrest links/videos consistent with in-app Learn; MIT + courtesy note); LICENSE was already present (MIT, Renato Lucindo). PT-BR pass done (`6196191`): terminology fixes (Cachorrinhos; *mídias* not *fontes*; "Tempo total retido" now matches Stats) and the app name localized to **Meditação do Bebê Fofo** across shell + Learn (real YouTube video titles kept English). Prior: perf pass verified (no changes), PWA shipped (`b0da8f2`). Lint / 209 tests / build green.
 
-**Next:** **README** (privacy-first framing) **+ LICENSE.**
+**Next:** **Ship** — GitHub Pages multi-version deploy at `lucindo.github.io/cute` + Pake desktop builds via `desktop.yml`. Blocked on the first push: no git remote yet (explicit gate), and `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm both before pushing. README's Desktop-apps + live-URL sections are deferred here to avoid dead links.
 
 **Open questions:** none blocking. Repo still has **no git remote** — confirm before any first push.
 
@@ -17,7 +17,8 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - Icon slot: `IconButton` md=40px vs `TopAppBar`'s 36px placeholder → title ~2px off-center when one slot is filled. Visual-only.
 - Device verification pending: iOS unmuted-first-video (FR-35) and session lifecycle-edges (FR-38/39); pointer gestures touch-only. Aww per-card stats `aria-hidden` (optional SR follow-up).
 - PWA device verification pending: add-to-home-screen (iOS/Android) + airplane-mode reload not device-tested. SW is off in dev by design — test offline via `npm run preview`.
-- Carry-over: session persistence best-effort (no error surface); DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
+- PWA install label + browser-tab title are English-only (static `manifest.name` / `<title>`); the in-app shell + Learn show "Meditação do Bebê Fofo". One manifest = one name — localizing the installed label is a product call for Ship.
+- Carry-over: session persistence best-effort (no error surface); DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push.
 
 ## Roadmap
 
@@ -43,5 +44,6 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Learn/About: practice explanation, three video links, book credit, background-music note; EN/PT-BR; original copy (not Forrest's wording); reached from the shell top-bar trailing ⓘ
 - [x] PWA: offline after first load, installable, zero non-asset network requests (device install/offline verification pending)
 - [x] Performance pass: 500-source library meets ≤100ms interaction / ≤300ms transition targets (verified via `cuteSeed(500)`; met targets, no changes needed)
-- [ ] README (privacy-first framing) + LICENSE
+- [x] README (privacy-first framing); LICENSE pre-existing (MIT). Desktop-apps + live-URL sections deferred to Ship
+- [x] PT-BR final pass: terminology review + app-name localization ("Meditação do Bebê Fofo"); structural EN↔PT parity is type-enforced
 - [ ] Ship: Pages multi-version deploy live at `lucindo.github.io/cute`; Pake desktop builds via `desktop.yml`

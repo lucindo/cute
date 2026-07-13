@@ -8,6 +8,14 @@ import { requestPersistence } from './storage/persistence.ts'
 // flag yet (the Collection storage gauge will, via navigator.storage).
 void requestPersistence()
 
+// Dev-only: expose the performance-pass library seeder on window. Dynamic
+// import so the whole module tree-shakes out of the production bundle.
+if (import.meta.env.DEV) {
+  void import('./dev/seed.ts').then((m) => {
+    m.installDevSeed()
+  })
+}
+
 const rootEl = document.getElementById('root')
 if (rootEl === null) throw new Error('Root element #root not found in index.html')
 createRoot(rootEl).render(

@@ -88,8 +88,8 @@ export const LEARN_CONTENT: Readonly<Record<LocaleId, LearnContent>> = {
   'pt-BR': {
     description: {
       section1: {
-        title: 'O que é a Cute Baby Meditation',
-        body: 'A Cute Baby Meditation é uma forma de prática de Mettā — bondade amorosa — com raízes no Visuddhimagga, um texto budista clássico. Em vez de repetir frases, você deixa que algo irresistivelmente fofo — um bebê, um gatinho, um cachorrinho — desperte um calor imediato, e mantém sua atenção nesse sentimento. É uma prática silenciosa e autodirigida: alguns minutos de contemplação e sentimento, não uma lição nem uma medição.',
+        title: 'O que é a Meditação do Bebê Fofo',
+        body: 'A Meditação do Bebê Fofo é uma forma de prática de Mettā — bondade amorosa — com raízes no Visuddhimagga, um texto budista clássico. Em vez de repetir frases, você deixa que algo irresistivelmente fofo — um bebê, um gatinho, um cachorrinho — desperte um calor imediato, e mantém sua atenção nesse sentimento. É uma prática silenciosa e autodirigida: alguns minutos de contemplação e sentimento, não uma lição nem uma medição.',
       },
       section2: {
         title: 'Como funciona uma sessão',

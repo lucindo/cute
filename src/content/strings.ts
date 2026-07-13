@@ -1,7 +1,6 @@
 // UI strings catalog — all UI strings live here, not inline in components.
 // Sub-objects per surface: shell.* (app chrome + mode switcher), practice.*,
 // collection.*. Interpolated strings are typed as functions.
-// PT-BR values pending native-speaker review before release.
 
 import type { LocaleId, ThemeId } from '../domain/settings'
 import type { SeededTagId } from '../domain/tags'
@@ -305,7 +304,7 @@ const EN: UiStrings = {
 
 const PT_BR: UiStrings = {
   shell: {
-    appTitle: 'Cute Baby Meditation',
+    appTitle: 'Meditação do Bebê Fofo',
     settings: 'Configurações',
     modeToggle: {
       label: 'Modo do app',
@@ -322,11 +321,11 @@ const PT_BR: UiStrings = {
     },
     filter: {
       label: 'Filtrar por tag',
-      allHint: 'Todas as fontes',
+      allHint: 'Todas as mídias',
     },
     start: 'Começar',
     emptyCollection: 'Sua coleção está vazia. Adicione fotos ou vídeos na Coleção para começar.',
-    emptyFilter: 'Nenhuma fonte corresponde às tags selecionadas.',
+    emptyFilter: 'Nenhuma mídia corresponde às tags selecionadas.',
   },
   session: {
     stop: 'Parar',
@@ -339,7 +338,7 @@ const PT_BR: UiStrings = {
       title: 'Sessão concluída',
       duration: 'Duração',
       holds: 'Retenções',
-      totalHeld: 'Tempo retido',
+      totalHeld: 'Tempo total retido',
       longest: 'Maior retenção',
       done: 'Concluir',
     },
@@ -383,7 +382,7 @@ const PT_BR: UiStrings = {
     seeded: {
       'seed:babies': 'Bebês',
       'seed:kittens': 'Gatinhos',
-      'seed:puppies': 'Filhotes',
+      'seed:puppies': 'Cachorrinhos',
       'seed:family': 'Família',
       'seed:bhakti': 'Bhakti',
     },
@@ -449,7 +448,7 @@ const PT_BR: UiStrings = {
   learn: {
     title: 'Sobre esta prática',
     close: 'Fechar',
-    videosHeading: 'Vídeos da Cute Baby Meditation',
+    videosHeading: 'Vídeos da Meditação do Bebê Fofo',
     resourcesHeading: 'Recursos do Forrest Knutson',
   },
 }

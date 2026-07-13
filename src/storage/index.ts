@@ -12,6 +12,7 @@ export type {
   TagRecord,
   WriteOp,
 } from './db'
+export { exportBackup, importBackup } from './backup'
 export { deleteSource, updateSource } from './sources'
 export { saveCompletedSession } from './sessions'
 export { createTag, deleteTag, renameTag } from './tags'

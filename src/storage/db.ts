@@ -184,10 +184,12 @@ export type WriteOp = {
   [S in StoreName]:
     | { op: 'put'; store: S; record: StoreRecordMap[S] }
     | { op: 'delete'; store: S; id: string }
+    | { op: 'clear'; store: S }
 }[StoreName]
 
-// All ops commit in one transaction or none do — import (source+blob+thumb)
-// and tombstoning (source update + blob/thumb removal) must never half-apply.
+// All ops commit in one transaction or none do — import (source+blob+thumb),
+// tombstoning (source update + blob/thumb removal), and backup restore
+// (clear-all + rewrite-all) must never half-apply.
 export function writeMany(
   db: IDBDatabase,
   ops: readonly WriteOp[],
@@ -214,7 +216,8 @@ export function writeMany(
       for (const op of ops) {
         const store = tx.objectStore(op.store)
         if (op.op === 'put') store.put(op.record)
-        else store.delete(op.id)
+        else if (op.op === 'delete') store.delete(op.id)
+        else store.clear()
       }
     } catch (cause) {
       // A synchronously invalid op (e.g. record missing its key) must not let

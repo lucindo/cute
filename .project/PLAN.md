@@ -13,7 +13,6 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 **Watch:**
 - Backup on huge libraries runs `zipSync`/`unzipSync` on the main thread — fine at phone scale; async fflate API is the follow-up if a large collection janks the UI.
 - fflate returns `Uint8Array<ArrayBufferLike>`, not a valid `BlobPart`/`ArrayBuffer` under strict lib types — copy into a fresh `new Uint8Array(...)` before `new Blob`/`new File`.
-- `PROJECT.md` repo map is ~1 item behind: omits `domain/backup.ts`, `storage/backup.ts`, `hooks/useBackup.ts`, and still calls `fflate` "planned" — run `/ds-project-map` at a natural point.
 - Focus-return polish: returning from Stats lands focus on Settings' back button, not the originating Statistics row. Minor a11y; deferred.
 - Icon slot: `IconButton` md=40px vs `TopAppBar`'s 36px placeholder → title ~2px off-center when one slot is filled. Visual-only.
 - Device verification pending: iOS unmuted-first-video (FR-35) and session lifecycle-edges (FR-38/39); pointer gestures touch-only. Aww per-card stats `aria-hidden` (optional SR follow-up).

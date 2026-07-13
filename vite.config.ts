@@ -3,6 +3,7 @@ import { execSync } from 'node:child_process'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vitest/config'
+import { VitePWA } from 'vite-plugin-pwa'
 
 import packageJson from './package.json' with { type: 'json' }
 
@@ -32,7 +33,57 @@ export default defineConfig({
     __APP_BUILD_SHA__: JSON.stringify(BUILD_SHA),
     __APP_BUILD_DATE__: JSON.stringify(BUILD_DATE),
   },
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      strategies: 'generateSW',
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'pwa-maskable-192x192.png',
+        'pwa-maskable-512x512.png',
+      ],
+      manifest: {
+        name: 'Cute Baby Meditation',
+        short_name: 'Cute Baby',
+        description: 'A private Mettā gazing practice — hold the aww, on-device.',
+        theme_color: '#1a1d24',
+        background_color: '#1a1d24',
+        display: 'standalone',
+        // start_url and scope omitted — auto-default to the Vite base, so each
+        // versioned Pages build (/cute/, /cute/vN/) self-scopes without colliding.
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          {
+            src: 'pwa-maskable-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: 'pwa-maskable-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // Locales are EN + pt-BR (both Latin-script). Latin + Latin-ext woff2
+        // still precache; the other Inter subsets ship to dist/ but stay out of
+        // the SW install to trim the precache.
+        globIgnores: ['**/inter-{cyrillic,cyrillic-ext,greek,greek-ext,vietnamese}-*.woff2'],
+        cleanupOutdatedCaches: true,
+      },
+    }),
+  ],
   test: {
     environment: 'jsdom',
     globals: true,

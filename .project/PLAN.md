@@ -4,20 +4,17 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Stats page built and shipped on `dev` (Steps 6–8, 3 commits `9e55aa8`→`d0835f8`). `domain/stats.aggregateStats(sessions, holds, limit)` routes every per-session number through `sessionMachine.summarize` (the completion-screen function) so totals match the event log by construction (AC-23); `useStats` loads the full session + hold log once (static snapshot, no change subscription) and aggregates at limit 10. `StatsScreen` renders lifetime totals (sessions, practice time, total held via new `formatTotalDuration`; longest hold via `formatDuration`) + newest-first recent list (date, duration, `♥ holds`, end reason), with loading/error/empty states. Reached via a Statistics nav row in `SettingsScreen`; `App` routes `view='stats'` and passes the active `locale`. Lint / 186 tests / build green. This closes the whole Stats roadmap item AND the Settings surface (the Statistics row was its last remaining piece).
+**State:** Backup shipped on `dev` — full roadmap item done in 5 commits (`dfb3b41` fflate dep → `382af10` Settings section). `domain/backup.ts` (manifest schema + strict `validateManifest` trust boundary), `storage/backup.ts` (`exportBackup`/`importBackup`, atomic clear+rewrite via a new `writeMany` `clear` op), `useBackup` hook (download seam + restore + refresh events), and a Settings BACKUP section (Export + confirm-gated Restore, EN/PT-BR). Manifest carries records only; media rides as `media|thumbs/<id>.<ext>` zip entries (blob MIME from `source.mimeType`, thumb MIME from extension). `fflate` now in the bundle: +8.9 kB gzip (86.47 total). Lint / 207 tests / build green. Only unit `verify` remaining is the user's own browser/device check.
 
-**Next:** **Backup (Steps 1–6 below)** — zip export/restore via `fflate` (first runtime dep beyond the react/inter cap; already approved in DECISIONS). Format is fixed by SPEC §Interfaces line 126: a single `.zip` = `manifest.json` (schema-versioned: sources incl. tombstones, tags, sessions, holdEvents) + `media/<id>.<ext>` + `thumbs/<id>.<ext>`. Prefs/localStorage are **not** in the backup (device-local; AC-9 checks only collection/tags/sessions/events/stats). Restore validates the manifest *before* touching any store and aborts untouched on invalid (FR-22/AC-10); replace-all is atomic. Steps:
-1. Add `fflate` dep → verify: `npm i fflate`, builds, bundle delta sane (~8KB).
-2. `domain/backup.ts` — pure manifest schema (`BACKUP_VERSION=1`), `buildManifest(...)` + `validateManifest(raw): Result<Manifest>` (manual coerce like `prefs.ts` — no zod in the dep cap; this is the trust boundary) → verify: unit-test round-trip + rejects wrong-version/malformed.
-3. `storage/backup.ts` — `exportBackup(db): Result<Uint8Array>` (read all stores, zip) + `importBackup(db, bytes): Result<void>` (unzip → validate → clear+rewrite all stores atomically; media rebuilt as ArrayBuffer+MIME per the WebKit-Blob decision) → verify: fake-indexeddb round-trip identical (AC-9), corrupt zip leaves data untouched (AC-10).
-4. `useBackup` hook — export (build zip, trigger download) + restore (read `File`, import, surface errors) + dispatch `cute:collection-changed`/`cute:tags-changed` so grid/stats refresh → verify: screen-level.
-5. Settings BACKUP section — Export button + Restore file input + destructive-replace `ConfirmDialog`; strings EN/PT-BR; wire in `SettingsScreen` → verify: render + confirm-gates-restore.
-6. Full suite + lint + build green; user does own browser/device visual check.
+**Next:** **Learn/About page** — adapt HRV's LearnPage: practice explanation (from the book), the three YouTube video links, book credit, and the note that unmuted videos interrupt background music (iOS audio session). PT-BR complete incl. seeded tags. Reached from Settings (add a row) or the shell — decide placement when starting.
 
-**Open questions:** none blocking. `fflate` will be the first non-cap runtime dep (pre-approved). Source URL `https://github.com/lucindo/cute` confirmed; repo still has no git remote — confirm before first push.
+**Open questions:** none blocking. Repo still has **no git remote** — confirm before any first push.
 
 **Watch:**
-- Focus-return polish: returning from Stats lands focus on Settings' back button, not the originating Statistics row (HRV refocuses the row). Minor a11y; deferred.
+- Backup on huge libraries runs `zipSync`/`unzipSync` on the main thread — fine at phone scale; async fflate API is the follow-up if a large collection janks the UI.
+- fflate returns `Uint8Array<ArrayBufferLike>`, not a valid `BlobPart`/`ArrayBuffer` under strict lib types — copy into a fresh `new Uint8Array(...)` before `new Blob`/`new File`.
+- `PROJECT.md` repo map is ~1 item behind: omits `domain/backup.ts`, `storage/backup.ts`, `hooks/useBackup.ts`, and still calls `fflate` "planned" — run `/ds-project-map` at a natural point.
+- Focus-return polish: returning from Stats lands focus on Settings' back button, not the originating Statistics row. Minor a11y; deferred.
 - Icon slot: `IconButton` md=40px vs `TopAppBar`'s 36px placeholder → title ~2px off-center when one slot is filled. Visual-only.
 - Device verification pending: iOS unmuted-first-video (FR-35) and session lifecycle-edges (FR-38/39); pointer gestures touch-only. Aww per-card stats `aria-hidden` (optional SR follow-up).
 - Carry-over: session persistence best-effort (no error surface); DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
@@ -42,7 +39,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Aww factor (FR-17/AC-7): Collection aww-factor sort (session-local, descending total held) alongside newest-first; each card shows hold count + total held time
 - [x] Settings surface: HRV-style page (gear in TopAppBar leading slot; `shell|settings|stats` nav) — Theme (net-new light/dark/system + pre-paint), Language, About/version+Source, and the Statistics→Stats nav row; no audio Feedback section
 - [x] Stats page (reached from Settings): read-time aggregate of lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
-- [ ] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
+- [x] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
 - [ ] Learn/About: practice explanation, three video links, book credit, background-music note; PT-BR complete incl. seeded tags
 - [ ] PWA: offline after first load, installable, zero non-asset network requests
 - [ ] Performance pass: 500-source library meets ≤100ms interaction / ≤300ms transition targets

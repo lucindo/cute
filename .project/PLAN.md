@@ -4,26 +4,18 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** FR-35 video sound and FR-17 aww factor both landed on `dev` (6 commits, `b233d02`→`f31e030`). Video: one persistent App-level `<video>` unlocked at the Start gesture, `videoSound` pref (default on) + overlay mute toggle; `SessionView` drives the shared element imperatively over a transparent `z-20` gesture surface. Aww: read-time `aggregateHoldStats` joined into `useCollection`, session-local aww-factor sort + per-card `♥ n · m:ss` stat (aria-hidden). Lint / 159 tests / build green.
+**State:** Settings surface (Steps 1–5) built and shipped on `dev` (7 commits, `7f14a47`→`3f244f6`). Gear in the `TopAppBar` leading slot routes `shell → settings` via an `App` `view` state (`shell|settings|stats`); `SettingsScreen` (back chevron focused on mount) holds Theme, Language, About. Theme is net-new: `data-theme` resolved from a tri-state `prefs.theme` via `resolveTheme`, `useTheme` (3-effect sync + `system`-gated matchMedia), `index.html` pre-paint reads the persisted theme → no reload flash. Language switches locale live; About shows `version · sha · date` (build `define`) + external `Source →`. New units: `useTheme`, generic `usePreferenceChoice` writer, `ThemePicker` / `LanguagePicker` / `PickerCardGrid` / `IconButton` / `SettingsSectionHeader`, gear/back/right icons, `vite-env.d.ts`. Lint / 174 tests / build green.
 
-**Next:** Build the **Settings surface** (HRV parity minus the audio Feedback section) — the home for Theme/Language, with Statistics→Stats and About. Scope + confirmed choices in `DECISIONS.md` (settings surface — planned). Ordered steps, one per step-mode turn:
-1. Port primitives: `SettingsSectionHeader`, `IconButton`, `IconAnchor` + gear / `ChevronBack` / `ChevronRight` icons.
-2. Nav: `App` `view` state (`shell | settings | stats`) + gear in `TopAppBar` leading slot → skeleton `SettingsScreen` (back-wired).
-3. Theme system: `ThemeId` + `prefs.theme` + coercer; `useTheme` (apply + gated `system` matchMedia + cross/same-tab sync); update `index.html` pre-paint to read `cute:state:v1 → prefs.theme`; `PickerCardGrid` control (default `system`).
-4. Language: locale setter (write prefs + dispatch `cute:prefs-changed`), `SegmentedControl` control, display-name strings.
-5. About: add `src/vite-env.d.ts` (`__APP_VERSION__` / `_SHA` / `_DATE`), Version row + `Source →` (`github.com/lucindo/cute`).
-6. `domain/stats.ts` — pure `aggregateStats(sessions, holds, limit)` + tests.
-7. `useStats` hook (load + aggregate) + tests.
-8. `StatsScreen` UI + wire the Statistics row + strings.
+**Next:** **Step 6 — `domain/stats.ts`**: pure `aggregateStats(sessions, holds, limit)` → lifetime totals (session count, total practice time incl. overtime, total held time, longest hold) + a recent-sessions list. Must equal the event log exactly (AC-23); unit-test the read-model math. Then Step 7 `useStats` (load + aggregate), Step 8 `StatsScreen` + wire the Statistics row (the one thing that reaches `view='stats'`) + strings.
 
-**Open questions:** none blocking. Source URL assumed `github.com/lucindo/cute` (repo has no remote yet — confirm before first push).
+**Open questions:** none. Source URL confirmed `https://github.com/lucindo/cute` (repo still has no git remote — confirm before first push).
 
 **Watch:**
-- `PROJECT.md` map now stale beyond one-line fixes — new files this session (`hooks/useVideoSound.ts`, `components/icons/SpeakerIcon.tsx` + `SpeakerMutedIcon.tsx`, `domain/holdStats.ts`) and changed responsibilities (`App` owns the persistent `<video>`; `SessionView` drives it; `SessionOverlay` has the sound toggle; `useCollection` joins hold stats; `CollectionScreen` has aww sort + card stats). Prior session-runtime files also still unmapped. Run `/ds-project-map`.
-- Device verification pending: iOS unmuted-first-video (FR-35; fallback = blank-clip primer) and session lifecycle-edges (FR-38/39). Pointer gestures (hold/tap/swipe, 10px slop) still touch-device-only.
-- Aww per-card stats are `aria-hidden` — SR parity is an optional follow-up.
-- Session persistence is best-effort (no error surface); a fresh DB connection opens per source nav — consolidate in the perf pass. Possible media micro-flicker on rapid nav.
-- Carry-over: iOS video-import probe waits for `loadeddata` with no timeout; nested delete-confirm device check; DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
+- `PROJECT.md` map stale beyond one-line fixes — this session added `components/primitives/IconButton` + `PickerCardGrid`, `components/SettingsSectionHeader` / `ThemePicker` / `LanguagePicker`, `components/icons/GearIcon` / `ChevronBackIcon` / `ChevronRightIcon`, `app/SettingsScreen`, `hooks/useTheme` / `usePreferenceChoice`, `src/vite-env.d.ts`; changed responsibilities (`App` owns `view` + calls `useTheme`; `domain/settings` has `ThemeId` / `resolveTheme`; prefs has `theme`; `index.html` pre-paint reads persisted theme). Prior aww/session-runtime files still unmapped. Run `/ds-project-map`.
+- Icon slot: `IconButton` md=40px vs `TopAppBar`'s 36px placeholder → title ~2px off-center when one slot is filled. Visual-only.
+- `'stats'` view is in the `App` union but unreachable until Step 8 wires the Statistics row.
+- Device verification pending: iOS unmuted-first-video (FR-35) and session lifecycle-edges (FR-38/39); pointer gestures touch-only. Aww per-card stats `aria-hidden` (optional SR follow-up).
+- Carry-over: session persistence best-effort (no error surface); DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
 
 ## Roadmap
 
@@ -43,7 +35,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [~] Session lifecycle edges: timer-expiry-mid-hold + overtime, backgrounding truncates hold, stop saves `stopped`, wake lock held — all done; on-device verification remains
 - [x] Completion screen: duration incl. overtime, hold count, total held time, longest hold
 - [x] Aww factor (FR-17/AC-7): Collection aww-factor sort (session-local, descending total held) alongside newest-first; each card shows hold count + total held time
-- [ ] Settings surface: HRV-style page (gear in TopAppBar leading slot; `shell|settings|stats` nav) — Statistics→Stats, Theme (net-new light/dark/system system + pre-paint), Language, About/version+Source; no audio Feedback section
+- [~] Settings surface: HRV-style page (gear in TopAppBar leading slot; `shell|settings|stats` nav) — Theme (net-new light/dark/system + pre-paint), Language, About/version+Source all done; no audio Feedback section. Remaining: the Statistics→Stats row (lands with Step 8)
 - [ ] Stats page (reached from Settings): read-time aggregate of lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
 - [ ] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
 - [ ] Learn/About: practice explanation, three video links, book credit, background-music note; PT-BR complete incl. seeded tags

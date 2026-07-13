@@ -117,6 +117,18 @@ export interface UiStrings {
       readonly version: string
       readonly source: string
     }
+    readonly backup: {
+      readonly label: string
+      readonly export: string
+      readonly restore: string
+      readonly working: string
+      readonly restoreTitle: string
+      readonly restoreBody: string
+      readonly restoreConfirm: string
+      readonly restoreCancel: string
+      readonly invalidFile: string
+      readonly error: string
+    }
   }
   readonly stats: {
     readonly title: string
@@ -250,6 +262,19 @@ const EN: UiStrings = {
       version: 'Version',
       source: 'Source',
     },
+    backup: {
+      label: 'Backup',
+      export: 'Export backup',
+      restore: 'Restore backup',
+      working: 'Working…',
+      restoreTitle: 'Replace everything?',
+      restoreBody:
+        'Restoring replaces all current photos, videos, tags, and practice history with the backup’s contents. This cannot be undone.',
+      restoreConfirm: 'Replace',
+      restoreCancel: 'Cancel',
+      invalidFile: 'That file isn’t a valid backup. Nothing was changed.',
+      error: 'Something went wrong. Please try again.',
+    },
   },
   stats: {
     title: 'Statistics',
@@ -381,6 +406,19 @@ const PT_BR: UiStrings = {
       label: 'Sobre',
       version: 'Versão',
       source: 'Código-fonte',
+    },
+    backup: {
+      label: 'Backup',
+      export: 'Exportar backup',
+      restore: 'Restaurar backup',
+      working: 'Processando…',
+      restoreTitle: 'Substituir tudo?',
+      restoreBody:
+        'Restaurar substitui todas as fotos, vídeos, tags e histórico de prática atuais pelo conteúdo do backup. Isso não pode ser desfeito.',
+      restoreConfirm: 'Substituir',
+      restoreCancel: 'Cancelar',
+      invalidFile: 'Esse arquivo não é um backup válido. Nada foi alterado.',
+      error: 'Algo deu errado. Tente novamente.',
     },
   },
   stats: {

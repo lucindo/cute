@@ -4,8 +4,10 @@ import { CollectionScreen } from './CollectionScreen'
 import { PracticeScreen } from './PracticeScreen'
 import { SessionView } from './SessionView'
 import { SettingsScreen } from './SettingsScreen'
+import { LearnScreen } from './LearnScreen'
 import { StatsScreen } from './StatsScreen'
 import { GearIcon } from '../components/icons/GearIcon'
+import { InfoIcon } from '../components/icons/InfoIcon'
 import { IconButton } from '../components/primitives/IconButton'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import { PageShell } from '../components/primitives/PageShell'
@@ -16,7 +18,7 @@ import type { SessionRequest } from '../hooks/useSession'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
 
 type AppMode = 'practice' | 'collection'
-type AppView = 'shell' | 'settings' | 'stats'
+type AppView = 'shell' | 'settings' | 'stats' | 'learn'
 
 export function App(): ReactElement {
   const { locale, uiStrings } = useLocale()
@@ -80,6 +82,13 @@ export function App(): ReactElement {
             setView('settings')
           }}
         />
+      ) : view === 'learn' ? (
+        <LearnScreen
+          locale={locale}
+          onBack={() => {
+            setView('shell')
+          }}
+        />
       ) : (
         <PageShell width="practice">
           <TopAppBar
@@ -90,6 +99,15 @@ export function App(): ReactElement {
                 label={uiStrings.shell.settings}
                 onClick={() => {
                   setView('settings')
+                }}
+              />
+            }
+            trailing={
+              <IconButton
+                icon={<InfoIcon />}
+                label={uiStrings.learn.title}
+                onClick={() => {
+                  setView('learn')
                 }}
               />
             }

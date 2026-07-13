@@ -144,6 +144,12 @@ export interface UiStrings {
     readonly empty: string
     readonly loadError: string
   }
+  readonly learn: {
+    readonly title: string
+    readonly close: string
+    readonly videosHeading: string
+    readonly resourcesHeading: string
+  }
 }
 
 const EN: UiStrings = {
@@ -289,6 +295,12 @@ const EN: UiStrings = {
     empty: 'No sessions yet. Your practice history will appear here.',
     loadError: 'Could not open your practice history.',
   },
+  learn: {
+    title: 'About this practice',
+    close: 'Close',
+    videosHeading: 'Cute Baby Meditation Videos',
+    resourcesHeading: 'Forrest Knutson Resources',
+  },
 }
 
 const PT_BR: UiStrings = {
@@ -433,6 +445,12 @@ const PT_BR: UiStrings = {
     sessionMeta: (duration, holds) => `${duration} · ♥ ${String(holds)}`,
     empty: 'Nenhuma sessão ainda. Seu histórico de prática aparecerá aqui.',
     loadError: 'Não foi possível abrir seu histórico de prática.',
+  },
+  learn: {
+    title: 'Sobre esta prática',
+    close: 'Fechar',
+    videosHeading: 'Vídeos da Cute Baby Meditation',
+    resourcesHeading: 'Recursos do Forrest Knutson',
   },
 }
 

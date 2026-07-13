@@ -4,9 +4,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Backup shipped on `dev` — full roadmap item done in 5 commits (`dfb3b41` fflate dep → `382af10` Settings section). `domain/backup.ts` (manifest schema + strict `validateManifest` trust boundary), `storage/backup.ts` (`exportBackup`/`importBackup`, atomic clear+rewrite via a new `writeMany` `clear` op), `useBackup` hook (download seam + restore + refresh events), and a Settings BACKUP section (Export + confirm-gated Restore, EN/PT-BR). Manifest carries records only; media rides as `media|thumbs/<id>.<ext>` zip entries (blob MIME from `source.mimeType`, thumb MIME from extension). `fflate` now in the bundle: +8.9 kB gzip (86.47 total). Lint / 207 tests / build green. Only unit `verify` remaining is the user's own browser/device check.
+**State:** Learn/About page shipped on `dev` (`8652860`), verified live. Reached via an ⓘ `IconButton` in the shell `TopAppBar` **trailing** slot → `view: 'learn'` — HRV-faithful (Settings left, About right). `LearnScreen` + flattened `LearnPanel` (one practice, so HRV's per-practice content map is gone). Content in `content/learnContent.ts`: **original** practice copy (nothing lifted from Forrest's wording), the 3 reference videos, resource links, EN/PT-BR; claim-safe footer in `content/lockedCopy.ts` behind a frozen byte-equality test. Lint / 209 tests / build green (89.32 kB gz).
 
-**Next:** **Learn/About page** — adapt HRV's LearnPage: practice explanation (from the book), the three YouTube video links, book credit, and the note that unmuted videos interrupt background music (iOS audio session). PT-BR complete incl. seeded tags. Reached from Settings (add a row) or the shell — decide placement when starting.
+**Next:** **PWA** — offline after first load, installable, zero non-asset network requests. Vite PWA plugin not yet added.
 
 **Open questions:** none blocking. Repo still has **no git remote** — confirm before any first push.
 
@@ -39,7 +39,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Settings surface: HRV-style page (gear in TopAppBar leading slot; `shell|settings|stats` nav) — Theme (net-new light/dark/system + pre-paint), Language, About/version+Source, and the Statistics→Stats nav row; no audio Feedback section
 - [x] Stats page (reached from Settings): read-time aggregate of lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
 - [x] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
-- [ ] Learn/About: practice explanation, three video links, book credit, background-music note; PT-BR complete incl. seeded tags
+- [x] Learn/About: practice explanation, three video links, book credit, background-music note; EN/PT-BR; original copy (not Forrest's wording); reached from the shell top-bar trailing ⓘ
 - [ ] PWA: offline after first load, installable, zero non-asset network requests
 - [ ] Performance pass: 500-source library meets ≤100ms interaction / ≤300ms transition targets
 - [ ] README (privacy-first framing) + LICENSE

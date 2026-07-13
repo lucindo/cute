@@ -108,6 +108,11 @@ export interface UiStrings {
     readonly language: {
       readonly label: string
     }
+    readonly about: {
+      readonly label: string
+      readonly version: string
+      readonly source: string
+    }
   }
 }
 
@@ -218,6 +223,11 @@ const EN: UiStrings = {
     language: {
       label: 'Language',
     },
+    about: {
+      label: 'About',
+      version: 'Version',
+      source: 'Source',
+    },
   },
 }
 
@@ -327,6 +337,11 @@ const PT_BR: UiStrings = {
     },
     language: {
       label: 'Idioma',
+    },
+    about: {
+      label: 'Sobre',
+      version: 'Versão',
+      source: 'Código-fonte',
     },
   },
 }

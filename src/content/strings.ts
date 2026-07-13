@@ -105,6 +105,9 @@ export interface UiStrings {
       readonly label: string
       readonly options: Readonly<Record<ThemeId, string>>
     }
+    readonly language: {
+      readonly label: string
+    }
   }
 }
 
@@ -212,6 +215,9 @@ const EN: UiStrings = {
       label: 'Theme',
       options: { light: 'Light', dark: 'Dark', system: 'System' },
     },
+    language: {
+      label: 'Language',
+    },
   },
 }
 
@@ -318,6 +324,9 @@ const PT_BR: UiStrings = {
     theme: {
       label: 'Tema',
       options: { light: 'Claro', dark: 'Escuro', system: 'Sistema' },
+    },
+    language: {
+      label: 'Idioma',
     },
   },
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactElement } from 'react'
 
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
+import { LanguagePicker } from '../components/LanguagePicker'
 import { SettingsSectionHeader } from '../components/SettingsSectionHeader'
 import { ThemePicker } from '../components/ThemePicker'
 import { IconButton } from '../components/primitives/IconButton'
@@ -40,6 +41,8 @@ export function SettingsScreen({ onBack }: SettingsScreenProps): ReactElement {
           label={strings.settings.theme.label}
           optionLabels={strings.settings.theme.options}
         />
+        <SettingsSectionHeader label={strings.settings.language.label} />
+        <LanguagePicker label={strings.settings.language.label} />
       </div>
     </PageShell>
   )

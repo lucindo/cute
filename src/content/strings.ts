@@ -101,6 +101,10 @@ export interface UiStrings {
   readonly settings: {
     readonly title: string
     readonly back: string
+    readonly statistics: {
+      readonly label: string
+      readonly open: string
+    }
     readonly theme: {
       readonly label: string
       readonly options: Readonly<Record<ThemeId, string>>
@@ -113,6 +117,20 @@ export interface UiStrings {
       readonly version: string
       readonly source: string
     }
+  }
+  readonly stats: {
+    readonly title: string
+    readonly back: string
+    readonly sessions: string
+    readonly practiceTime: string
+    readonly totalHeld: string
+    readonly longest: string
+    readonly recent: string
+    // Keyed by SessionRecord.endReason; a new reason would fail the lookup.
+    readonly endReason: Readonly<Record<'completed' | 'stopped', string>>
+    readonly sessionMeta: (duration: string, holds: number) => string
+    readonly empty: string
+    readonly loadError: string
   }
 }
 
@@ -216,6 +234,10 @@ const EN: UiStrings = {
   settings: {
     title: 'Settings',
     back: 'Back',
+    statistics: {
+      label: 'Statistics',
+      open: 'View statistics',
+    },
     theme: {
       label: 'Theme',
       options: { light: 'Light', dark: 'Dark', system: 'System' },
@@ -228,6 +250,19 @@ const EN: UiStrings = {
       version: 'Version',
       source: 'Source',
     },
+  },
+  stats: {
+    title: 'Statistics',
+    back: 'Back',
+    sessions: 'Sessions',
+    practiceTime: 'Practice time',
+    totalHeld: 'Total held',
+    longest: 'Longest hold',
+    recent: 'Recent sessions',
+    endReason: { completed: 'Completed', stopped: 'Stopped' },
+    sessionMeta: (duration, holds) => `${duration} · ♥ ${String(holds)}`,
+    empty: 'No sessions yet. Your practice history will appear here.',
+    loadError: 'Could not open your practice history.',
   },
 }
 
@@ -331,6 +366,10 @@ const PT_BR: UiStrings = {
   settings: {
     title: 'Configurações',
     back: 'Voltar',
+    statistics: {
+      label: 'Estatísticas',
+      open: 'Ver estatísticas',
+    },
     theme: {
       label: 'Tema',
       options: { light: 'Claro', dark: 'Escuro', system: 'Sistema' },
@@ -343,6 +382,19 @@ const PT_BR: UiStrings = {
       version: 'Versão',
       source: 'Código-fonte',
     },
+  },
+  stats: {
+    title: 'Estatísticas',
+    back: 'Voltar',
+    sessions: 'Sessões',
+    practiceTime: 'Tempo de prática',
+    totalHeld: 'Tempo total retido',
+    longest: 'Maior retenção',
+    recent: 'Sessões recentes',
+    endReason: { completed: 'Concluída', stopped: 'Parada' },
+    sessionMeta: (duration, holds) => `${duration} · ♥ ${String(holds)}`,
+    empty: 'Nenhuma sessão ainda. Seu histórico de prática aparecerá aqui.',
+    loadError: 'Não foi possível abrir seu histórico de prática.',
   },
 }
 

@@ -4,6 +4,7 @@ import { CollectionScreen } from './CollectionScreen'
 import { PracticeScreen } from './PracticeScreen'
 import { SessionView } from './SessionView'
 import { SettingsScreen } from './SettingsScreen'
+import { StatsScreen } from './StatsScreen'
 import { GearIcon } from '../components/icons/GearIcon'
 import { IconButton } from '../components/primitives/IconButton'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
@@ -18,7 +19,7 @@ type AppMode = 'practice' | 'collection'
 type AppView = 'shell' | 'settings' | 'stats'
 
 export function App(): ReactElement {
-  const { uiStrings } = useLocale()
+  const { locale, uiStrings } = useLocale()
   useTheme()
   const [mode, setMode] = useState<AppMode>('practice')
   const [view, setView] = useState<AppView>('shell')
@@ -67,6 +68,16 @@ export function App(): ReactElement {
         <SettingsScreen
           onBack={() => {
             setView('shell')
+          }}
+          onOpenStats={() => {
+            setView('stats')
+          }}
+        />
+      ) : view === 'stats' ? (
+        <StatsScreen
+          locale={locale}
+          onBack={() => {
+            setView('settings')
           }}
         />
       ) : (

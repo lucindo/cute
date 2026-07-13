@@ -7,6 +7,7 @@ import { SettingsSectionHeader } from '../components/SettingsSectionHeader'
 import { ThemePicker } from '../components/ThemePicker'
 import { IconButton } from '../components/primitives/IconButton'
 import { PageShell } from '../components/primitives/PageShell'
+import { SectionCard } from '../components/primitives/SectionCard'
 import { SettingsRow } from '../components/SettingsRow'
 import { TopAppBar } from '../components/primitives/TopAppBar'
 import { useUiStrings } from '../hooks/useUiStringsContext'
@@ -19,9 +20,10 @@ const BUILD_INFO =
 
 export interface SettingsScreenProps {
   onBack(this: void): void
+  onOpenStats(this: void): void
 }
 
-export function SettingsScreen({ onBack }: SettingsScreenProps): ReactElement {
+export function SettingsScreen({ onBack, onOpenStats }: SettingsScreenProps): ReactElement {
   const strings = useUiStrings()
   const backRef = useRef<HTMLButtonElement>(null)
 
@@ -44,6 +46,19 @@ export function SettingsScreen({ onBack }: SettingsScreenProps): ReactElement {
         }
       />
       <div className="w-full text-left">
+        <SettingsSectionHeader label={strings.settings.statistics.label} />
+        <SectionCard padding="4px 8px">
+          <button
+            type="button"
+            onClick={onOpenStats}
+            className="flex min-h-[44px] w-full items-center justify-between rounded-2xl px-2 text-left transition hover:bg-[var(--color-zen-bg-soft)] active:bg-[var(--color-zen-bg-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2 motion-reduce:transition-none"
+          >
+            <span className="text-[15px] text-[var(--color-zen-text)]">
+              {strings.settings.statistics.open}
+            </span>
+            <ChevronRightIcon className="text-[var(--color-zen-muted)]" />
+          </button>
+        </SectionCard>
         <SettingsSectionHeader label={strings.settings.theme.label} />
         <ThemePicker
           label={strings.settings.theme.label}

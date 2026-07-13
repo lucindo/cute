@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatBytes, formatDuration } from './format'
+import { formatBytes, formatDuration, formatTotalDuration } from './format'
 
 describe('formatBytes', () => {
   it('formats across unit boundaries', () => {
@@ -26,5 +26,20 @@ describe('formatDuration', () => {
   it('leaves minutes uncapped for long overtime and floors negatives to zero', () => {
     expect(formatDuration(3_720_000)).toBe('62:00')
     expect(formatDuration(-1000)).toBe('0:00')
+  })
+})
+
+describe('formatTotalDuration', () => {
+  it('steps through seconds, minutes, and hours', () => {
+    expect(formatTotalDuration(0)).toBe('0s')
+    expect(formatTotalDuration(45_000)).toBe('45s')
+    expect(formatTotalDuration(90_000)).toBe('1m')
+    expect(formatTotalDuration(3_600_000)).toBe('1h')
+    expect(formatTotalDuration(3_900_000)).toBe('1h 5m')
+  })
+
+  it('drops the minutes part on a whole hour and floors negatives', () => {
+    expect(formatTotalDuration(7_200_000)).toBe('2h')
+    expect(formatTotalDuration(-5000)).toBe('0s')
   })
 })

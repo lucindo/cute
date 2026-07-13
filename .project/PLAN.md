@@ -4,9 +4,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** PWA shipped on `dev` (`b0da8f2`). Ported HRV's `vite-plugin-pwa` setup (`generateSW` / `registerType: autoUpdate` / `injectRegister: auto`, no SW code in `src/`): precaches all assets → offline after first load; installable `manifest.webmanifest` (4 nested-heart icons incl. maskable, dark `#1a1d24` theme, `start_url`/`scope` auto-defaulted to `/cute/` so versioned builds self-scope); zero external requests. Precache trimmed to Latin + Latin-ext Inter subsets. Icons rendered from `public/favicon.svg` via `rsvg-convert` (5 PNGs → `public/`). Lint / 209 tests / build green (89.32 kB gz app; SW precache 19 entries / 491 KiB).
+**State:** Performance pass **verified — no code changes needed.** A dev-only seeder (`cuteSeed(500)` on `window`, tree-shaken from prod, commit `b8d3268`) fills a 500-source synthetic library through the real `writeMany` path (distinct thumbs, ~1280px blobs, seeded tags, holds/sessions). Measured against NFR-1/NFR-2: grid mount+scroll, session transitions, aww-sort, tag filter, and Stats all meet ≤100ms interaction / ≤300ms transition. Scoped-but-unneeded optimizations left on the shelf: Tier 1 (grid `loading="lazy"`/`decoding="async"`), Tier 2 (persistent DB connection + next-source prefetch), Tier 3 (grid virtualization). Prior: PWA shipped (`b0da8f2`), offline + installable. Lint / 209 tests / build green.
 
-**Next:** **Performance pass** — 500-source library meets ≤100ms interaction / ≤300ms transition targets.
+**Next:** **README** (privacy-first framing) **+ LICENSE.**
 
 **Open questions:** none blocking. Repo still has **no git remote** — confirm before any first push.
 
@@ -42,6 +42,6 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
 - [x] Learn/About: practice explanation, three video links, book credit, background-music note; EN/PT-BR; original copy (not Forrest's wording); reached from the shell top-bar trailing ⓘ
 - [x] PWA: offline after first load, installable, zero non-asset network requests (device install/offline verification pending)
-- [ ] Performance pass: 500-source library meets ≤100ms interaction / ≤300ms transition targets
+- [x] Performance pass: 500-source library meets ≤100ms interaction / ≤300ms transition targets (verified via `cuteSeed(500)`; met targets, no changes needed)
 - [ ] README (privacy-first framing) + LICENSE
 - [ ] Ship: Pages multi-version deploy live at `lucindo.github.io/cute`; Pake desktop builds via `desktop.yml`

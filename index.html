@@ -10,10 +10,11 @@
     <!-- Chrome/Android browser tab + PWA theme color -->
     <meta name="theme-color" content="#414957">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Pre-paint theme attribute so returning dark-theme users never see a light
-         flash. Reads system preference only for now; the persisted-theme read
-         hooks in here once the storage layer defines its localStorage keys. -->
-    <script>(function(){try{var d=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;document.documentElement.setAttribute('data-theme',d?'dark':'light')}catch(_){document.documentElement.setAttribute('data-theme','light')}})();</script>
+    <!-- Pre-paint data-theme so returning users never see a wrong-theme flash.
+         Reads the persisted pref (key must track STATE_KEY in src/storage); any
+         non-'light'/'dark' value (incl. 'system' and absent/corrupt state)
+         follows the OS preference, matching coerceTheme's default. -->
+    <script>(function(){try{var t='system',raw=localStorage.getItem('cute:state:v1');if(raw){var p=JSON.parse(raw);if(p&&p.prefs&&typeof p.prefs.theme==='string')t=p.prefs.theme}var sysDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;var dark=t==='dark'||(t!=='light'&&sysDark);document.documentElement.setAttribute('data-theme',dark?'dark':'light')}catch(_){document.documentElement.setAttribute('data-theme','light')}})();</script>
     <title>Cute Baby Meditation</title>
   </head>
   <body>

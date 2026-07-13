@@ -1,6 +1,8 @@
 import { useEffect, useRef, type ReactElement } from 'react'
 
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
+import { SettingsSectionHeader } from '../components/SettingsSectionHeader'
+import { ThemePicker } from '../components/ThemePicker'
 import { IconButton } from '../components/primitives/IconButton'
 import { PageShell } from '../components/primitives/PageShell'
 import { TopAppBar } from '../components/primitives/TopAppBar'
@@ -32,6 +34,13 @@ export function SettingsScreen({ onBack }: SettingsScreenProps): ReactElement {
           />
         }
       />
+      <div className="w-full text-left">
+        <SettingsSectionHeader label={strings.settings.theme.label} />
+        <ThemePicker
+          label={strings.settings.theme.label}
+          optionLabels={strings.settings.theme.options}
+        />
+      </div>
     </PageShell>
   )
 }

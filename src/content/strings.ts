@@ -3,7 +3,7 @@
 // collection.*. Interpolated strings are typed as functions.
 // PT-BR values pending native-speaker review before release.
 
-import type { LocaleId } from '../domain/settings'
+import type { LocaleId, ThemeId } from '../domain/settings'
 import type { SeededTagId } from '../domain/tags'
 
 export interface UiStrings {
@@ -101,6 +101,10 @@ export interface UiStrings {
   readonly settings: {
     readonly title: string
     readonly back: string
+    readonly theme: {
+      readonly label: string
+      readonly options: Readonly<Record<ThemeId, string>>
+    }
   }
 }
 
@@ -204,6 +208,10 @@ const EN: UiStrings = {
   settings: {
     title: 'Settings',
     back: 'Back',
+    theme: {
+      label: 'Theme',
+      options: { light: 'Light', dark: 'Dark', system: 'System' },
+    },
   },
 }
 
@@ -307,6 +315,10 @@ const PT_BR: UiStrings = {
   settings: {
     title: 'Configurações',
     back: 'Voltar',
+    theme: {
+      label: 'Tema',
+      options: { light: 'Claro', dark: 'Escuro', system: 'Sistema' },
+    },
   },
 }
 

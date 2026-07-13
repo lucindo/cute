@@ -4,9 +4,9 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 
 ## Now
 
-**State:** Learn/About page shipped on `dev` (`8652860`), verified live. Reached via an ⓘ `IconButton` in the shell `TopAppBar` **trailing** slot → `view: 'learn'` — HRV-faithful (Settings left, About right). `LearnScreen` + flattened `LearnPanel` (one practice, so HRV's per-practice content map is gone). Content in `content/learnContent.ts`: **original** practice copy (nothing lifted from Forrest's wording), the 3 reference videos, resource links, EN/PT-BR; claim-safe footer in `content/lockedCopy.ts` behind a frozen byte-equality test. Lint / 209 tests / build green (89.32 kB gz).
+**State:** PWA shipped on `dev` (`b0da8f2`). Ported HRV's `vite-plugin-pwa` setup (`generateSW` / `registerType: autoUpdate` / `injectRegister: auto`, no SW code in `src/`): precaches all assets → offline after first load; installable `manifest.webmanifest` (4 nested-heart icons incl. maskable, dark `#1a1d24` theme, `start_url`/`scope` auto-defaulted to `/cute/` so versioned builds self-scope); zero external requests. Precache trimmed to Latin + Latin-ext Inter subsets. Icons rendered from `public/favicon.svg` via `rsvg-convert` (5 PNGs → `public/`). Lint / 209 tests / build green (89.32 kB gz app; SW precache 19 entries / 491 KiB).
 
-**Next:** **PWA** — offline after first load, installable, zero non-asset network requests. Vite PWA plugin not yet added.
+**Next:** **Performance pass** — 500-source library meets ≤100ms interaction / ≤300ms transition targets.
 
 **Open questions:** none blocking. Repo still has **no git remote** — confirm before any first push.
 
@@ -16,6 +16,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - Focus-return polish: returning from Stats lands focus on Settings' back button, not the originating Statistics row. Minor a11y; deferred.
 - Icon slot: `IconButton` md=40px vs `TopAppBar`'s 36px placeholder → title ~2px off-center when one slot is filled. Visual-only.
 - Device verification pending: iOS unmuted-first-video (FR-35) and session lifecycle-edges (FR-38/39); pointer gestures touch-only. Aww per-card stats `aria-hidden` (optional SR follow-up).
+- PWA device verification pending: add-to-home-screen (iOS/Android) + airplane-mode reload not device-tested. SW is off in dev by design — test offline via `npm run preview`.
 - Carry-over: session persistence best-effort (no error surface); DB v3 clears pre-release media once (tags/renames survive); `.gitignore` ignores `CLAUDE.md`/`AGENTS.md` — confirm before first push; PT-BR final pass deferred to project end.
 
 ## Roadmap
@@ -40,7 +41,7 @@ Source: `SPEC.md` (requirements) · `DECISIONS.md` (rationale) · `.reference/hr
 - [x] Stats page (reached from Settings): read-time aggregate of lifetime totals (sessions, practice time, held time, longest hold) + recent-sessions list
 - [x] Backup: zip export of full state; restore validates manifest, confirms, replaces; corrupt zip aborts untouched
 - [x] Learn/About: practice explanation, three video links, book credit, background-music note; EN/PT-BR; original copy (not Forrest's wording); reached from the shell top-bar trailing ⓘ
-- [ ] PWA: offline after first load, installable, zero non-asset network requests
+- [x] PWA: offline after first load, installable, zero non-asset network requests (device install/offline verification pending)
 - [ ] Performance pass: 500-source library meets ≤100ms interaction / ≤300ms transition targets
 - [ ] README (privacy-first framing) + LICENSE
 - [ ] Ship: Pages multi-version deploy live at `lucindo.github.io/cute`; Pake desktop builds via `desktop.yml`

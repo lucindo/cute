@@ -63,9 +63,14 @@ export function SourceSheet({
   }
 
   const createAndStage = (name: string): void => {
-    void onCreateTag(name).then((id) => {
-      if (id !== null) setTagIds((prev) => new Set(prev).add(id))
-    })
+    onCreateTag(name).then(
+      (id) => {
+        if (id !== null) setTagIds((prev) => new Set(prev).add(id))
+      },
+      // Staging is best-effort; onCreateTag resolves null on expected failure,
+      // so a reject is a bug — absorb it rather than strand an unhandled reject.
+      () => undefined,
+    )
   }
 
   const requestClose = (): void => {

@@ -27,6 +27,9 @@ dist-ssr
 CLAUDE.md
 AGENTS.md
 
+# Internal project docs — design history, not part of the published app
+.project/
+
 # HRV reference clone — consultation only, never committed
 .reference/
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type ReactElement } from 'react'
+import { useRef, useState, type ChangeEvent, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
@@ -12,6 +12,7 @@ import { SectionCard } from '../components/primitives/SectionCard'
 import { SettingsRow } from '../components/SettingsRow'
 import { TopAppBar } from '../components/primitives/TopAppBar'
 import { useBackup, type BackupDeps } from '../hooks/useBackup'
+import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 
 const GITHUB_URL = 'https://github.com/lucindo/cute'
@@ -33,14 +34,9 @@ export interface SettingsScreenProps {
 export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScreenProps): ReactElement {
   const strings = useUiStrings()
   const { backupState, exportNow, restore } = useBackup(backupDeps)
-  const backRef = useRef<HTMLButtonElement>(null)
+  const backRef = useFocusOnMount<HTMLButtonElement>()
   const fileRef = useRef<HTMLInputElement>(null)
   const [pendingRestore, setPendingRestore] = useState<File | null>(null)
-
-  // Land focus on the way out so keyboard/SR users aren't stranded at page top.
-  useEffect(() => {
-    backRef.current?.focus()
-  }, [])
 
   const working = backupState.status === 'working'
   const errorText =

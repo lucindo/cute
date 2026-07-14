@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement } from 'react'
+import type { ReactElement } from 'react'
 
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
 import { LearnPanel } from '../components/LearnPanel'
@@ -8,6 +8,7 @@ import { TopAppBar } from '../components/primitives/TopAppBar'
 import { LEARN_CONTENT } from '../content/learnContent'
 import { LOCKED_COPY } from '../content/lockedCopy'
 import type { LocaleId } from '../domain/settings'
+import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 
 export interface LearnScreenProps {
@@ -16,14 +17,9 @@ export interface LearnScreenProps {
 }
 
 // About/Learn page (SPEC FR-5), reached from the shell TopAppBar trailing slot.
-// Focuses the back button on mount so there's always a known affordance.
 export function LearnScreen({ locale, onBack }: LearnScreenProps): ReactElement {
   const strings = useUiStrings().learn
-  const backRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    backRef.current?.focus()
-  }, [])
+  const backRef = useFocusOnMount<HTMLButtonElement>()
 
   return (
     <PageShell>

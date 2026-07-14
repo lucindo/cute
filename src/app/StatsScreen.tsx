@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement } from 'react'
+import type { ReactElement } from 'react'
 
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
 import { IconButton } from '../components/primitives/IconButton'
@@ -10,6 +10,7 @@ import { formatDuration, formatTotalDuration } from '../domain/format'
 import type { RecentSession } from '../domain/stats'
 import type { LocaleId } from '../domain/settings'
 import type { UiStrings } from '../content/strings'
+import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import { useStats } from '../hooks/useStats'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 
@@ -66,11 +67,7 @@ function RecentRow({
 export function StatsScreen({ locale, onBack }: StatsScreenProps): ReactElement {
   const s = useUiStrings().stats
   const state = useStats()
-  const backRef = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    backRef.current?.focus()
-  }, [])
+  const backRef = useFocusOnMount<HTMLButtonElement>()
 
   return (
     <PageShell>

@@ -1,0 +1,61 @@
+import '@testing-library/jest-dom/vitest'
+
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it } from 'vitest'
+
+import { App } from './App'
+import { STATE_KEY } from '../storage'
+
+describe('App', () => {
+  it('renders the app title', () => {
+    render(<App />)
+    expect(screen.getByRole('heading', { name: 'Cute Baby Meditation' })).toBeInTheDocument()
+  })
+
+  it('starts in Practice mode and switches to Collection and back', async () => {
+    render(<App />)
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Collection' }))
+    expect(
+      await screen.findByText('Your collection is empty. Import photos or videos to begin.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Duration' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Practice' }))
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
+  })
+
+  it('opens Settings from the gear and returns via back', async () => {
+    render(<App />)
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Duration' })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByRole('group', { name: 'Duration' })).toBeInTheDocument()
+  })
+
+  it('applies the persisted theme to data-theme', () => {
+    window.localStorage.setItem(
+      STATE_KEY,
+      JSON.stringify({ version: 1, prefs: { theme: 'dark' } }),
+    )
+    render(<App />)
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark')
+  })
+
+  it('renders PT-BR strings when the persisted locale is pt-BR', () => {
+    window.localStorage.setItem(
+      STATE_KEY,
+      JSON.stringify({ version: 1, prefs: { locale: 'pt-BR' } }),
+    )
+    render(<App />)
+    expect(screen.getByRole('radio', { name: 'Prática' })).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Duração' })).toBeInTheDocument()
+    expect(document.documentElement.lang).toBe('pt-BR')
+  })
+})

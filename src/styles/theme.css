@@ -1,0 +1,127 @@
+@theme {
+  /* Mono Zen palette (light) — cool slate + pale near-white. Values verbatim
+     from HRV Breathing's locked palette; token names neutralized (zen-*). */
+  --color-zen-bg: #f3f5f7;
+  --color-zen-bg-soft: #e8eaee;
+  --color-zen-bg-edge: #fafbfc;
+  --color-zen-surface: #ffffff;
+  --color-zen-accent: #5d6877;
+  --color-zen-accent-strong: #414957;
+  --color-zen-muted: #969ba6;
+  --color-zen-on-accent: #ffffff;
+  --color-zen-text: #3a4150;
+  --color-zen-text-soft: #6b7280;
+  --color-border-soft: rgba(93, 104, 119, 0.16);
+  --color-modal-backdrop: rgba(58, 65, 80, 0.22);
+
+  /* Surface elevation + scrim (light). Shadow channels use the palette's cool
+     slate undertone instead of generic pure black. */
+  --shadow-card: 0 1px 2px rgb(46 52 64 / 0.04), 0 4px 12px rgb(46 52 64 / 0.06);
+  --shadow-modal: 0 10px 30px rgb(46 52 64 / 0.12), 0 4px 12px rgb(46 52 64 / 0.08);
+  --scrim-modal: rgb(46 52 64 / 0.40);
+
+  /* Destructive-action color set — same red reads correctly on both themes. */
+  --color-destructive: #bf616a;
+  --color-destructive-hover: #a85459;
+  --color-destructive-active: #92444c;
+  --color-destructive-on: #eceff4;
+}
+
+/* Mono Zen palette (dark) — deep cool slate + dimmed slate ink. */
+[data-theme='dark']:root {
+  --color-zen-bg: #1a1d24;
+  --color-zen-bg-soft: #23272f;
+  --color-zen-bg-edge: #13161c;
+  --color-zen-surface: #252932;
+  --color-zen-accent: #b4bac4;
+  --color-zen-accent-strong: #ccd0d9;
+  --color-zen-muted: #6a6e76;
+  --color-zen-on-accent: #1a1d24;
+  --color-zen-text: #dde0e6;
+  --color-zen-text-soft: #8a8d95;
+  --color-border-soft: rgba(168, 174, 184, 0.16);
+  --color-modal-backdrop: rgba(0, 0, 0, 0.65);
+
+  /* Surface elevation + scrim (dark). Pure-black channels, consistent with
+     --color-modal-backdrop. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.20), 0 4px 12px rgb(0 0 0 / 0.30);
+  --shadow-modal: 0 10px 30px rgb(0 0 0 / 0.40), 0 4px 12px rgb(0 0 0 / 0.30);
+  --scrim-modal: rgb(0 0 0 / 0.60);
+
+  --color-destructive: #bf616a;
+  --color-destructive-hover: #a85459;
+  --color-destructive-active: #92444c;
+  --color-destructive-on: #eceff4;
+}
+
+/* Native <dialog> entry/exit fade. @starting-style + display/overlay
+   allow-discrete so the dialog fades 0 → 1 on showModal() and 1 → 0 on
+   close(). Reduced-motion branch below disables the transition. */
+dialog.modal-fade {
+  opacity: 0;
+  transition:
+    opacity 200ms ease-out,
+    display 200ms allow-discrete,
+    overlay 200ms allow-discrete;
+}
+dialog.modal-fade[open] {
+  opacity: 1;
+}
+@starting-style {
+  dialog.modal-fade[open] {
+    opacity: 0;
+  }
+}
+dialog.modal-fade[open]::backdrop {
+  transition: background-color 200ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.modal-fade {
+    transition: none !important;
+  }
+}
+
+/* Hold-in-progress indicator (SPEC FR-33): a slow breathing glow on the session
+   overlay's time pill while a hold records. Reduced motion gets a solid ring. */
+@keyframes hold-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.7);
+  }
+}
+.hold-pulse {
+  animation: hold-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hold-pulse {
+    animation: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Page background gradient — mobile uses a circle-at-top wash; desktop (≥sm)
+   switches to a positioned wider-canvas variant. A custom property so shells
+   can apply it via Tailwind arbitrary value without per-breakpoint class
+   strings. */
+:root {
+  --page-bg-gradient: radial-gradient(
+    circle at top,
+    var(--color-zen-bg-soft),
+    var(--color-zen-bg) 48%,
+    var(--color-zen-bg-edge)
+  );
+}
+@media (min-width: 640px) {
+  :root {
+    --page-bg-gradient: radial-gradient(
+      50% 70% at 50% 25%,
+      var(--color-zen-bg-edge) 0%,
+      var(--color-zen-bg) 50%,
+      var(--color-zen-bg-soft) 100%
+    );
+  }
+}

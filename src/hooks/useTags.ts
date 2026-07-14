@@ -1,0 +1,138 @@
+// Tag catalog read model + mutations. Reads on mount and on
+// TAGS_CHANGED_EVENT; mutations open their own connection, then announce.
+// Deleting a tag also rewrites sources, so it announces
+// COLLECTION_CHANGED_EVENT too. One mutation at a time, mirroring
+// useDeleteSource.
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { COLLECTION_CHANGED_EVENT } from './useCollection'
+import type { Result } from '../domain/result'
+import {
+  createTag,
+  deleteTag,
+  getAllRecords,
+  openDb,
+  renameTag,
+  type StorageError,
+  type TagRecord,
+} from '../storage'
+
+export const TAGS_CHANGED_EVENT = 'cute:tags-changed'
+
+export type TagsState =
+  | { status: 'loading' }
+  | { status: 'error'; error: StorageError }
+  | { status: 'ready'; tags: TagRecord[] }
+
+export type TagActionState =
+  | { status: 'idle' }
+  | { status: 'busy' }
+  | { status: 'error'; error: StorageError }
+
+export interface UseTags {
+  tagsState: TagsState
+  actionState: TagActionState
+  rename: (id: string, name: string) => void
+  remove: (id: string) => void
+  // Create a catalog tag and resolve its id (null on failure) so a caller can
+  // stage the assignment locally. Used by the per-item sheet's draft editor.
+  create: (name: string) => Promise<string | null>
+}
+
+export function useTags(): UseTags {
+  const [tagsState, setTagsState] = useState<TagsState>({ status: 'loading' })
+  const [actionState, setActionState] = useState<TagActionState>({ status: 'idle' })
+  const busy = useRef(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load(): Promise<void> {
+      const opened = await openDb()
+      if (!opened.ok) {
+        if (!cancelled) setTagsState({ status: 'error', error: opened.error })
+        return
+      }
+      const tags = await getAllRecords(opened.value, 'tags')
+      opened.value.close()
+      if (cancelled) return
+      if (!tags.ok) {
+        setTagsState({ status: 'error', error: tags.error })
+        return
+      }
+      setTagsState({ status: 'ready', tags: tags.value })
+    }
+
+    void load()
+    const onChanged = (): void => {
+      void load()
+    }
+    window.addEventListener(TAGS_CHANGED_EVENT, onChanged)
+    return () => {
+      cancelled = true
+      window.removeEventListener(TAGS_CHANGED_EVENT, onChanged)
+    }
+  }, [])
+
+  const mutate = useCallback(
+    (
+      op: (db: IDBDatabase) => Promise<Result<unknown, StorageError>>,
+      alsoCollection: boolean,
+    ): void => {
+      if (busy.current) return
+      busy.current = true
+      setActionState({ status: 'busy' })
+      void (async () => {
+        const opened = await openDb()
+        if (!opened.ok) {
+          setActionState({ status: 'error', error: opened.error })
+          busy.current = false
+          return
+        }
+        const result = await op(opened.value)
+        opened.value.close()
+        if (!result.ok) {
+          setActionState({ status: 'error', error: result.error })
+          busy.current = false
+          return
+        }
+        setActionState({ status: 'idle' })
+        busy.current = false
+        window.dispatchEvent(new Event(TAGS_CHANGED_EVENT))
+        if (alsoCollection) window.dispatchEvent(new Event(COLLECTION_CHANGED_EVENT))
+      })()
+    },
+    [],
+  )
+
+  const rename = useCallback(
+    (id: string, name: string): void => {
+      mutate((db) => renameTag(db, id, name), false)
+    },
+    [mutate],
+  )
+  const remove = useCallback(
+    (id: string): void => {
+      mutate((db) => deleteTag(db, id), true)
+    },
+    [mutate],
+  )
+  const create = useCallback(async (name: string): Promise<string | null> => {
+    const opened = await openDb()
+    if (!opened.ok) {
+      setActionState({ status: 'error', error: opened.error })
+      return null
+    }
+    const created = await createTag(opened.value, name)
+    opened.value.close()
+    if (!created.ok) {
+      setActionState({ status: 'error', error: created.error })
+      return null
+    }
+    window.dispatchEvent(new Event(TAGS_CHANGED_EVENT))
+    return created.value.id
+  }, [])
+
+  return { tagsState, actionState, rename, remove, create }
+}

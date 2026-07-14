@@ -5,7 +5,6 @@ export const SEEDED_TAG_IDS = [
   'seed:babies',
   'seed:kittens',
   'seed:puppies',
-  'seed:family',
   'seed:bhakti',
 ] as const
 

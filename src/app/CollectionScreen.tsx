@@ -4,7 +4,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
 import { PlusIcon } from '../components/icons/PlusIcon'
 import { TagIcon } from '../components/icons/TagIcon'
-import { IconButton, type IconButtonSize } from '../components/primitives/IconButton'
+import { IconButton } from '../components/primitives/IconButton'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import type { UiStrings } from '../content/strings'
 import { formatBytes, formatDuration } from '../domain/format'
@@ -30,6 +30,22 @@ function rejectionHint(rejection: FileRejection, strings: UiStrings): string {
     case 'storage-failed':
       return strings.collection.rejection.storageFailed
   }
+}
+
+// Toolbar action segment — mirrors a SegmentedControl segment so the + / tag
+// pill reads as a peer of the sort switcher, not a pair of floating buttons.
+const toolbarAction =
+  'grid size-9 place-items-center rounded-full text-[var(--color-zen-text-soft)] transition hover:bg-[var(--color-zen-surface)] hover:text-[var(--color-zen-text)] active:bg-[var(--color-zen-surface)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent disabled:cursor-not-allowed disabled:opacity-60'
+
+// Loading feedback is essential, so the spin runs even under
+// prefers-reduced-motion — a frozen spinner communicates nothing.
+function Spinner(): ReactElement {
+  return (
+    <span
+      aria-hidden="true"
+      className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent"
+    />
+  )
 }
 
 export interface CollectionScreenProps {
@@ -78,24 +94,14 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
   const isEmpty = collection.status === 'ready' && collection.sources.length === 0
   const hasItems = collection.status === 'ready' && collection.sources.length > 0
 
-  const importButton = (size: IconButtonSize): ReactElement => (
+  // Empty-state CTA only — the populated toolbar renders import as a pill segment.
+  const importCta = (
     <IconButton
-      size={size}
+      size="md"
       disabled={importing}
       label={importing ? strings.collection.importing : strings.collection.importButton}
       onClick={() => fileInputRef.current?.click()}
-      icon={
-        importing ? (
-          // Loading feedback is essential, so the spin runs even under
-          // prefers-reduced-motion — a frozen spinner communicates nothing.
-          <span
-            aria-hidden="true"
-            className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent"
-          />
-        ) : (
-          <PlusIcon />
-        )
-      }
+      icon={importing ? <Spinner /> : <PlusIcon />}
     />
   )
 
@@ -165,14 +171,14 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
       )}
       {isEmpty && (
         <div className="mt-12 flex flex-col items-center gap-4 text-center">
-          {importButton('md')}
+          {importCta}
           <p className="max-w-xs text-sm text-[var(--color-zen-text-soft)]">{strings.collection.empty}</p>
         </div>
       )}
       {hasItems && (
         <>
           <div className="mt-6 flex items-center justify-between gap-3">
-            <div className="w-64">
+            <div className="w-56">
               <SegmentedControl<'recent' | 'aww'>
                 options={[
                   { id: 'recent', label: strings.collection.sortRecent },
@@ -183,15 +189,27 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
                 ariaLabel={strings.collection.sortLabel}
               />
             </div>
-            {importButton('sm')}
-            {tagsState.status === 'ready' && (
-              <IconButton
-                size="sm"
-                icon={<TagIcon />}
-                label={strings.tags.edit}
-                onClick={onOpenTags}
-              />
-            )}
+            <div className="flex items-center rounded-full border border-[var(--color-border-soft)] bg-[var(--color-zen-bg-soft)] p-1">
+              <button
+                type="button"
+                disabled={importing}
+                aria-label={importing ? strings.collection.importing : strings.collection.importButton}
+                onClick={() => fileInputRef.current?.click()}
+                className={toolbarAction}
+              >
+                {importing ? <Spinner /> : <PlusIcon />}
+              </button>
+              {tagsState.status === 'ready' && (
+                <button
+                  type="button"
+                  aria-label={strings.tags.edit}
+                  onClick={onOpenTags}
+                  className={toolbarAction}
+                >
+                  <TagIcon />
+                </button>
+              )}
+            </div>
           </div>
           <div className="mt-6">{grid}</div>
         </>

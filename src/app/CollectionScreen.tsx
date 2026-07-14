@@ -183,17 +183,15 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
                 ariaLabel={strings.collection.sortLabel}
               />
             </div>
-            <div className="flex items-center gap-2">
-              {importButton('sm')}
-              {tagsState.status === 'ready' && (
-                <IconButton
-                  size="sm"
-                  icon={<TagIcon />}
-                  label={strings.tags.edit}
-                  onClick={onOpenTags}
-                />
-              )}
-            </div>
+            {importButton('sm')}
+            {tagsState.status === 'ready' && (
+              <IconButton
+                size="sm"
+                icon={<TagIcon />}
+                label={strings.tags.edit}
+                onClick={onOpenTags}
+              />
+            )}
           </div>
           <div className="mt-6">{grid}</div>
         </>

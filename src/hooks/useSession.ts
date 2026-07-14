@@ -52,21 +52,19 @@ export interface UseSession {
   readonly frame: SessionFrame | null
   readonly summary: SessionSummary | null
   readonly media: SessionMedia | null
-  readonly overlayVisible: boolean
   readonly pressStart: () => void
   readonly pressEnd: () => void
   readonly cancelPress: () => void
   readonly next: () => void
   readonly prev: () => void
   readonly stop: () => void
-  readonly toggleOverlay: () => void
 }
 
 type SessionSetState = Dispatch<SetStateAction<SessionState>>
 
 type SessionControls = Pick<
   UseSession,
-  'pressStart' | 'pressEnd' | 'cancelPress' | 'next' | 'prev' | 'stop' | 'toggleOverlay'
+  'pressStart' | 'pressEnd' | 'cancelPress' | 'next' | 'prev' | 'stop'
 >
 
 // Wall-clock drivers for a running session: the tick that advances the machine
@@ -156,11 +154,7 @@ function useSessionMedia(currentSourceId: string | null): SessionMedia | null {
 
 // Gesture/navigation commands. All memoized on the stable setters; pressEnd
 // reads the latest state via a ref since it branches on the machine's result.
-function useSessionControls(
-  state: SessionState,
-  setState: SessionSetState,
-  setOverlayVisible: Dispatch<SetStateAction<boolean>>,
-): SessionControls {
+function useSessionControls(state: SessionState, setState: SessionSetState): SessionControls {
   const stateRef = useRef<SessionState>(state)
   useEffect(() => {
     stateRef.current = state
@@ -173,10 +167,8 @@ function useSessionControls(
   const doPressEnd = useCallback(() => {
     const s = stateRef.current
     if (s.status !== 'running') return
-    const { session, wasHold } = pressEnd(s, Date.now())
-    setState(session)
-    if (!wasHold) setOverlayVisible((v) => !v) // tap toggles the overlay (FR-29)
-  }, [setState, setOverlayVisible])
+    setState(pressEnd(s, Date.now()).session)
+  }, [setState])
 
   const doCancelPress = useCallback(() => {
     setState((s) => (s.status === 'running' ? cancelPress(s) : s))
@@ -194,10 +186,6 @@ function useSessionControls(
     setState((s) => (s.status === 'running' ? stop(s, Date.now()) : s))
   }, [setState])
 
-  const toggleOverlay = useCallback(() => {
-    setOverlayVisible((v) => !v)
-  }, [setOverlayVisible])
-
   return {
     pressStart: doPressStart,
     pressEnd: doPressEnd,
@@ -205,7 +193,6 @@ function useSessionControls(
     next,
     prev,
     stop: doStop,
-    toggleOverlay,
   }
 }
 
@@ -223,20 +210,18 @@ export function useSession(request: SessionRequest): UseSession {
     ),
   )
   const [now, setNow] = useState<number>(() => Date.now())
-  const [overlayVisible, setOverlayVisible] = useState<boolean>(true)
 
   useSessionRuntime(state.status, setState, setNow)
   useSessionPersistence(state)
   const currentSourceId = state.status === 'running' ? currentSource(state) : null
   const media = useSessionMedia(currentSourceId)
-  const controls = useSessionControls(state, setState, setOverlayVisible)
+  const controls = useSessionControls(state, setState)
 
   return {
     state,
     frame: state.status === 'running' ? sessionFrame(state, now) : null,
     summary: state.status === 'complete' ? summarize(state.record, state.holds) : null,
     media,
-    overlayVisible,
     ...controls,
   }
 }

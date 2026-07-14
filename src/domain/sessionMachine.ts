@@ -81,8 +81,8 @@ export function pressStart(s: RunningSession, at: number): RunningSession {
   return { ...s, hold: { sourceId: currentSource(s), startedAt: at } }
 }
 
-// Classify a released press: ≥300ms records a hold, shorter is a tap (overlay
-// toggle — the caller's concern). wasHold lets the caller skip the toggle.
+// Classify a released press: ≥300ms records a hold; a shorter tap records
+// nothing. wasHold reports which.
 export function pressEnd(
   s: RunningSession,
   at: number,

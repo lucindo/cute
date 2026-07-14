@@ -17,9 +17,9 @@ export interface SessionOverlayProps {
 // Discrete session overlay (SPEC FR-33): remaining/overtime countdown flanked by
 // a mute toggle and a stop control on translucent blurred pills so it stays
 // legible over any media. No time-of-day clock — it duplicated the OS status bar
-// on mobile. The container is click-through except the buttons, so taps on the
-// media still reach the surface (toggle overlay / hold). A subtle ring on the
-// time pill signals a hold in progress.
+// on mobile. The container is click-through except the buttons, so presses on the
+// media still reach the surface to record a hold. A subtle ring on the time pill
+// signals a hold in progress.
 export function SessionOverlay({
   frame,
   muted,

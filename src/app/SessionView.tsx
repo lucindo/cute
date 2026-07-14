@@ -34,8 +34,7 @@ interface PointerHandlers {
 }
 
 // Keyboard grammar (FR-32): Space held = hold (repeat filtered), ←/→ = prev/next,
-// Esc = stop-with-confirm, O = toggle overlay. Suspended while the confirm dialog
-// owns focus.
+// Esc = stop-with-confirm. Suspended while the confirm dialog owns focus.
 function useSessionKeyboard(opts: {
   running: boolean
   confirmStop: boolean
@@ -43,11 +42,9 @@ function useSessionKeyboard(opts: {
   pressEnd: () => void
   next: () => void
   prev: () => void
-  toggleOverlay: () => void
   setConfirmStop: Dispatch<SetStateAction<boolean>>
 }): void {
-  const { running, confirmStop, pressStart, pressEnd, next, prev, toggleOverlay, setConfirmStop } =
-    opts
+  const { running, confirmStop, pressStart, pressEnd, next, prev, setConfirmStop } = opts
   useEffect(() => {
     if (!running || confirmStop) return undefined
     const onKeyDown = (e: KeyboardEvent): void => {
@@ -67,9 +64,6 @@ function useSessionKeyboard(opts: {
         case 'Escape':
           setConfirmStop(true)
           break
-        case 'KeyO':
-          toggleOverlay()
-          break
         default:
           break
       }
@@ -86,7 +80,7 @@ function useSessionKeyboard(opts: {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [running, confirmStop, pressStart, pressEnd, next, prev, toggleOverlay, setConfirmStop])
+  }, [running, confirmStop, pressStart, pressEnd, next, prev, setConfirmStop])
 }
 
 // Drive the shared App-level <video> (SPEC FR-35): swap src, apply the sound
@@ -198,14 +192,12 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     frame,
     summary,
     media,
-    overlayVisible,
     pressStart,
     pressEnd,
     cancelPress,
     next,
     prev,
     stop,
-    toggleOverlay,
   } = useSession(request)
   const [confirmStop, setConfirmStop] = useState(false)
   const running = state.status === 'running'
@@ -218,7 +210,6 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     pressEnd,
     next,
     prev,
-    toggleOverlay,
     setConfirmStop,
   })
   const pointer = usePointerGestures({ pressStart, pressEnd, cancelPress, next, prev })
@@ -247,7 +238,7 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
           className="pointer-events-none absolute inset-0 h-full w-full object-contain [-webkit-touch-callout:none]"
         />
       )}
-      {overlayVisible && frame !== null && (
+      {frame !== null && (
         <SessionOverlay
           frame={frame}
           muted={!soundOn}

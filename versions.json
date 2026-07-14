@@ -1,7 +1,8 @@
 {
-  "official": "v0.2",
+  "official": "v0.3",
   "versions": [
     "v0.1",
-    "v0.2"
+    "v0.2",
+    "v0.3"
   ]
 }

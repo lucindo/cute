@@ -44,7 +44,6 @@ export async function processVideoFile(
 // Frame 0 is often black or a fade-in; nudge forward for the poster.
 const POSTER_SEEK_S = 0.5
 
-// A blob URL either decodes or fires `error` — no network stalls, no timeout.
 async function probeVideo(blob: Blob): Promise<ImageBitmap> {
   const url = URL.createObjectURL(blob)
   const video = document.createElement('video')
@@ -53,6 +52,11 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
   video.preload = 'auto'
   try {
     video.src = url
+    // iOS Safari won't decode frames for an off-DOM <video> that never played,
+    // so `loadeddata`/`seeked` never fire (and never error) — the import hangs.
+    // A muted inline play() is allowed without a gesture and forces the decode;
+    // it may still reject, so the loadeddata wait below is what actually gates.
+    await video.play().catch(() => {})
     await videoEvent(video, 'loadeddata')
     // Duration is Infinity for some WebM without metadata — skip the seek.
     if (Number.isFinite(video.duration) && video.duration > POSTER_SEEK_S) {
@@ -68,8 +72,17 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
   }
 }
 
+// Cap on each decode wait: a video event that never fires (nor errors) must
+// reject so the file rejects as undecodable, never hanging the whole import.
+const PROBE_TIMEOUT_MS = 10_000
+
 function videoEvent(video: HTMLVideoElement, event: string): Promise<void> {
   return new Promise((resolve, reject) => {
+    const cleanup = (): void => {
+      clearTimeout(timer)
+      video.removeEventListener(event, onEvent)
+      video.removeEventListener('error', onError)
+    }
     const onEvent = (): void => {
       cleanup()
       resolve()
@@ -78,10 +91,10 @@ function videoEvent(video: HTMLVideoElement, event: string): Promise<void> {
       cleanup()
       reject(new Error(video.error?.message ?? 'video decode failed'))
     }
-    const cleanup = (): void => {
-      video.removeEventListener(event, onEvent)
-      video.removeEventListener('error', onError)
-    }
+    const timer = setTimeout(() => {
+      cleanup()
+      reject(new Error(`video ${event} timed out`))
+    }, PROBE_TIMEOUT_MS)
     video.addEventListener(event, onEvent)
     video.addEventListener('error', onError)
   })

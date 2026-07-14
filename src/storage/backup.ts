@@ -21,17 +21,19 @@ const MEDIA_DIR = 'media/'
 const THUMB_DIR = 'thumbs/'
 
 export async function exportBackup(db: IDBDatabase): Promise<Result<Uint8Array, StorageError>> {
-  const sources = await getAllRecords(db, 'sources')
+  const [sources, tags, sessions, holdEvents, blobs, thumbs] = await Promise.all([
+    getAllRecords(db, 'sources'),
+    getAllRecords(db, 'tags'),
+    getAllRecords(db, 'sessions'),
+    getAllRecords(db, 'holdEvents'),
+    getAllRecords(db, 'blobs'),
+    getAllRecords(db, 'thumbs'),
+  ])
   if (!sources.ok) return sources
-  const tags = await getAllRecords(db, 'tags')
   if (!tags.ok) return tags
-  const sessions = await getAllRecords(db, 'sessions')
   if (!sessions.ok) return sessions
-  const holdEvents = await getAllRecords(db, 'holdEvents')
   if (!holdEvents.ok) return holdEvents
-  const blobs = await getAllRecords(db, 'blobs')
   if (!blobs.ok) return blobs
-  const thumbs = await getAllRecords(db, 'thumbs')
   if (!thumbs.ok) return thumbs
 
   const manifest = buildManifest({

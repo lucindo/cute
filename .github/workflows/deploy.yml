@@ -161,37 +161,21 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Create assembly directory
-        run: mkdir -p site
-      - name: Download all build artifacts
+      - name: Download root build (official tag) into site/
         uses: actions/download-artifact@v8
         with:
-          path: artifacts
-      - name: Assemble site (root + current)
-        # pkg_version_short via env, not inlined — keeps a crafted version string
-        # out of the shell.
-        env:
-          PKG_VERSION_SHORT: ${{ needs.validate-version.outputs.pkg_version_short }}
-        run: |
-          set -e
-          # Root = the official tag's build.
-          if [ -d artifacts/build-root ]; then
-            cp -R artifacts/build-root/. site/
-            echo "Copied build-root to site/"
-          else
-            echo "ERROR: build-root artifact missing — root would be empty" >&2
-            exit 1
-          fi
-          # Current tag (push event only) → site/<pkg_version_short>/.
-          if [ -d artifacts/build-current ]; then
-            SHORT="$PKG_VERSION_SHORT"
-            mkdir -p "site/$SHORT"
-            cp -R artifacts/build-current/. "site/$SHORT/"
-            echo "Copied build-current → site/$SHORT/"
-          else
-            echo "build-current artifact absent (workflow_dispatch, no pushed tag) — skipping current-tag stage"
-          fi
-          ls -la site/
+          name: build-root
+          path: site
+      - name: Download current-tag build into versioned subpath
+        # Present only on tag pushes; skipped on workflow_dispatch (build-current
+        # is skipped there, so the official build at the root is the whole deploy).
+        if: needs.build-current.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: build-current
+          path: site/${{ needs.validate-version.outputs.pkg_version_short }}
+      - name: Show assembled tree
+        run: ls -la site/
       - uses: actions/configure-pages@v6
         with:
           enablement: true

@@ -226,7 +226,12 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     >
       {!showVideo && <div className="absolute inset-0 bg-black" />}
       {media !== null && media.type === 'image' && (
-        <img src={media.url} alt="" className="absolute inset-0 h-full w-full object-contain" />
+        <img
+          src={media.url}
+          alt=""
+          draggable={false}
+          className="pointer-events-none absolute inset-0 h-full w-full object-contain [-webkit-touch-callout:none]"
+        />
       )}
       {overlayVisible && frame !== null && (
         <SessionOverlay

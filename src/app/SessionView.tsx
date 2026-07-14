@@ -175,6 +175,21 @@ function usePointerGestures(opts: {
   }
 }
 
+// While the black media takeover is on screen, paint the iOS Safari status-bar
+// band black too (via theme-color), so it doesn't seam against the fill and the
+// fullscreen illusion holds. Restored to the page's color on completion/exit.
+function useBlackStatusBar(active: boolean): void {
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (!active || meta === null) return undefined
+    const prev = meta.getAttribute('content')
+    meta.setAttribute('content', '#000000')
+    return () => {
+      if (prev !== null) meta.setAttribute('content', prev)
+    }
+  }, [active])
+}
+
 export function SessionView({ request, videoRef, setVideoActive, onExit }: SessionViewProps): ReactElement {
   const strings = useUiStrings()
   const { soundOn, setSoundOn } = useVideoSound()
@@ -207,6 +222,7 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     setConfirmStop,
   })
   const pointer = usePointerGestures({ pressStart, pressEnd, cancelPress, next, prev })
+  useBlackStatusBar(running)
 
   if (state.status === 'complete' && summary !== null) {
     return <CompletionScreen summary={summary} onDone={onExit} strings={strings.session.completion} />

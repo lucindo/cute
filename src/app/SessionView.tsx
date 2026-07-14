@@ -169,30 +169,30 @@ function usePointerGestures(opts: {
   }
 }
 
-// While the black media takeover is on screen, paint the iOS status bar black so
-// it doesn't seam against the fill. Two levers: theme-color drives Safari's
-// browser UI; the apple-* style drives the installed standalone status bar —
-// documented read-at-launch but updated at runtime on many iOS builds, harmless
-// where it isn't. Both restored to their prior value on completion/exit.
+// While the black media takeover is on screen, force the iOS status bar black.
+// The installed standalone strip paints with the document background and its text
+// follows color-scheme (the status-bar metas are read at launch — runtime writes
+// are ignored on iOS), so blacken <html> and pin a dark scheme (white text) for
+// the session. theme-color covers Safari's browser chrome. All restored on exit.
 function useBlackStatusBar(active: boolean): void {
   useEffect(() => {
     if (!active) return undefined
-    const swaps: ReadonlyArray<readonly [name: string, value: string]> = [
-      ['theme-color', '#000000'],
-      ['apple-mobile-web-app-status-bar-style', 'black'],
-    ]
-    const restore: Array<() => void> = []
-    for (const [name, value] of swaps) {
-      const meta = document.querySelector(`meta[name="${name}"]`)
-      if (meta === null) continue
-      const prev = meta.getAttribute('content')
-      meta.setAttribute('content', value)
-      restore.push(() => {
-        if (prev !== null) meta.setAttribute('content', prev)
-      })
-    }
+    const root = document.documentElement
+    const prevBg = root.style.backgroundColor
+    const prevScheme = root.style.colorScheme
+    root.style.backgroundColor = '#000000'
+    root.style.colorScheme = 'dark'
+
+    const themeColor = document.querySelector('meta[name="theme-color"]')
+    const prevThemeColor = themeColor === null ? null : themeColor.getAttribute('content')
+    if (themeColor !== null) themeColor.setAttribute('content', '#000000')
+
     return () => {
-      for (const undo of restore) undo()
+      root.style.backgroundColor = prevBg
+      root.style.colorScheme = prevScheme
+      if (themeColor !== null && prevThemeColor !== null) {
+        themeColor.setAttribute('content', prevThemeColor)
+      }
     }
   }, [active])
 }

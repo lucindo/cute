@@ -31,10 +31,11 @@ export interface SettingsScreenProps {
   backupDeps?: BackupDeps
 }
 
-export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScreenProps): ReactElement {
-  const strings = useUiStrings()
+// Owns the backup export/restore leaf: useBackup state, the hidden file input,
+// and the restore-confirm dialog (top-layer, so its DOM position is moot).
+function BackupSection({ backupDeps }: { backupDeps: BackupDeps | undefined }): ReactElement {
+  const b = useUiStrings().settings.backup
   const { backupState, exportNow, restore } = useBackup(backupDeps)
-  const backRef = useFocusOnMount<HTMLButtonElement>()
   const fileRef = useRef<HTMLInputElement>(null)
   const [pendingRestore, setPendingRestore] = useState<File | null>(null)
 
@@ -42,8 +43,8 @@ export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScre
   const errorText =
     backupState.status === 'error'
       ? backupState.error.name === 'InvalidBackup'
-        ? strings.settings.backup.invalidFile
-        : strings.settings.backup.error
+        ? b.invalidFile
+        : b.error
       : null
 
   function onFilePicked(event: ChangeEvent<HTMLInputElement>): void {
@@ -58,7 +59,51 @@ export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScre
     setPendingRestore(null)
   }
 
-  const b = strings.settings.backup
+  return (
+    <>
+      <SettingsSectionHeader label={b.label} />
+      <SectionCard padding="4px 8px">
+        <button type="button" onClick={exportNow} disabled={working} className={ROW_CLASS}>
+          {b.export}
+        </button>
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={working}
+          className={`${ROW_CLASS} border-t border-[var(--color-border-soft)]`}
+        >
+          {b.restore}
+        </button>
+      </SectionCard>
+      {errorText !== null && (
+        <p role="alert" className="mt-2 px-2 text-[13px] text-[var(--color-destructive)]">
+          {errorText}
+        </p>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".zip,application/zip"
+        className="hidden"
+        aria-hidden="true"
+        onChange={onFilePicked}
+      />
+      <ConfirmDialog
+        open={pendingRestore !== null}
+        title={b.restoreTitle}
+        body={b.restoreBody}
+        confirmLabel={b.restoreConfirm}
+        cancelLabel={b.restoreCancel}
+        onConfirm={confirmRestore}
+        onCancel={() => { setPendingRestore(null) }}
+      />
+    </>
+  )
+}
+
+export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScreenProps): ReactElement {
+  const strings = useUiStrings()
+  const backRef = useFocusOnMount<HTMLButtonElement>()
 
   return (
     <PageShell>
@@ -92,33 +137,7 @@ export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScre
         />
         <SettingsSectionHeader label={strings.settings.language.label} />
         <LanguagePicker label={strings.settings.language.label} />
-        <SettingsSectionHeader label={b.label} />
-        <SectionCard padding="4px 8px">
-          <button type="button" onClick={exportNow} disabled={working} className={ROW_CLASS}>
-            {b.export}
-          </button>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={working}
-            className={`${ROW_CLASS} border-t border-[var(--color-border-soft)]`}
-          >
-            {b.restore}
-          </button>
-        </SectionCard>
-        {errorText !== null && (
-          <p role="alert" className="mt-2 px-2 text-[13px] text-[var(--color-destructive)]">
-            {errorText}
-          </p>
-        )}
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".zip,application/zip"
-          className="hidden"
-          aria-hidden="true"
-          onChange={onFilePicked}
-        />
+        <BackupSection backupDeps={backupDeps} />
         <SettingsSectionHeader label={strings.settings.about.label} />
         <SettingsRow
           label={strings.settings.about.version}
@@ -140,15 +159,6 @@ export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScre
           <ChevronRightIcon className="text-[var(--color-zen-muted)]" />
         </a>
       </div>
-      <ConfirmDialog
-        open={pendingRestore !== null}
-        title={b.restoreTitle}
-        body={b.restoreBody}
-        confirmLabel={b.restoreConfirm}
-        cancelLabel={b.restoreCancel}
-        onConfirm={confirmRestore}
-        onCancel={() => { setPendingRestore(null) }}
-      />
     </PageShell>
   )
 }

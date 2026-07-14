@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
+import { PlusIcon } from '../components/icons/PlusIcon'
+import { TagIcon } from '../components/icons/TagIcon'
+import { IconButton, type IconButtonSize } from '../components/primitives/IconButton'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import type { UiStrings } from '../content/strings'
 import { formatBytes, formatDuration } from '../domain/format'
@@ -72,48 +75,60 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
   }, [importFrom])
 
   const importing = importState.status === 'importing'
+  const isEmpty = collection.status === 'ready' && collection.sources.length === 0
+  const hasItems = collection.status === 'ready' && collection.sources.length > 0
 
-  let content: ReactElement | null = null
-  if (collection.status === 'error') {
-    content = <p className="text-sm text-[var(--color-zen-text-soft)]">{strings.collection.loadError}</p>
-  } else if (collection.status === 'ready' && collection.sources.length === 0) {
-    content = <p className="text-sm text-[var(--color-zen-text-soft)]">{strings.collection.empty}</p>
-  } else if (collection.status === 'ready') {
-    content = (
-      <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
-        {orderedSources.map((source) => (
-          <li key={source.id}>
-            <button
-              type="button"
-              aria-label={strings.collection.openItem}
-              onClick={() => {
-                setOpenSourceId(source.id)
-              }}
-              className="block w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
+  const importButton = (size: IconButtonSize): ReactElement => (
+    <IconButton
+      size={size}
+      disabled={importing}
+      label={importing ? strings.collection.importing : strings.collection.importButton}
+      onClick={() => fileInputRef.current?.click()}
+      icon={
+        importing ? (
+          // Loading feedback is essential, so the spin runs even under
+          // prefers-reduced-motion — a frozen spinner communicates nothing.
+          <span
+            aria-hidden="true"
+            className="size-5 animate-spin rounded-full border-2 border-current border-t-transparent"
+          />
+        ) : (
+          <PlusIcon />
+        )
+      }
+    />
+  )
+
+  const grid = (
+    <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
+      {orderedSources.map((source) => (
+        <li key={source.id}>
+          <button
+            type="button"
+            aria-label={strings.collection.openItem}
+            onClick={() => {
+              setOpenSourceId(source.id)
+            }}
+            className="block w-full rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
+          >
+            <div className="aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)]">
+              {source.thumbUrl !== null && (
+                <img src={source.thumbUrl} alt="" className="h-full w-full object-cover" />
+              )}
+            </div>
+            <p
+              // Supplementary visual metadata; keep the stat out of the
+              // button's accessible name.
+              aria-hidden="true"
+              className="mt-1 text-center text-[11px] tabular-nums text-[var(--color-zen-text-soft)]"
             >
-              <div className="aspect-square overflow-hidden rounded-lg bg-[var(--color-zen-surface)]">
-                {source.thumbUrl !== null && (
-                  <img
-                    src={source.thumbUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
-              <p
-                // Supplementary visual metadata; keep the stat out of the
-                // button's accessible name.
-                aria-hidden="true"
-                className="mt-1 text-center text-[11px] tabular-nums text-[var(--color-zen-text-soft)]"
-              >
-                {strings.collection.holdStat(source.holdCount, formatDuration(source.totalHeldMs))}
-              </p>
-            </button>
-          </li>
-        ))}
-      </ul>
-    )
-  }
+              {strings.collection.holdStat(source.holdCount, formatDuration(source.totalHeldMs))}
+            </p>
+          </button>
+        </li>
+      ))}
+    </ul>
+  )
 
   const openSource =
     collection.status === 'ready'
@@ -136,32 +151,53 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
         type="file"
         accept="image/*,video/*"
         multiple
-        aria-label={strings.collection.importButton}
+        tabIndex={-1}
         className="sr-only"
         onChange={(event) => {
           importFrom(Array.from(event.currentTarget.files ?? []))
           event.currentTarget.value = ''
         }}
       />
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <button
-          type="button"
-          disabled={importing}
-          onClick={() => fileInputRef.current?.click()}
-          className="rounded-full bg-[var(--color-zen-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-zen-on-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2 disabled:opacity-60"
-        >
-          {importing ? strings.collection.importing : strings.collection.importButton}
-        </button>
-        {tagsState.status === 'ready' && (
-          <button
-            type="button"
-            onClick={onOpenTags}
-            className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-medium text-[var(--color-zen-text)] hover:bg-[var(--color-zen-bg-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2"
-          >
-            {strings.tags.edit}
-          </button>
-        )}
-      </div>
+      {collection.status === 'error' && (
+        <p className="mt-6 text-center text-sm text-[var(--color-zen-text-soft)]">
+          {strings.collection.loadError}
+        </p>
+      )}
+      {isEmpty && (
+        <div className="mt-12 flex flex-col items-center gap-4 text-center">
+          {importButton('md')}
+          <p className="max-w-xs text-sm text-[var(--color-zen-text-soft)]">{strings.collection.empty}</p>
+        </div>
+      )}
+      {hasItems && (
+        <>
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <div className="w-fit">
+              <SegmentedControl<'recent' | 'aww'>
+                options={[
+                  { id: 'recent', label: strings.collection.sortRecent },
+                  { id: 'aww', label: strings.collection.sortAww },
+                ]}
+                value={sortMode}
+                onChange={setSortMode}
+                ariaLabel={strings.collection.sortLabel}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              {importButton('sm')}
+              {tagsState.status === 'ready' && (
+                <IconButton
+                  size="sm"
+                  icon={<TagIcon />}
+                  label={strings.tags.edit}
+                  onClick={onOpenTags}
+                />
+              )}
+            </div>
+          </div>
+          <div className="mt-6">{grid}</div>
+        </>
+      )}
       {actionState.status === 'error' && (
         <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">{strings.tags.actionFailed}</p>
       )}
@@ -184,20 +220,6 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
           {strings.collection.saveFailed}
         </p>
       )}
-      {collection.status === 'ready' && collection.sources.length > 0 && (
-        <div className="mt-6 flex justify-center">
-          <SegmentedControl<'recent' | 'aww'>
-            options={[
-              { id: 'recent', label: strings.collection.sortRecent },
-              { id: 'aww', label: strings.collection.sortAww },
-            ]}
-            value={sortMode}
-            onChange={setSortMode}
-            ariaLabel={strings.collection.sortLabel}
-          />
-        </div>
-      )}
-      <div className="mt-6">{content}</div>
       {collection.status === 'ready' && (
         <p className="mt-6 text-xs text-[var(--color-zen-muted)]">
           {quota !== null

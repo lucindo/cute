@@ -314,6 +314,8 @@ describe('CollectionScreen tags', () => {
   })
 
   it('navigates to the tags page from the edit-tags button', async () => {
+    // The edit-tags icon lives in the populated-collection toolbar.
+    await seed([source({ id: 'a' })])
     const onOpenTags = vi.fn()
     renderScreen(UI_STRINGS.en, onOpenTags)
 
@@ -329,6 +331,14 @@ describe('CollectionScreen import', () => {
 
   function makeImageFile(name: string, type = 'image/jpeg'): File {
     return new File(['x'], name, { type })
+  }
+
+  // The file input is sr-only and unlabeled (the + button carries the label),
+  // so target it by tag — the screen renders exactly one input.
+  function fileInput(container: HTMLElement): HTMLInputElement {
+    const input = container.querySelector('input')
+    if (input === null) throw new Error('expected the file input')
+    return input
   }
 
   // A list item whose full text matches — rejection lines render as split
@@ -374,7 +384,7 @@ describe('CollectionScreen import', () => {
     const { container } = renderScreen()
     await screen.findByText(EMPTY_TEXT)
 
-    await userEvent.upload(screen.getByLabelText(IMPORT_LABEL), [makeImageFile('a.jpg')])
+    await userEvent.upload(fileInput(container), [makeImageFile('a.jpg')])
 
     await waitFor(() => {
       expect(container.querySelectorAll('img')).toHaveLength(1)
@@ -421,10 +431,10 @@ describe('CollectionScreen import', () => {
   it('disables the import button while a batch is processing', async () => {
     let release: ((bitmap: ImageBitmap) => void) | undefined
     vi.stubGlobal('createImageBitmap', () => new Promise<ImageBitmap>((resolve) => { release = resolve }))
-    renderScreen()
+    const { container } = renderScreen()
     await screen.findByText(EMPTY_TEXT)
 
-    await userEvent.upload(screen.getByLabelText(IMPORT_LABEL), [makeImageFile('slow.jpg')])
+    await userEvent.upload(fileInput(container), [makeImageFile('slow.jpg')])
     const busyButton = await screen.findByRole('button', { name: UI_STRINGS.en.collection.importing })
     expect(busyButton).toBeDisabled()
 

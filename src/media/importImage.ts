@@ -14,7 +14,7 @@ export interface ProcessedImage {
 }
 
 export type ImportRejection =
-  | { reason: 'undecodable'; mimeType: string }
+  | { reason: 'undecodable'; mimeType: string; detail?: string }
   | { reason: 'encode-failed'; mimeType: string }
 
 // Seams for the two browser-only leaves, injectable for jsdom tests.

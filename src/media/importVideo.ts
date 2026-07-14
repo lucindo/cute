@@ -28,8 +28,10 @@ export async function processVideoFile(
   let poster: ImageBitmap
   try {
     poster = await probe(file)
-  } catch {
-    return err({ reason: 'undecodable', mimeType: file.type })
+  } catch (cause) {
+    // v0.5 diagnostic: carry the probe's failure detail to the UI so the
+    // iOS-only reject can be pinned down on-device. Revert once diagnosed.
+    return err({ reason: 'undecodable', mimeType: file.type, detail: errName(cause) })
   }
   try {
     const thumb = await encode(poster, THUMB_MAX_EDGE)
@@ -63,17 +65,25 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
   try {
     video.src = url
     // Muted inline play() forces iOS to actually decode; it may still reject,
-    // so the loadeddata wait below is what gates.
-    await video.play().catch(() => {})
-    await videoEvent(video, 'loadeddata')
-    // Duration is Infinity for some WebM without metadata — skip the seek.
-    if (Number.isFinite(video.duration) && video.duration > POSTER_SEEK_S) {
-      video.currentTime = POSTER_SEEK_S
-      // Best-effort: a stalled seek keeps the loaded frame rather than losing
-      // the whole video over a black-frame nicety.
-      await videoEvent(video, 'seeked').catch(() => {})
+    // so the loadeddata wait below is what gates. Capture its outcome for the
+    // v0.5 diagnostic and fold it into any downstream failure.
+    const play = await video.play().then(
+      () => 'play:ok',
+      (e: unknown) => `play:${e instanceof Error ? e.name : 'fail'}`,
+    )
+    try {
+      await videoEvent(video, 'loadeddata')
+      // Duration is Infinity for some WebM without metadata — skip the seek.
+      if (Number.isFinite(video.duration) && video.duration > POSTER_SEEK_S) {
+        video.currentTime = POSTER_SEEK_S
+        // Best-effort: a stalled seek keeps the loaded frame rather than losing
+        // the whole video over a black-frame nicety.
+        await videoEvent(video, 'seeked').catch(() => {})
+      }
+      return await grabFrame(video)
+    } catch (stage) {
+      throw new Error(`${play} ${errName(stage)}`, { cause: stage })
     }
-    return await grabFrame(video)
   } finally {
     // Detach before revoking so the decoder releases the blob (iOS Safari).
     video.pause()
@@ -84,17 +94,26 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
   }
 }
 
+// Compact one-liner for the v0.5 diagnostic — Error message, else stringified.
+function errName(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
+
 // createImageBitmap(<video>) is flaky on Safari; a canvas round-trip is not.
 async function grabFrame(video: HTMLVideoElement): Promise<ImageBitmap> {
   const { videoWidth: w, videoHeight: h } = video
-  if (w === 0 || h === 0) throw new Error('video produced no frame')
+  if (w === 0 || h === 0) throw new Error('noframe')
   const canvas = document.createElement('canvas')
   canvas.width = w
   canvas.height = h
   const ctx = canvas.getContext('2d')
-  if (ctx === null) throw new Error('2d canvas context unavailable')
+  if (ctx === null) throw new Error('no2dctx')
   ctx.drawImage(video, 0, 0)
-  return await createImageBitmap(canvas)
+  try {
+    return await createImageBitmap(canvas)
+  } catch (e) {
+    throw new Error(`bitmap:${errName(e)}`, { cause: e })
+  }
 }
 
 // Cap on each decode wait: a video event that never fires (nor errors) must
@@ -114,11 +133,12 @@ function videoEvent(video: HTMLVideoElement, event: string): Promise<void> {
     }
     const onError = (): void => {
       cleanup()
-      reject(new Error(video.error?.message ?? 'video decode failed'))
+      // MediaError.code (3=decode, 4=src-unsupported) is the key iOS signal.
+      reject(new Error(`${event}:err${String(video.error?.code ?? '?')}`))
     }
     const timer = setTimeout(() => {
       cleanup()
-      reject(new Error(`video ${event} timed out`))
+      reject(new Error(`${event}:timeout`))
     }, PROBE_TIMEOUT_MS)
     video.addEventListener(event, onEvent)
     video.addEventListener('error', onError)

@@ -113,6 +113,27 @@ describe('importFiles', () => {
     expect(outcome.rejected[0]?.rejection.reason).toBe('storage-failed')
   })
 
+  it('keeps the batch alive when a file becomes unreadable mid-import', async () => {
+    const db = await freshDb()
+    const good = new File(['a'], 'a.jpg', { type: 'image/jpeg' })
+    const badVideo = new File(['clip'], 'clip.mp4', { type: 'video/mp4' })
+    const badGif = new File(['x'], 'anim.gif', { type: 'image/gif' })
+    const unreadable = (): Promise<ArrayBuffer> =>
+      Promise.reject(new DOMException('gone', 'NotReadableError'))
+    vi.spyOn(badVideo, 'arrayBuffer').mockImplementation(unreadable)
+    vi.spyOn(badGif, 'arrayBuffer').mockImplementation(unreadable)
+
+    const outcome = await importFiles(db, [good, badVideo, badGif], fakeDeps())
+    expect(outcome.imported).toHaveLength(1)
+    expect(outcome.rejected).toHaveLength(2)
+    expect(outcome.rejected[0]?.name).toBe('clip.mp4')
+    expect(outcome.rejected[0]?.rejection.reason).toBe('storage-failed')
+    expect(outcome.rejected[1]).toEqual({
+      name: 'anim.gif',
+      rejection: { reason: 'undecodable', mimeType: 'image/gif' },
+    })
+  })
+
   it('returns an empty outcome for an empty batch', async () => {
     const db = await freshDb()
     await expect(importFiles(db, [], fakeDeps())).resolves.toEqual({ imported: [], rejected: [] })

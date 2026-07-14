@@ -61,7 +61,20 @@ export async function importFiles(
       tags: [],
       deleted: false,
     }
-    const [bytes, thumbBytes] = await Promise.all([blob.arrayBuffer(), thumb.arrayBuffer()])
+    // The source file's bytes can still fail to read here — moved/deleted since
+    // the picker, permission revoked, removable/network volume — so reject just
+    // this file and keep the batch alive (the pipeline's per-file contract).
+    let read: [ArrayBuffer, ArrayBuffer]
+    try {
+      read = await Promise.all([blob.arrayBuffer(), thumb.arrayBuffer()])
+    } catch (cause) {
+      outcome.rejected.push({
+        name: file.name,
+        rejection: { reason: 'storage-failed', error: { name: 'ReadFailed', message: String(cause) } },
+      })
+      continue
+    }
+    const [bytes, thumbBytes] = read
     const written = await writeMany(db, [
       { op: 'put', store: 'sources', record: source },
       { op: 'put', store: 'blobs', record: { id: source.id, type: blob.type, bytes } },

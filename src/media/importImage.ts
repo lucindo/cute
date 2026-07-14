@@ -32,7 +32,14 @@ export async function processImageFile(
 
   let passthrough = false
   if (file.type === 'image/gif' || file.type === 'image/webp') {
-    const bytes = new Uint8Array(await file.arrayBuffer())
+    let bytes: Uint8Array
+    try {
+      bytes = new Uint8Array(await file.arrayBuffer())
+    } catch {
+      // File became unreadable between the picker and here — fail as undecodable
+      // rather than throw out of the batch.
+      return err({ reason: 'undecodable', mimeType: file.type })
+    }
     passthrough = file.type === 'image/gif' ? isAnimatedGif(bytes) : isAnimatedWebp(bytes)
   }
 

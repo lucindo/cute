@@ -4,7 +4,14 @@
 // decisions live in the machine (domain/sessionMachine); this hook only injects
 // Date.now() and the DOM.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react'
 
 import { newId } from '../domain/id'
 import {
@@ -55,34 +62,25 @@ export interface UseSession {
   readonly toggleOverlay: () => void
 }
 
-export function useSession(request: SessionRequest): UseSession {
-  const [state, setState] = useState<SessionState>(() =>
-    startSession(
-      {
-        id: newId(),
-        sourceIds: request.sourceIds,
-        plannedMinutes: request.plannedMinutes,
-        tagFilter: [...request.tagFilter],
-        startedAt: Date.now(),
-      },
-      Math.random,
-    ),
-  )
-  const [now, setNow] = useState<number>(() => Date.now())
-  const [overlayVisible, setOverlayVisible] = useState<boolean>(true)
-  const [media, setMedia] = useState<SessionMedia | null>(null)
+type SessionSetState = Dispatch<SetStateAction<SessionState>>
 
-  // Latest state for the one gesture handler that branches on its result.
-  const stateRef = useRef<SessionState>(state)
-  useEffect(() => {
-    stateRef.current = state
-  }, [state])
+type SessionControls = Pick<
+  UseSession,
+  'pressStart' | 'pressEnd' | 'cancelPress' | 'next' | 'prev' | 'stop' | 'toggleOverlay'
+>
 
+// Wall-clock drivers for a running session: the tick that advances the machine
+// (and may complete it), the lifetime wake lock (progressive; FR-39), and the
+// visibility listener that truncates an active hold on backgrounding (FR-38).
+function useSessionRuntime(
+  status: SessionState['status'],
+  setState: SessionSetState,
+  setNow: Dispatch<SetStateAction<number>>,
+): void {
   const { request: acquireWakeLock, release: releaseWakeLock } = useWakeLock()
 
-  // Wall-clock tick while running; a tick may complete the session.
   useEffect(() => {
-    if (state.status !== 'running') return undefined
+    if (status !== 'running') return undefined
     const id = setInterval(() => {
       const t = Date.now()
       setNow(t)
@@ -91,9 +89,8 @@ export function useSession(request: SessionRequest): UseSession {
     return () => {
       clearInterval(id)
     }
-  }, [state.status])
+  }, [status, setState, setNow])
 
-  // Wake lock for the session's lifetime (progressive; FR-39).
   useEffect(() => {
     void acquireWakeLock()
     return () => {
@@ -101,7 +98,6 @@ export function useSession(request: SessionRequest): UseSession {
     }
   }, [acquireWakeLock, releaseWakeLock])
 
-  // Backgrounding truncates any active hold (FR-38); the next tick resolves expiry.
   useEffect(() => {
     const onHidden = (): void => {
       if (document.visibilityState === 'visible') return
@@ -111,10 +107,12 @@ export function useSession(request: SessionRequest): UseSession {
     return () => {
       document.removeEventListener('visibilitychange', onHidden)
     }
-  }, [])
+  }, [setState])
+}
 
-  // Persist once on completion (FR-43). Best-effort: v1 has no recovery path or
-  // error surface, so a failed write loses the record.
+// Persist once on completion (FR-43). Best-effort: v1 has no recovery path or
+// error surface, so a failed write loses the record.
+function useSessionPersistence(state: SessionState): void {
   const persistedRef = useRef<boolean>(false)
   useEffect(() => {
     if (state.status !== 'complete' || persistedRef.current) return
@@ -127,9 +125,11 @@ export function useSession(request: SessionRequest): UseSession {
       opened.value.close()
     })()
   }, [state])
+}
 
-  // Load the current source's media; revoke the prior object URL on change.
-  const currentSourceId = state.status === 'running' ? currentSource(state) : null
+// Load the current source's media; revoke the prior object URL on change.
+function useSessionMedia(currentSourceId: string | null): SessionMedia | null {
+  const [media, setMedia] = useState<SessionMedia | null>(null)
   useEffect(() => {
     if (currentSourceId === null) return undefined
     const active = { current: true }
@@ -151,10 +151,24 @@ export function useSession(request: SessionRequest): UseSession {
       if (objectUrl !== null) URL.revokeObjectURL(objectUrl)
     }
   }, [currentSourceId])
+  return media
+}
+
+// Gesture/navigation commands. All memoized on the stable setters; pressEnd
+// reads the latest state via a ref since it branches on the machine's result.
+function useSessionControls(
+  state: SessionState,
+  setState: SessionSetState,
+  setOverlayVisible: Dispatch<SetStateAction<boolean>>,
+): SessionControls {
+  const stateRef = useRef<SessionState>(state)
+  useEffect(() => {
+    stateRef.current = state
+  }, [state])
 
   const doPressStart = useCallback(() => {
     setState((s) => (s.status === 'running' ? pressStart(s, Date.now()) : s))
-  }, [])
+  }, [setState])
 
   const doPressEnd = useCallback(() => {
     const s = stateRef.current
@@ -162,34 +176,29 @@ export function useSession(request: SessionRequest): UseSession {
     const { session, wasHold } = pressEnd(s, Date.now())
     setState(session)
     if (!wasHold) setOverlayVisible((v) => !v) // tap toggles the overlay (FR-29)
-  }, [])
+  }, [setState, setOverlayVisible])
 
   const doCancelPress = useCallback(() => {
     setState((s) => (s.status === 'running' ? cancelPress(s) : s))
-  }, [])
+  }, [setState])
 
   const next = useCallback(() => {
     setState((s) => (s.status === 'running' ? advance(s, Math.random) : s))
-  }, [])
+  }, [setState])
 
   const prev = useCallback(() => {
     setState((s) => (s.status === 'running' ? back(s) : s))
-  }, [])
+  }, [setState])
 
   const doStop = useCallback(() => {
     setState((s) => (s.status === 'running' ? stop(s, Date.now()) : s))
-  }, [])
+  }, [setState])
 
   const toggleOverlay = useCallback(() => {
     setOverlayVisible((v) => !v)
-  }, [])
+  }, [setOverlayVisible])
 
   return {
-    state,
-    frame: state.status === 'running' ? sessionFrame(state, now) : null,
-    summary: state.status === 'complete' ? summarize(state.record, state.holds) : null,
-    media,
-    overlayVisible,
     pressStart: doPressStart,
     pressEnd: doPressEnd,
     cancelPress: doCancelPress,
@@ -197,5 +206,37 @@ export function useSession(request: SessionRequest): UseSession {
     prev,
     stop: doStop,
     toggleOverlay,
+  }
+}
+
+export function useSession(request: SessionRequest): UseSession {
+  const [state, setState] = useState<SessionState>(() =>
+    startSession(
+      {
+        id: newId(),
+        sourceIds: request.sourceIds,
+        plannedMinutes: request.plannedMinutes,
+        tagFilter: [...request.tagFilter],
+        startedAt: Date.now(),
+      },
+      Math.random,
+    ),
+  )
+  const [now, setNow] = useState<number>(() => Date.now())
+  const [overlayVisible, setOverlayVisible] = useState<boolean>(true)
+
+  useSessionRuntime(state.status, setState, setNow)
+  useSessionPersistence(state)
+  const currentSourceId = state.status === 'running' ? currentSource(state) : null
+  const media = useSessionMedia(currentSourceId)
+  const controls = useSessionControls(state, setState, setOverlayVisible)
+
+  return {
+    state,
+    frame: state.status === 'running' ? sessionFrame(state, now) : null,
+    summary: state.status === 'complete' ? summarize(state.record, state.holds) : null,
+    media,
+    overlayVisible,
+    ...controls,
   }
 }

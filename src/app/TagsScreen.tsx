@@ -43,7 +43,7 @@ export function TagsScreen({ onBack }: TagsScreenProps): ReactElement {
           <IconButton icon={<ChevronBackIcon />} label={t.back} onClick={onBack} buttonRef={backRef} />
         }
       />
-      <div className="w-full text-left">
+      <div className="mt-6 w-full text-left">
         <SectionCard padding="14px 16px">
           <form
             className="flex items-center gap-2"

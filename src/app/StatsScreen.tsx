@@ -77,11 +77,11 @@ export function StatsScreen({ locale, onBack }: StatsScreenProps): ReactElement 
           <IconButton icon={<ChevronBackIcon />} label={s.back} onClick={onBack} buttonRef={backRef} />
         }
       />
-      <div className="w-full text-left">
+      <div className="mt-6 w-full text-left">
         {state.status === 'error' ? (
-          <p className="mt-6 text-center text-sm text-[var(--color-zen-muted)]">{s.loadError}</p>
+          <p className="text-center text-sm text-[var(--color-zen-muted)]">{s.loadError}</p>
         ) : state.status === 'loading' ? null : state.stats.totalSessions === 0 ? (
-          <p className="mt-6 text-center text-sm text-[var(--color-zen-muted)]">{s.empty}</p>
+          <p className="text-center text-sm text-[var(--color-zen-muted)]">{s.empty}</p>
         ) : (
           <>
             <SectionCard padding="14px 16px">

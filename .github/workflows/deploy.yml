@@ -152,7 +152,10 @@ jobs:
     # workflow_dispatch skips build-current (no pushed tag → nothing to build at
     # /cute/v{X.Y}/). Allow assemble to proceed when build-current was skipped,
     # but still require build-root to have succeeded.
-    if: needs.build-root.result == 'success' && (needs.build-current.result == 'success' || needs.build-current.result == 'skipped')
+    # !cancelled() is required so this still evaluates when build-current is
+    # skipped (workflow_dispatch) — a bare needs-result expression would skip
+    # the job outright the moment any dependency is skipped.
+    if: ${{ !cancelled() && needs.build-root.result == 'success' && (needs.build-current.result == 'success' || needs.build-current.result == 'skipped') }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages

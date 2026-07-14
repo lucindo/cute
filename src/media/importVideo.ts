@@ -50,26 +50,51 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
   video.muted = true
   video.playsInline = true
   video.preload = 'auto'
+  // iOS honors gestureless inline play only via these attributes, not the props.
+  video.setAttribute('muted', '')
+  video.setAttribute('playsinline', '')
+  video.setAttribute('webkit-playsinline', '') // older iOS spelling
+  // iOS Safari decodes frames only for a <video> in the document — an off-DOM
+  // element never fires loadeddata/seeked (the import stalled then rejected).
+  // Park it in-viewport but invisible; off-screen or display:none can also
+  // suppress the decode.
+  video.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none'
+  document.body.appendChild(video)
   try {
     video.src = url
-    // iOS Safari won't decode frames for an off-DOM <video> that never played,
-    // so `loadeddata`/`seeked` never fire (and never error) — the import hangs.
-    // A muted inline play() is allowed without a gesture and forces the decode;
-    // it may still reject, so the loadeddata wait below is what actually gates.
+    // Muted inline play() forces iOS to actually decode; it may still reject,
+    // so the loadeddata wait below is what gates.
     await video.play().catch(() => {})
     await videoEvent(video, 'loadeddata')
     // Duration is Infinity for some WebM without metadata — skip the seek.
     if (Number.isFinite(video.duration) && video.duration > POSTER_SEEK_S) {
       video.currentTime = POSTER_SEEK_S
-      await videoEvent(video, 'seeked')
+      // Best-effort: a stalled seek keeps the loaded frame rather than losing
+      // the whole video over a black-frame nicety.
+      await videoEvent(video, 'seeked').catch(() => {})
     }
-    return await createImageBitmap(video)
+    return await grabFrame(video)
   } finally {
     // Detach before revoking so the decoder releases the blob (iOS Safari).
+    video.pause()
     video.removeAttribute('src')
     video.load()
+    video.remove()
     URL.revokeObjectURL(url)
   }
+}
+
+// createImageBitmap(<video>) is flaky on Safari; a canvas round-trip is not.
+async function grabFrame(video: HTMLVideoElement): Promise<ImageBitmap> {
+  const { videoWidth: w, videoHeight: h } = video
+  if (w === 0 || h === 0) throw new Error('video produced no frame')
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) throw new Error('2d canvas context unavailable')
+  ctx.drawImage(video, 0, 0)
+  return await createImageBitmap(canvas)
 }
 
 // Cap on each decode wait: a video event that never fires (nor errors) must

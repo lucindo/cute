@@ -6,6 +6,7 @@ import { SessionView } from './SessionView'
 import { SettingsScreen } from './SettingsScreen'
 import { LearnScreen } from './LearnScreen'
 import { StatsScreen } from './StatsScreen'
+import { TagsScreen } from './TagsScreen'
 import { GearIcon } from '../components/icons/GearIcon'
 import { InfoIcon } from '../components/icons/InfoIcon'
 import { IconButton } from '../components/primitives/IconButton'
@@ -18,7 +19,7 @@ import type { SessionRequest } from '../hooks/useSession'
 import { UiStringsProvider } from '../hooks/useUiStringsContext'
 
 type AppMode = 'practice' | 'collection'
-type AppView = 'shell' | 'settings' | 'stats' | 'learn'
+type AppView = 'shell' | 'settings' | 'stats' | 'learn' | 'tags'
 
 export function App(): ReactElement {
   const { locale, uiStrings } = useLocale()
@@ -89,6 +90,12 @@ export function App(): ReactElement {
             setView('shell')
           }}
         />
+      ) : view === 'tags' ? (
+        <TagsScreen
+          onBack={() => {
+            setView('shell')
+          }}
+        />
       ) : (
         <PageShell width="practice">
           <TopAppBar
@@ -126,7 +133,11 @@ export function App(): ReactElement {
           {mode === 'practice' ? (
             <PracticeScreen onStart={handleStart} />
           ) : (
-            <CollectionScreen />
+            <CollectionScreen
+              onOpenTags={() => {
+                setView('tags')
+              }}
+            />
           )}
         </PageShell>
       )}

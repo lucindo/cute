@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
-import { TagManagerSheet } from '../components/TagManagerSheet'
 import { SegmentedControl } from '../components/primitives/SegmentedControl'
 import type { UiStrings } from '../content/strings'
 import { formatBytes, formatDuration } from '../domain/format'
@@ -30,16 +29,19 @@ function rejectionHint(rejection: FileRejection, strings: UiStrings): string {
   }
 }
 
-export function CollectionScreen(): ReactElement {
+export interface CollectionScreenProps {
+  onOpenTags(this: void): void
+}
+
+export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactElement {
   const strings = useUiStrings()
   const collection = useCollection()
   const { importState, importFrom } = useImportFiles()
   const { deleteState, deleteById } = useDeleteSource()
   const { saveState, saveSource } = useSaveSource()
-  const { tagsState, actionState, rename, remove, create } = useTags()
+  const { tagsState, actionState, create } = useTags()
   const quota = useStorageQuota()
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
-  const [managing, setManaging] = useState(false)
   const [openSourceId, setOpenSourceId] = useState<string | null>(null)
   // Session-local like the practice tag filter — a sort is a per-visit choice.
   const [sortMode, setSortMode] = useState<'recent' | 'aww'>('recent')
@@ -153,10 +155,7 @@ export function CollectionScreen(): ReactElement {
         {tagsState.status === 'ready' && (
           <button
             type="button"
-            aria-haspopup="dialog"
-            onClick={() => {
-              setManaging(true)
-            }}
+            onClick={onOpenTags}
             className="rounded-full border border-[var(--color-border-soft)] px-4 py-2 text-sm font-medium text-[var(--color-zen-text)] hover:bg-[var(--color-zen-bg-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent focus-visible:ring-offset-2"
           >
             {strings.tags.edit}
@@ -216,15 +215,6 @@ export function CollectionScreen(): ReactElement {
         }}
         onClose={() => {
           setOpenSourceId(null)
-        }}
-      />
-      <TagManagerSheet
-        open={managing}
-        tags={tagsState.status === 'ready' ? tagsState.tags : []}
-        onRename={rename}
-        onDelete={remove}
-        onClose={() => {
-          setManaging(false)
         }}
       />
       <ConfirmDialog

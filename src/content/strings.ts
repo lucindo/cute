@@ -83,6 +83,9 @@ export interface UiStrings {
   readonly tags: {
     readonly seeded: Readonly<Record<SeededTagId, string>>
     readonly edit: string
+    readonly title: string
+    readonly back: string
+    readonly itemCount: (count: number) => string
     readonly empty: string
     readonly newTagPlaceholder: string
     readonly add: string
@@ -231,6 +234,9 @@ const EN: UiStrings = {
       'seed:bhakti': 'Bhakti',
     },
     edit: 'Edit tags',
+    title: 'Tags',
+    back: 'Back',
+    itemCount: (count) => (count === 1 ? '1 item' : `${String(count)} items`),
     empty: 'No tags yet.',
     newTagPlaceholder: 'New tag',
     add: 'Add',
@@ -379,6 +385,9 @@ const PT_BR: UiStrings = {
       'seed:bhakti': 'Bhakti',
     },
     edit: 'Editar tags',
+    title: 'Tags',
+    back: 'Voltar',
+    itemCount: (count) => (count === 1 ? '1 item' : `${String(count)} itens`),
     empty: 'Nenhuma tag ainda.',
     newTagPlaceholder: 'Nova tag',
     add: 'Adicionar',

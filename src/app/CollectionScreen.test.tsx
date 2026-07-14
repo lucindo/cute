@@ -21,10 +21,13 @@ const ERROR_TEXT = UI_STRINGS.en.collection.loadError
 // Tiles carry no caption now, so they share one accessible name.
 const OPEN = UI_STRINGS.en.collection.openItem
 
-function renderScreen(strings: UiStrings = UI_STRINGS.en): ReturnType<typeof render> {
+function renderScreen(
+  strings: UiStrings = UI_STRINGS.en,
+  onOpenTags: () => void = () => {},
+): ReturnType<typeof render> {
   return render(
     <UiStringsProvider value={strings}>
-      <CollectionScreen />
+      <CollectionScreen onOpenTags={onOpenTags} />
     </UiStringsProvider>,
   )
 }
@@ -310,55 +313,12 @@ describe('CollectionScreen tags', () => {
     })
   })
 
-  it('opens the tag manager in a sheet and closes it', async () => {
-    renderScreen()
+  it('navigates to the tags page from the edit-tags button', async () => {
+    const onOpenTags = vi.fn()
+    renderScreen(UI_STRINGS.en, onOpenTags)
+
     await userEvent.click(await screen.findByRole('button', { name: T.edit }))
-
-    const sheet = screen.getByRole('dialog', { name: T.edit })
-    expect(within(sheet).getByRole('button', { name: `${T.rename} Babies` })).toBeInTheDocument()
-
-    await userEvent.click(within(sheet).getByRole('button', { name: UI_STRINGS.en.collection.close }))
-    expect(screen.queryByRole('dialog', { name: T.edit })).not.toBeInTheDocument()
-  })
-
-  it('renames a seeded tag from the manager', async () => {
-    renderScreen()
-    await userEvent.click(await screen.findByRole('button', { name: T.edit }))
-    await userEvent.click(screen.getByRole('button', { name: `${T.rename} Babies` }))
-
-    const input = screen.getByLabelText(T.rename)
-    await userEvent.clear(input)
-    await userEvent.type(input, 'Infants')
-    await userEvent.click(screen.getByRole('button', { name: T.save }))
-
-    expect(await screen.findByText('Infants')).toBeInTheDocument()
-    const stored = await getRecord(await openDbOrThrow(), 'tags', 'seed:babies')
-    expect(stored).toEqual({ ok: true, value: { id: 'seed:babies', name: 'Infants' } })
-  })
-
-  it('deletes a tag after confirmation and strips it from sources', async () => {
-    await seed([source({ id: 'a', tags: ['seed:puppies'] })])
-    renderScreen()
-    await userEvent.click(await screen.findByRole('button', { name: T.edit }))
-    await userEvent.click(screen.getByRole('button', { name: `${T.delete} Puppies` }))
-
-    const dialog = screen.getByRole('dialog', { name: T.deleteTitle })
-    await userEvent.click(within(dialog).getByRole('button', { name: T.deleteConfirm }))
-
-    await waitFor(() => {
-      expect(screen.queryByText('Puppies')).not.toBeInTheDocument()
-    })
-    const db = await openDbOrThrow()
-    await expect(getRecord(db, 'tags', 'seed:puppies')).resolves.toEqual({ ok: true, value: null })
-    const stored = await getRecord(db, 'sources', 'a')
-    if (!stored.ok || stored.value === null) throw new Error('expected the source')
-    expect(stored.value.tags).toEqual([])
-  })
-
-  it('renders seeded tag names in the active locale', async () => {
-    renderScreen(UI_STRINGS['pt-BR'])
-    await userEvent.click(await screen.findByRole('button', { name: UI_STRINGS['pt-BR'].tags.edit }))
-    expect(await screen.findByText('Bebês')).toBeInTheDocument()
+    expect(onOpenTags).toHaveBeenCalledTimes(1)
   })
 })
 

@@ -8,14 +8,15 @@ import type { TagRecord } from '../storage'
 
 export interface TagManagerProps {
   tags: TagRecord[]
+  counts: ReadonlyMap<string, number>
   onRename(this: void, id: string, name: string): void
   onDelete(this: void, id: string): void
 }
 
-// Tag list with rename and confirmed delete (SPEC FR-14). Creation lives in
-// the assign panel, where a new tag is created and assigned in one gesture.
+// Tag list with rename and confirmed delete (SPEC FR-14). Each row shows a live
+// per-tag item count (counts). Creation lives on the Tags page above this list.
 // Rows use HRV's SettingsRow chrome (divider + 15px label) for fidelity.
-export function TagManager({ tags, onRename, onDelete }: TagManagerProps): ReactElement {
+export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps): ReactElement {
   const strings = useUiStrings()
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null)
   const [pendingDelete, setPendingDelete] = useState<string | null>(null)
@@ -84,7 +85,13 @@ export function TagManager({ tags, onRename, onDelete }: TagManagerProps): React
               ariaLabel={name}
               className="flex items-center justify-between gap-2"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
+                <span
+                  aria-hidden="true"
+                  className="text-[13px] tabular-nums text-[var(--color-zen-muted)]"
+                >
+                  {strings.tags.itemCount(counts.get(tag.id) ?? 0)}
+                </span>
                 <button
                   type="button"
                   aria-label={`${strings.tags.rename} ${name}`}

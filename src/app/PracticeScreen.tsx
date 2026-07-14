@@ -16,7 +16,7 @@ export interface PracticeScreenProps {
 
 export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
   const strings = useUiStrings()
-  const { duration, setDuration } = useSessionDuration()
+  const { durationMin, setDurationMin } = useSessionDuration()
   const { tagsState } = useTags()
   const collection = useCollection()
   const [filter, setFilter] = useState<string[]>([])
@@ -38,7 +38,7 @@ export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
     sources.length === 0 ? strings.practice.emptyCollection : strings.practice.emptyFilter
 
   const startSession = (): void => {
-    onStart({ sourceIds: pool.map((s) => s.id), plannedMinutes: duration, tagFilter: filter })
+    onStart({ sourceIds: pool.map((s) => s.id), plannedMinutes: durationMin, tagFilter: filter })
   }
 
   return (
@@ -46,10 +46,10 @@ export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
       <SectionCard padding="6px 18px">
         <SettingsStepper<number>
           label={strings.practice.duration}
-          value={duration}
+          value={durationMin}
           options={SESSION_DURATIONS}
           formatValue={(v) => `${String(v)} ${strings.practice.minUnit}`}
-          onChange={setDuration}
+          onChange={setDurationMin}
           strings={strings.practice.stepper}
           noBorder
         />

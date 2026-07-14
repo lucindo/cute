@@ -10,7 +10,7 @@ export interface PickerCardGridProps<T extends string> {
   columns: 2 | 3 | 4
   // Render the `<p>` sublabel sr-only when an enclosing SettingsSectionHeader
   // already carries the visible label; the aria-labelledby link stays intact.
-  sectionLabelHidden?: boolean | undefined
+  sectionLabelHidden?: boolean
 }
 
 const COLUMNS_CLASS: Record<2 | 3 | 4, string> = {

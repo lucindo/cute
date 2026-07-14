@@ -27,17 +27,15 @@ function renderSettings(
   opts: { download?: (blob: Blob, name: string) => void } = {},
 ): { onOpenStats: ReturnType<typeof vi.fn>; container: HTMLElement } {
   const onOpenStats = vi.fn()
-  const element =
-    opts.download !== undefined ? (
-      <UiStringsProvider value={UI_STRINGS.en}>
-        <SettingsScreen onBack={vi.fn()} onOpenStats={onOpenStats} backupDeps={{ download: opts.download }} />
-      </UiStringsProvider>
-    ) : (
-      <UiStringsProvider value={UI_STRINGS.en}>
-        <SettingsScreen onBack={vi.fn()} onOpenStats={onOpenStats} />
-      </UiStringsProvider>
-    )
-  const { container } = render(element)
+  const { container } = render(
+    <UiStringsProvider value={UI_STRINGS.en}>
+      <SettingsScreen
+        onBack={vi.fn()}
+        onOpenStats={onOpenStats}
+        {...(opts.download ? { backupDeps: { download: opts.download } } : {})}
+      />
+    </UiStringsProvider>,
+  )
   return { onOpenStats, container }
 }
 

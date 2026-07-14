@@ -1,6 +1,6 @@
 // UI strings catalog — all UI strings live here, not inline in components.
-// Sub-objects per surface: shell.* (app chrome + mode switcher), practice.*,
-// collection.*. Interpolated strings are typed as functions.
+// One sub-object per surface (shell, practice, session, …); interpolated
+// strings are typed as functions.
 
 import type { LocaleId, ThemeId } from '../domain/settings'
 import type { SeededTagId } from '../domain/tags'

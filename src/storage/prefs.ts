@@ -35,15 +35,15 @@ export const DEFAULT_PREFS: UserPrefs = {
   videoSound: true,
 }
 
-export function coerceLocale(raw: unknown): LocaleId {
+function coerceLocale(raw: unknown): LocaleId {
   return isValidLocale(raw) ? raw : DEFAULT_LOCALE
 }
 
-export function coerceTheme(raw: unknown): ThemeId {
+function coerceTheme(raw: unknown): ThemeId {
   return isValidTheme(raw) ? raw : DEFAULT_THEME
 }
 
-export function coerceVideoSound(raw: unknown): boolean {
+function coerceVideoSound(raw: unknown): boolean {
   return typeof raw === 'boolean' ? raw : true
 }
 

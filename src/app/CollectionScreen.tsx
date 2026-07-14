@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactElement } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
@@ -45,6 +45,16 @@ export function CollectionScreen(): ReactElement {
   const [sortMode, setSortMode] = useState<'recent' | 'aww'>('recent')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Aww sort is a stable re-order of the newest-first base by descending
+  // lifetime held time (FR-17/AC-7); ties keep newest-first. Memoized so it
+  // re-sorts only on source/sort-mode change, not every unrelated re-render.
+  const orderedSources = useMemo(() => {
+    if (collection.status !== 'ready') return []
+    return sortMode === 'aww'
+      ? [...collection.sources].sort((a, b) => b.totalHeldMs - a.totalHeldMs)
+      : collection.sources
+  }, [collection, sortMode])
+
   useEffect(() => {
     const onPaste = (event: ClipboardEvent): void => {
       const files = event.clipboardData?.files
@@ -67,15 +77,9 @@ export function CollectionScreen(): ReactElement {
   } else if (collection.status === 'ready' && collection.sources.length === 0) {
     content = <p className="text-sm text-[var(--color-zen-text-soft)]">{strings.collection.empty}</p>
   } else if (collection.status === 'ready') {
-    // Aww sort is a stable re-order of the newest-first base by descending
-    // lifetime held time (FR-17/AC-7); ties keep newest-first.
-    const ordered =
-      sortMode === 'aww'
-        ? [...collection.sources].sort((a, b) => b.totalHeldMs - a.totalHeldMs)
-        : collection.sources
     content = (
       <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
-        {ordered.map((source) => (
+        {orderedSources.map((source) => (
           <li key={source.id}>
             <button
               type="button"

@@ -2,15 +2,17 @@ import {
   useEffect,
   useRef,
   useState,
+  type Dispatch,
   type PointerEvent,
   type ReactElement,
   type RefObject,
+  type SetStateAction,
 } from 'react'
 
 import { CompletionScreen } from './CompletionScreen'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SessionOverlay } from '../components/SessionOverlay'
-import { useSession, type SessionRequest } from '../hooks/useSession'
+import { useSession, type SessionMedia, type SessionRequest } from '../hooks/useSession'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 import { useVideoSound } from '../hooks/useVideoSound'
 
@@ -24,31 +26,28 @@ export interface SessionViewProps {
   onExit(this: void): void
 }
 
-export function SessionView({ request, videoRef, setVideoActive, onExit }: SessionViewProps): ReactElement {
-  const strings = useUiStrings()
-  const { soundOn, setSoundOn } = useVideoSound()
-  const {
-    state,
-    frame,
-    summary,
-    media,
-    overlayVisible,
-    pressStart,
-    pressEnd,
-    cancelPress,
-    next,
-    prev,
-    stop,
-    toggleOverlay,
-  } = useSession(request)
-  const [confirmStop, setConfirmStop] = useState(false)
-  const gestureRef = useRef<{ x: number; y: number; swiped: boolean } | null>(null)
+interface PointerHandlers {
+  onPointerDown(this: void, e: PointerEvent<HTMLDivElement>): void
+  onPointerMove(this: void, e: PointerEvent<HTMLDivElement>): void
+  onPointerUp(this: void): void
+  onPointerCancel(this: void): void
+}
 
-  const running = state.status === 'running'
-
-  // Keyboard grammar (FR-32): Space held = hold (repeat filtered), ←/→ =
-  // prev/next, Esc = stop-with-confirm, O = toggle overlay. Suspended while the
-  // confirm dialog owns focus.
+// Keyboard grammar (FR-32): Space held = hold (repeat filtered), ←/→ = prev/next,
+// Esc = stop-with-confirm, O = toggle overlay. Suspended while the confirm dialog
+// owns focus.
+function useSessionKeyboard(opts: {
+  running: boolean
+  confirmStop: boolean
+  pressStart: () => void
+  pressEnd: () => void
+  next: () => void
+  prev: () => void
+  toggleOverlay: () => void
+  setConfirmStop: Dispatch<SetStateAction<boolean>>
+}): void {
+  const { running, confirmStop, pressStart, pressEnd, next, prev, toggleOverlay, setConfirmStop } =
+    opts
   useEffect(() => {
     if (!running || confirmStop) return undefined
     const onKeyDown = (e: KeyboardEvent): void => {
@@ -87,10 +86,20 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
     }
-  }, [running, confirmStop, pressStart, pressEnd, next, prev, toggleOverlay])
+  }, [running, confirmStop, pressStart, pressEnd, next, prev, toggleOverlay, setConfirmStop])
+}
 
-  // Drive the shared App-level <video> (SPEC FR-35): swap src, apply the sound
-  // pref, and show/hide it as the current media and running state change.
+// Drive the shared App-level <video> (SPEC FR-35): swap src, apply the sound
+// pref, show/hide as media/running change, and hand the element back hidden and
+// source-less when the session ends. Returns whether the video layer is shown.
+function useSessionVideo(opts: {
+  videoRef: RefObject<HTMLVideoElement | null>
+  setVideoActive: (active: boolean) => void
+  media: SessionMedia | null
+  running: boolean
+  soundOn: boolean
+}): boolean {
+  const { videoRef, setVideoActive, media, running, soundOn } = opts
   const showVideo = running && media !== null && media.type === 'video'
   useEffect(() => {
     const v = videoRef.current
@@ -105,7 +114,6 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     }
   }, [showVideo, media, soundOn, videoRef, setVideoActive])
 
-  // Hand the shared element back hidden and source-less when the session ends.
   useEffect(() => {
     const v = videoRef.current
     return () => {
@@ -117,42 +125,91 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     }
   }, [videoRef, setVideoActive])
 
+  return showVideo
+}
+
+// Pointer gesture grammar (FR-30): press = hold; movement past SLOP_PX becomes a
+// swipe that cancels the press, and a mostly-horizontal swipe navigates
+// (left = next, right = previous).
+function usePointerGestures(opts: {
+  pressStart: () => void
+  pressEnd: () => void
+  cancelPress: () => void
+  next: () => void
+  prev: () => void
+}): PointerHandlers {
+  const { pressStart, pressEnd, cancelPress, next, prev } = opts
+  const gestureRef = useRef<{ x: number; y: number; swiped: boolean } | null>(null)
+  return {
+    onPointerDown: (e) => {
+      if (typeof e.currentTarget.setPointerCapture === 'function') {
+        e.currentTarget.setPointerCapture(e.pointerId)
+      }
+      gestureRef.current = { x: e.clientX, y: e.clientY, swiped: false }
+      pressStart()
+    },
+    onPointerMove: (e) => {
+      const g = gestureRef.current
+      if (g === null || g.swiped) return
+      const dx = e.clientX - g.x
+      const dy = e.clientY - g.y
+      if (Math.hypot(dx, dy) > SLOP_PX) {
+        g.swiped = true
+        cancelPress()
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx < 0) next()
+          else prev()
+        }
+      }
+    },
+    onPointerUp: () => {
+      const g = gestureRef.current
+      gestureRef.current = null
+      if (g !== null && !g.swiped) pressEnd()
+    },
+    onPointerCancel: () => {
+      const g = gestureRef.current
+      gestureRef.current = null
+      if (g !== null && !g.swiped) cancelPress()
+    },
+  }
+}
+
+export function SessionView({ request, videoRef, setVideoActive, onExit }: SessionViewProps): ReactElement {
+  const strings = useUiStrings()
+  const { soundOn, setSoundOn } = useVideoSound()
+  const {
+    state,
+    frame,
+    summary,
+    media,
+    overlayVisible,
+    pressStart,
+    pressEnd,
+    cancelPress,
+    next,
+    prev,
+    stop,
+    toggleOverlay,
+  } = useSession(request)
+  const [confirmStop, setConfirmStop] = useState(false)
+  const running = state.status === 'running'
+
+  const showVideo = useSessionVideo({ videoRef, setVideoActive, media, running, soundOn })
+  useSessionKeyboard({
+    running,
+    confirmStop,
+    pressStart,
+    pressEnd,
+    next,
+    prev,
+    toggleOverlay,
+    setConfirmStop,
+  })
+  const pointer = usePointerGestures({ pressStart, pressEnd, cancelPress, next, prev })
+
   if (state.status === 'complete' && summary !== null) {
     return <CompletionScreen summary={summary} onDone={onExit} strings={strings.session.completion} />
-  }
-
-  const onPointerDown = (e: PointerEvent<HTMLDivElement>): void => {
-    if (typeof e.currentTarget.setPointerCapture === 'function') {
-      e.currentTarget.setPointerCapture(e.pointerId)
-    }
-    gestureRef.current = { x: e.clientX, y: e.clientY, swiped: false }
-    pressStart()
-  }
-  const onPointerMove = (e: PointerEvent<HTMLDivElement>): void => {
-    const g = gestureRef.current
-    if (g === null || g.swiped) return
-    const dx = e.clientX - g.x
-    const dy = e.clientY - g.y
-    if (Math.hypot(dx, dy) > SLOP_PX) {
-      g.swiped = true
-      cancelPress()
-      // Horizontal swipe navigates (FR-30: left = next, right = previous);
-      // a mostly-vertical drag just cancels the press.
-      if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx < 0) next()
-        else prev()
-      }
-    }
-  }
-  const onPointerUp = (): void => {
-    const g = gestureRef.current
-    gestureRef.current = null
-    if (g !== null && !g.swiped) pressEnd()
-  }
-  const onPointerCancel = (): void => {
-    const g = gestureRef.current
-    gestureRef.current = null
-    if (g !== null && !g.swiped) cancelPress()
   }
 
   const clockLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -162,10 +219,10 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
       // Transparent above the z-10 App <video> so it shows through while a
       // video plays; a black backdrop stands in for images and while loading.
       className="fixed inset-0 z-20 touch-none select-none"
-      onPointerDown={confirmStop ? undefined : onPointerDown}
-      onPointerMove={confirmStop ? undefined : onPointerMove}
-      onPointerUp={confirmStop ? undefined : onPointerUp}
-      onPointerCancel={confirmStop ? undefined : onPointerCancel}
+      onPointerDown={confirmStop ? undefined : pointer.onPointerDown}
+      onPointerMove={confirmStop ? undefined : pointer.onPointerMove}
+      onPointerUp={confirmStop ? undefined : pointer.onPointerUp}
+      onPointerCancel={confirmStop ? undefined : pointer.onPointerCancel}
     >
       {!showVideo && <div className="absolute inset-0 bg-black" />}
       {media !== null && media.type === 'image' && (

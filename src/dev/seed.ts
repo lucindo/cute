@@ -73,19 +73,9 @@ function pickTags(index: number): string[] {
   return tag === undefined ? [] : [tag]
 }
 
-export async function seedLibrary(count = 500, options: SeedOptions = {}): Promise<void> {
-  const fullPx = options.fullPx ?? 1280
-  const thumbPx = options.thumbPx ?? 256
-  const opened = await openDb()
-  if (!opened.ok) {
-    console.error('[seed] openDb failed', opened.error)
-    return
-  }
-  const db = opened.value
-  const now = Date.now()
-
-  // A few sessions own the seeded holds, keeping holdEvents referentially
-  // honest and giving the Stats page data.
+// A few sessions own the seeded holds, keeping holdEvents referentially honest
+// and giving the Stats page data.
+function buildSessions(now: number, count: number): { sessionIds: string[]; sessionOps: WriteOp[] } {
   const sessionCount = Math.max(1, Math.ceil(count / 50))
   const sessionIds: string[] = []
   const sessionOps: WriteOp[] = []
@@ -107,51 +97,79 @@ export async function seedLibrary(count = 500, options: SeedOptions = {}): Promi
       } satisfies SessionRecord,
     })
   }
+  return { sessionIds, sessionOps }
+}
+
+// Source + blob + thumb, plus 1–8 holds on ~40% of items so aww-sort and stats
+// have variety. Encodes the full/thumb tiles for one index.
+async function buildSourceOps(
+  index: number,
+  now: number,
+  fullPx: number,
+  thumbPx: number,
+  sessionIds: string[],
+): Promise<WriteOp[]> {
+  const id = newId()
+  const hue = (index * 53) % 360
+  const [full, thumb] = await Promise.all([
+    encode(renderTile(fullPx, hue, String(index + 1))),
+    encode(renderTile(thumbPx, hue, String(index + 1))),
+  ])
+  const ops: WriteOp[] = [
+    {
+      op: 'put',
+      store: 'sources',
+      record: {
+        id,
+        type: 'image',
+        mimeType: MIME,
+        bytes: full.byteLength,
+        createdAt: now - index * 60_000, // low index = newest, matching import order
+        tags: pickTags(index),
+        deleted: false,
+      } satisfies SourceRecord,
+    },
+    { op: 'put', store: 'blobs', record: { id, type: MIME, bytes: full } },
+    { op: 'put', store: 'thumbs', record: { id, type: MIME, bytes: thumb } },
+  ]
+  const sessionId = sessionIds[index % sessionIds.length]
+  if (index % 5 < 2 && sessionId !== undefined) {
+    const holds = 1 + Math.floor(Math.random() * 8)
+    for (let h = 0; h < holds; h++) {
+      ops.push({
+        op: 'put',
+        store: 'holdEvents',
+        record: {
+          id: newId(),
+          sessionId,
+          sourceId: id,
+          startedAt: now,
+          durationMs: 300 + Math.floor(Math.random() * 12_000),
+        } satisfies HoldEventRecord,
+      })
+    }
+  }
+  return ops
+}
+
+export async function seedLibrary(count = 500, options: SeedOptions = {}): Promise<void> {
+  const fullPx = options.fullPx ?? 1280
+  const thumbPx = options.thumbPx ?? 256
+  const opened = await openDb()
+  if (!opened.ok) {
+    console.error('[seed] openDb failed', opened.error)
+    return
+  }
+  const db = opened.value
+  const now = Date.now()
+  const { sessionIds, sessionOps } = buildSessions(now, count)
 
   const BATCH = 25
   for (let start = 0; start < count; start += BATCH) {
     const ops: WriteOp[] = start === 0 ? [...sessionOps] : []
     const end = Math.min(start + BATCH, count)
     for (let i = start; i < end; i++) {
-      const id = newId()
-      const hue = (i * 53) % 360
-      const [full, thumb] = await Promise.all([
-        encode(renderTile(fullPx, hue, String(i + 1))),
-        encode(renderTile(thumbPx, hue, String(i + 1))),
-      ])
-      ops.push({
-        op: 'put',
-        store: 'sources',
-        record: {
-          id,
-          type: 'image',
-          mimeType: MIME,
-          bytes: full.byteLength,
-          createdAt: now - i * 60_000, // low index = newest, matching import order
-          tags: pickTags(i),
-          deleted: false,
-        } satisfies SourceRecord,
-      })
-      ops.push({ op: 'put', store: 'blobs', record: { id, type: MIME, bytes: full } })
-      ops.push({ op: 'put', store: 'thumbs', record: { id, type: MIME, bytes: thumb } })
-      // ~40% of sources carry 1–8 holds so aww-sort and stats have variety.
-      const sessionId = sessionIds[i % sessionIds.length]
-      if (i % 5 < 2 && sessionId !== undefined) {
-        const holds = 1 + Math.floor(Math.random() * 8)
-        for (let h = 0; h < holds; h++) {
-          ops.push({
-            op: 'put',
-            store: 'holdEvents',
-            record: {
-              id: newId(),
-              sessionId,
-              sourceId: id,
-              startedAt: now,
-              durationMs: 300 + Math.floor(Math.random() * 12_000),
-            } satisfies HoldEventRecord,
-          })
-        }
-      }
+      ops.push(...(await buildSourceOps(i, now, fullPx, thumbPx, sessionIds)))
     }
     const result = await writeMany(db, ops)
     if (!result.ok) {

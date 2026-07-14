@@ -169,17 +169,30 @@ function usePointerGestures(opts: {
   }
 }
 
-// While the black media takeover is on screen, paint the iOS Safari status-bar
-// band black too (via theme-color), so it doesn't seam against the fill and the
-// fullscreen illusion holds. Restored to the page's color on completion/exit.
+// While the black media takeover is on screen, paint the iOS status bar black so
+// it doesn't seam against the fill. Two levers: theme-color drives Safari's
+// browser UI; the apple-* style drives the installed standalone status bar —
+// documented read-at-launch but updated at runtime on many iOS builds, harmless
+// where it isn't. Both restored to their prior value on completion/exit.
 function useBlackStatusBar(active: boolean): void {
   useEffect(() => {
-    const meta = document.querySelector('meta[name="theme-color"]')
-    if (!active || meta === null) return undefined
-    const prev = meta.getAttribute('content')
-    meta.setAttribute('content', '#000000')
+    if (!active) return undefined
+    const swaps: ReadonlyArray<readonly [name: string, value: string]> = [
+      ['theme-color', '#000000'],
+      ['apple-mobile-web-app-status-bar-style', 'black'],
+    ]
+    const restore: Array<() => void> = []
+    for (const [name, value] of swaps) {
+      const meta = document.querySelector(`meta[name="${name}"]`)
+      if (meta === null) continue
+      const prev = meta.getAttribute('content')
+      meta.setAttribute('content', value)
+      restore.push(() => {
+        if (prev !== null) meta.setAttribute('content', prev)
+      })
+    }
     return () => {
-      if (prev !== null) meta.setAttribute('content', prev)
+      for (const undo of restore) undo()
     }
   }, [active])
 }

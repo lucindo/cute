@@ -26,7 +26,10 @@ export function formatBytes(bytes: number): string {
   let value = bytes
   for (const unit of ['KB', 'MB'] as const) {
     value /= 1000
-    if (value < 1000) return `${value.toFixed(1)} ${unit}`
+    // Threshold on the rounded value so e.g. 999_960 promotes to "1.0 MB"
+    // instead of rendering the same unit as "1000.0 KB".
+    const rounded = Math.round(value * 10) / 10
+    if (rounded < 1000) return `${rounded.toFixed(1)} ${unit}`
   }
   return `${(value / 1000).toFixed(1)} GB`
 }

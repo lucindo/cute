@@ -11,6 +11,11 @@ describe('formatBytes', () => {
     expect(formatBytes(2_400_000_000)).toBe('2.4 GB')
   })
 
+  it('promotes to the next unit when rounding would hit 1000', () => {
+    expect(formatBytes(999_960)).toBe('1.0 MB')
+    expect(formatBytes(999_960_000)).toBe('1.0 GB')
+  })
+
   it('clamps to GB for absurd sizes', () => {
     expect(formatBytes(5_000_000_000_000)).toBe('5000.0 GB')
   })

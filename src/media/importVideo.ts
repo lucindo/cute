@@ -82,7 +82,10 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
       }
       return await grabFrame(video)
     } catch (stage) {
-      throw new Error(`${play} ${errName(stage)}`, { cause: stage })
+      // v0.6 micro-diagnostic: the blob-URL load stalled — capture where, and
+      // retry from a data: URL to confirm it's the blob-URL loader.
+      const diag = await diagnoseStall(video, blob)
+      throw new Error(`${play} ${errName(stage)} ${diag}`, { cause: stage })
     }
   } finally {
     // Detach before revoking so the decoder releases the blob (iOS Safari).
@@ -97,6 +100,54 @@ async function probeVideo(blob: Blob): Promise<ImageBitmap> {
 // Compact one-liner for the v0.5 diagnostic — Error message, else stringified.
 function errName(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
+}
+
+// v0.6 diagnostic only (revert with the probe): report where the blob-URL
+// <video> stalled (canPlayType, network/ready state) and whether the same bytes
+// load from a data: URL. data:ok while the blob stalled ⇒ it's the blob-URL
+// loader (iOS wants range requests) ⇒ the service-worker media route is right.
+async function diagnoseStall(stalled: HTMLVideoElement, blob: Blob): Promise<string> {
+  const canQt = stalled.canPlayType('video/quicktime')
+  const qt = canQt === '' ? 'no' : canQt
+  const state = `net${String(stalled.networkState)}ready${String(stalled.readyState)}`
+  const megabytes = Math.round(blob.size / (1024 * 1024))
+  if (blob.size > 50 * 1024 * 1024) return `qt:${qt} ${state} data:skip(${String(megabytes)}MB)`
+  let data: string
+  try {
+    const probe = document.createElement('video')
+    probe.muted = true
+    probe.playsInline = true
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none'
+    document.body.appendChild(probe)
+    try {
+      probe.src = await blobToDataUrl(blob)
+      await probe.play().catch(() => undefined)
+      await videoEvent(probe, 'loadeddata')
+      data = 'ok'
+    } catch (e) {
+      data = errName(e)
+    } finally {
+      probe.removeAttribute('src')
+      probe.load()
+      probe.remove()
+    }
+  } catch (e) {
+    data = `read:${errName(e)}`
+  }
+  return `qt:${qt} ${state} data:${data}`
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (): void => {
+      resolve(typeof reader.result === 'string' ? reader.result : '')
+    }
+    reader.onerror = (): void => {
+      reject(reader.error ?? new Error('read failed'))
+    }
+    reader.readAsDataURL(blob)
+  })
 }
 
 // createImageBitmap(<video>) is flaky on Safari; a canvas round-trip is not.

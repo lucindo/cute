@@ -1,4 +1,4 @@
-// Save the per-item sheet's staged edits: writes one source's caption and tags
+// Save the per-item sheet's staged edits: writes one source's tags
 // in a single update on its own connection, then announces so useCollection
 // reloads. Mirrors useDeleteSource — one write at a time, ref guard for stale
 // closures.
@@ -9,7 +9,6 @@ import { COLLECTION_CHANGED_EVENT } from './useCollection'
 import { openDb, updateSource, type StorageError } from '../storage'
 
 export interface SourceEdits {
-  caption: string
   tags: string[]
 }
 

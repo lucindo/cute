@@ -23,7 +23,7 @@ export async function deleteSource(
 export async function updateSource(
   db: IDBDatabase,
   id: string,
-  edits: { caption: string; tags: string[] },
+  edits: { tags: string[] },
 ): Promise<Result<void, StorageError>> {
   const source = await getRecord(db, 'sources', id)
   if (!source.ok) return source
@@ -31,9 +31,5 @@ export async function updateSource(
     return err({ name: 'NotFound', message: `no source with id ${id}` })
   }
   const record: SourceRecord = { ...source.value, tags: edits.tags }
-  const trimmed = edits.caption.trim()
-  // Empty clears the field so the tile falls back to its generic label.
-  if (trimmed === '') delete record.caption
-  else record.caption = trimmed
   return writeMany(db, [{ op: 'put', store: 'sources', record }])
 }

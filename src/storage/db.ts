@@ -19,7 +19,6 @@ export interface SourceRecord {
   bytes: number
   createdAt: number
   tags: string[]
-  caption?: string
   // Tombstone (SPEC FR-18): blob and thumb are deleted, this record stays so
   // hold events and lifetime totals keep resolving.
   deleted: boolean

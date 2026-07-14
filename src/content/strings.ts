@@ -66,8 +66,6 @@ export interface UiStrings {
     readonly deleteFailed: string
     readonly openItem: string
     readonly close: string
-    readonly caption: string
-    readonly captionPlaceholder: string
     readonly save: string
     readonly saveFailed: string
     readonly discardTitle: string
@@ -211,8 +209,6 @@ const EN: UiStrings = {
     deleteFailed: 'Could not delete. Please try again.',
     openItem: 'Open item',
     close: 'Close',
-    caption: 'Caption',
-    captionPlaceholder: 'Add a caption…',
     save: 'Save',
     saveFailed: 'Could not save your changes. Please try again.',
     discardTitle: 'Discard changes?',
@@ -362,8 +358,6 @@ const PT_BR: UiStrings = {
     deleteFailed: 'Não foi possível excluir. Tente novamente.',
     openItem: 'Abrir item',
     close: 'Fechar',
-    caption: 'Legenda',
-    captionPlaceholder: 'Adicionar uma legenda…',
     save: 'Salvar',
     saveFailed: 'Não foi possível salvar suas alterações. Tente novamente.',
     discardTitle: 'Descartar alterações?',

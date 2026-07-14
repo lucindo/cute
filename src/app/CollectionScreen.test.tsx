@@ -18,6 +18,8 @@ async function openDbOrThrow(): Promise<IDBDatabase> {
 
 const EMPTY_TEXT = UI_STRINGS.en.collection.empty
 const ERROR_TEXT = UI_STRINGS.en.collection.loadError
+// Tiles carry no caption now, so they share one accessible name.
+const OPEN = UI_STRINGS.en.collection.openItem
 
 function renderScreen(strings: UiStrings = UI_STRINGS.en): ReturnType<typeof render> {
   return render(
@@ -66,24 +68,36 @@ describe('CollectionScreen', () => {
   })
 
   it('renders live thumbnails newest-first and skips tombstones', async () => {
+    const C = UI_STRINGS.en.collection
+    // Distinct held times give each tile an identifiable stat line; the older
+    // tile holds longer, so order proves createdAt sorting, not held time.
     await seed([
-      source({ id: 'old', caption: 'Old', createdAt: 100 }),
-      source({ id: 'new', caption: 'New', createdAt: 200 }),
-      source({ id: 'gone', caption: 'Gone', createdAt: 300, deleted: true }),
+      source({ id: 'old', createdAt: 100 }),
+      source({ id: 'new', createdAt: 200 }),
+      source({ id: 'gone', createdAt: 300, deleted: true }),
     ])
+    const db = await openDbOrThrow()
+    const holds: WriteOp[] = [
+      { op: 'put', store: 'holdEvents', record: { id: 'h1', sessionId: 's', sourceId: 'old', startedAt: 0, durationMs: 5000 } },
+      { op: 'put', store: 'holdEvents', record: { id: 'h2', sessionId: 's', sourceId: 'new', startedAt: 0, durationMs: 1000 } },
+    ]
+    if (!(await writeMany(db, holds)).ok) throw new Error('seed holds failed')
+    db.close()
     renderScreen()
 
-    expect(await screen.findAllByRole('listitem')).toHaveLength(2)
-    const alts = screen.getAllByRole('img').map((img) => img.getAttribute('alt'))
-    expect(alts).toEqual(['New', 'Old'])
-    expect(screen.queryByAltText('Gone')).not.toBeInTheDocument()
+    const items = await screen.findAllByRole('listitem')
+    expect(items).toHaveLength(2) // tombstone excluded
+    expect(items.map((li) => li.textContent)).toEqual([
+      C.holdStat(1, '0:01'), // 'new' (createdAt 200)
+      C.holdStat(1, '0:05'), // 'old' (createdAt 100)
+    ])
   })
 
   it('sorts by aww factor and shows per-card hold stats', async () => {
     // A is newer; B is older but has more lifetime held time.
     await seed([
-      source({ id: 'a', caption: 'A', createdAt: 200 }),
-      source({ id: 'b', caption: 'B', createdAt: 100 }),
+      source({ id: 'a', createdAt: 200 }),
+      source({ id: 'b', createdAt: 100 }),
     ])
     const db = await openDbOrThrow()
     const holds: WriteOp[] = [
@@ -96,16 +110,21 @@ describe('CollectionScreen', () => {
     const C = UI_STRINGS.en.collection
     renderScreen()
 
-    // Default (Recent): newest-first.
-    await screen.findByAltText('A')
-    expect(screen.getAllByRole('img').map((img) => img.getAttribute('alt'))).toEqual(['A', 'B'])
-    // Per-card stats render for both tiles.
-    expect(screen.getByText(C.holdStat(1, '0:01'))).toBeInTheDocument()
-    expect(screen.getByText(C.holdStat(1, '0:05'))).toBeInTheDocument()
+    // Default (Recent): newest-first → A (0:01) then B (0:05).
+    await waitFor(() => {
+      expect(screen.getAllByRole('listitem')).toHaveLength(2)
+    })
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      C.holdStat(1, '0:01'),
+      C.holdStat(1, '0:05'),
+    ])
 
     // Aww: B (5s held) outranks A (1s).
     await userEvent.click(screen.getByRole('radio', { name: C.sortAww }))
-    expect(screen.getAllByRole('img').map((img) => img.getAttribute('alt'))).toEqual(['B', 'A'])
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      C.holdStat(1, '0:05'),
+      C.holdStat(1, '0:01'),
+    ])
   })
 
   it('shows the load error when IndexedDB is unavailable', async () => {
@@ -122,21 +141,21 @@ describe('CollectionScreen', () => {
     renderScreen()
     await screen.findByText(EMPTY_TEXT)
 
-    await seed([source({ id: 'n1', caption: 'Fresh', createdAt: 10 })])
+    await seed([source({ id: 'n1', createdAt: 10 })])
     act(() => {
       window.dispatchEvent(new Event(COLLECTION_CHANGED_EVENT))
     })
 
-    expect(await screen.findByAltText('Fresh')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: OPEN })).toBeInTheDocument()
   })
 
   it('revokes thumbnail object URLs on unmount', async () => {
-    await seed([source({ id: 's1', caption: 'One' })])
+    await seed([source({ id: 's1' })])
     const created = vi.spyOn(URL, 'createObjectURL')
     const revoked = vi.spyOn(URL, 'revokeObjectURL')
 
     const { unmount } = renderScreen()
-    await screen.findByAltText('One')
+    await screen.findByRole('button', { name: OPEN })
     unmount()
 
     expect(created).toHaveBeenCalledTimes(1)
@@ -152,15 +171,15 @@ describe('CollectionScreen delete & storage', () => {
 
   // The delete flow lives in the item sheet: tap the tile, then Delete.
   async function openDeleteDialog(): Promise<HTMLElement> {
-    await userEvent.click(await screen.findByRole('button', { name: 'One' }))
+    await userEvent.click(await screen.findByRole('button', { name: OPEN }))
     await userEvent.click(screen.getByRole('button', { name: DELETE_LABEL }))
     return screen.getByRole('dialog', { name: UI_STRINGS.en.collection.deleteTitle })
   }
 
   it('shows the file size in the item sheet', async () => {
-    await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
+    await seed([source({ id: 's1', bytes: 2_400_000 })])
     renderScreen()
-    await userEvent.click(await screen.findByRole('button', { name: 'One' }))
+    await userEvent.click(await screen.findByRole('button', { name: OPEN }))
     expect(await screen.findByText('2.4 MB')).toBeInTheDocument()
   })
 
@@ -170,7 +189,7 @@ describe('CollectionScreen delete & storage', () => {
       configurable: true,
     })
     // 2_400_000 source bytes + the 1-byte seeded thumb.
-    await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
+    await seed([source({ id: 's1', bytes: 2_400_000 })])
     renderScreen()
     expect(
       await screen.findByText(UI_STRINGS.en.collection.storageGauge('2.4 MB', '2.0 GB')),
@@ -179,26 +198,26 @@ describe('CollectionScreen delete & storage', () => {
   })
 
   it('shows usage alone when no quota estimate exists', async () => {
-    await seed([source({ id: 's1', caption: 'One', bytes: 2_400_000 })])
+    await seed([source({ id: 's1', bytes: 2_400_000 })])
     renderScreen()
     expect(await screen.findByText(UI_STRINGS.en.collection.storageUsed('2.4 MB'))).toBeInTheDocument()
   })
 
   it('keeps the source when deletion is cancelled', async () => {
-    await seed([source({ id: 's1', caption: 'One' })])
+    await seed([source({ id: 's1' })])
     renderScreen()
 
     const dialog = await openDeleteDialog()
     await userEvent.click(within(dialog).getByRole('button', { name: UI_STRINGS.en.collection.deleteCancel }))
 
-    // Tile plus the still-open sheet preview.
-    expect(screen.getAllByAltText('One').length).toBeGreaterThan(0)
+    // The item sheet stays open; the source was not deleted.
+    expect(screen.getByRole('dialog', { name: OPEN })).toBeInTheDocument()
     const stored = await getRecord(await openDbOrThrow(), 'thumbs', 's1')
     expect(stored.ok && stored.value !== null).toBe(true)
   })
 
   it('tombstones the source on confirm and refreshes the grid', async () => {
-    await seed([source({ id: 's1', caption: 'One' })])
+    await seed([source({ id: 's1' })])
     renderScreen()
 
     const dialog = await openDeleteDialog()
@@ -215,21 +234,21 @@ describe('CollectionScreen delete & storage', () => {
 
 describe('CollectionScreen item sheet', () => {
   it('opens on tile tap with preview, size, and tag chips', async () => {
-    await seed([source({ id: 'a', caption: 'A', bytes: 1_200_000, tags: ['seed:babies'] })])
+    await seed([source({ id: 'a', bytes: 1_200_000, tags: ['seed:babies'] })])
     renderScreen()
 
-    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+    await userEvent.click(await screen.findByRole('button', { name: OPEN }))
 
-    const sheet = screen.getByRole('dialog', { name: 'A' })
-    expect(within(sheet).getByAltText('A')).toBeInTheDocument()
+    const sheet = screen.getByRole('dialog', { name: OPEN })
+    expect(sheet.querySelector('img')).toBeInTheDocument()
     expect(within(sheet).getByText('1.2 MB')).toBeInTheDocument()
     expect(within(sheet).getByRole('button', { name: 'Babies' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('stages a tag toggle and persists it on Save', async () => {
-    await seed([source({ id: 'a', caption: 'A' })])
+    await seed([source({ id: 'a' })])
     renderScreen()
-    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+    await userEvent.click(await screen.findByRole('button', { name: OPEN }))
 
     await userEvent.click(await screen.findByRole('button', { name: 'Kittens' }))
     await waitFor(() => {
@@ -251,13 +270,13 @@ describe('CollectionScreen item sheet', () => {
   })
 
   it('closes on the close button', async () => {
-    await seed([source({ id: 'a', caption: 'A' })])
+    await seed([source({ id: 'a' })])
     renderScreen()
-    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+    await userEvent.click(await screen.findByRole('button', { name: OPEN }))
 
     await userEvent.click(screen.getByRole('button', { name: UI_STRINGS.en.collection.close }))
 
-    expect(screen.queryByRole('dialog', { name: 'A' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: OPEN })).not.toBeInTheDocument()
   })
 })
 
@@ -265,9 +284,9 @@ describe('CollectionScreen tags', () => {
   const T = UI_STRINGS.en.tags
 
   it('creates a tag from the item sheet and assigns it on Save', async () => {
-    await seed([source({ id: 'a', caption: 'A' })])
+    await seed([source({ id: 'a' })])
     renderScreen()
-    await userEvent.click(await screen.findByRole('button', { name: 'A' }))
+    await userEvent.click(await screen.findByRole('button', { name: OPEN }))
 
     await userEvent.type(await screen.findByLabelText(T.newTagPlaceholder), 'Sunset')
     await userEvent.click(screen.getByRole('button', { name: T.add }))
@@ -318,7 +337,7 @@ describe('CollectionScreen tags', () => {
   })
 
   it('deletes a tag after confirmation and strips it from sources', async () => {
-    await seed([source({ id: 'a', caption: 'A', tags: ['seed:puppies'] })])
+    await seed([source({ id: 'a', tags: ['seed:puppies'] })])
     renderScreen()
     await userEvent.click(await screen.findByRole('button', { name: T.edit }))
     await userEvent.click(screen.getByRole('button', { name: `${T.delete} Puppies` }))

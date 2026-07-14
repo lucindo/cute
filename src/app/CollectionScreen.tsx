@@ -83,9 +83,7 @@ export function CollectionScreen(): ReactElement {
           <li key={source.id}>
             <button
               type="button"
-              // Content (the thumbnail's alt) names captioned tiles; the
-              // fallback keeps uncaptioned tiles reachable by name.
-              aria-label={source.caption === undefined ? strings.collection.openItem : undefined}
+              aria-label={strings.collection.openItem}
               onClick={() => {
                 setOpenSourceId(source.id)
               }}
@@ -95,14 +93,14 @@ export function CollectionScreen(): ReactElement {
                 {source.thumbUrl !== null && (
                   <img
                     src={source.thumbUrl}
-                    alt={source.caption ?? ''}
+                    alt=""
                     className="h-full w-full object-cover"
                   />
                 )}
               </div>
               <p
-                // Supplementary visual metadata; the tile is named by its
-                // caption, so keep the stat out of the button's accessible name.
+                // Supplementary visual metadata; keep the stat out of the
+                // button's accessible name.
                 aria-hidden="true"
                 className="mt-1 text-center text-[11px] tabular-nums text-[var(--color-zen-text-soft)]"
               >

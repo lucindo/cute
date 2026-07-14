@@ -83,8 +83,7 @@ function validateSource(raw: unknown): SourceRecord | null {
   if (!isNumber(r.createdAt)) return null
   if (!isStringArray(r.tags)) return null
   if (typeof r.deleted !== 'boolean') return null
-  if (r.caption !== undefined && typeof r.caption !== 'string') return null
-  const base: SourceRecord = {
+  return {
     id: r.id,
     type: r.type,
     mimeType: r.mimeType,
@@ -93,7 +92,6 @@ function validateSource(raw: unknown): SourceRecord | null {
     tags: r.tags,
     deleted: r.deleted,
   }
-  return r.caption === undefined ? base : { ...base, caption: r.caption }
 }
 
 function validateTag(raw: unknown): TagRecord | null {

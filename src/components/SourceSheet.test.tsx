@@ -20,7 +20,6 @@ function source(overrides: Partial<CollectionSource> = {}): CollectionSource {
     bytes: 3,
     createdAt: 1,
     tags: [],
-    caption: 'Cutie',
     deleted: false,
     thumbUrl: null,
     holdCount: 0,
@@ -33,7 +32,7 @@ function renderSheet(opts: { src?: CollectionSource; tags?: TagRecord[]; newTagI
   const onCreateTag = vi
     .fn<(name: string) => Promise<string | null>>()
     .mockResolvedValue(opts.newTagId ?? 't-new')
-  const onSave = vi.fn<(id: string, edits: { caption: string; tags: string[] }) => void>()
+  const onSave = vi.fn<(id: string, edits: { tags: string[] }) => void>()
   const onRequestDelete = vi.fn<(id: string) => void>()
   const onClose = vi.fn<() => void>()
   render(
@@ -55,36 +54,22 @@ const saveButton = (): HTMLElement => screen.getByRole('button', { name: S.save 
 const closeButton = (): HTMLElement => screen.getByRole('button', { name: S.close })
 
 describe('SourceSheet', () => {
-  it('shows the current caption with Save disabled', () => {
+  it('disables Save until an edit is made', () => {
     renderSheet()
-    expect(screen.getByLabelText(S.caption)).toHaveValue('Cutie')
     expect(saveButton()).toBeDisabled()
   })
 
-  it('enables Save once the caption changes and commits on Save', async () => {
-    const user = userEvent.setup()
-    const { onSave, onClose } = renderSheet()
-
-    const input = screen.getByLabelText(S.caption)
-    await user.clear(input)
-    await user.type(input, 'Sleepy pup')
-    expect(saveButton()).toBeEnabled()
-
-    await user.click(saveButton())
-    expect(onSave).toHaveBeenCalledExactlyOnceWith('s1', { caption: 'Sleepy pup', tags: [] })
-    expect(onClose).toHaveBeenCalledOnce()
-  })
-
-  it('stages a tag toggle without writing until Save', async () => {
+  it('stages a tag toggle without writing until Save, then commits and closes', async () => {
     const user = userEvent.setup()
     const tags: TagRecord[] = [{ id: 't1', name: 'Kittens' }]
-    const { onSave } = renderSheet({ tags })
+    const { onSave, onClose } = renderSheet({ tags })
 
     await user.click(screen.getByRole('button', { name: 'Kittens' }))
     expect(saveButton()).toBeEnabled()
 
     await user.click(saveButton())
-    expect(onSave).toHaveBeenCalledExactlyOnceWith('s1', { caption: 'Cutie', tags: ['t1'] })
+    expect(onSave).toHaveBeenCalledExactlyOnceWith('s1', { tags: ['t1'] })
+    expect(onClose).toHaveBeenCalledOnce()
   })
 
   it('creates a new tag and stages its assignment', async () => {
@@ -110,9 +95,10 @@ describe('SourceSheet', () => {
 
   it('asks to confirm when closing with unsaved changes, and discards', async () => {
     const user = userEvent.setup()
-    const { onClose } = renderSheet()
+    const tags: TagRecord[] = [{ id: 't1', name: 'Kittens' }]
+    const { onClose } = renderSheet({ tags })
 
-    await user.type(screen.getByLabelText(S.caption), '!')
+    await user.click(screen.getByRole('button', { name: 'Kittens' }))
     await user.click(closeButton())
     expect(onClose).not.toHaveBeenCalled()
     expect(screen.getByRole('dialog', { name: S.discardTitle })).toBeInTheDocument()
@@ -123,13 +109,14 @@ describe('SourceSheet', () => {
 
   it('keeps editing when the discard prompt is dismissed', async () => {
     const user = userEvent.setup()
-    const { onClose } = renderSheet()
+    const tags: TagRecord[] = [{ id: 't1', name: 'Kittens' }]
+    const { onClose } = renderSheet({ tags })
 
-    await user.type(screen.getByLabelText(S.caption), '!')
+    await user.click(screen.getByRole('button', { name: 'Kittens' }))
     await user.click(closeButton())
     await user.click(screen.getByRole('button', { name: S.discardCancel }))
 
     expect(onClose).not.toHaveBeenCalled()
-    expect(screen.getByLabelText(S.caption)).toHaveValue('Cutie!')
+    expect(saveButton()).toBeEnabled()
   })
 })

@@ -8,10 +8,10 @@ import type {
   TagRecord,
 } from '../storage'
 
-const imgNoCaption: SourceRecord = { id: 's1', type: 'image', mimeType: 'image/webp', bytes: 1024, createdAt: 1, tags: ['seed:babies'], deleted: false }
-const vidWithCaption: SourceRecord = { id: 's2', type: 'video', mimeType: 'video/mp4', bytes: 2048, createdAt: 2, tags: [], caption: 'hi', deleted: false }
+const img: SourceRecord = { id: 's1', type: 'image', mimeType: 'image/webp', bytes: 1024, createdAt: 1, tags: ['seed:babies'], deleted: false }
+const vid: SourceRecord = { id: 's2', type: 'video', mimeType: 'video/mp4', bytes: 2048, createdAt: 2, tags: [], deleted: false }
 const tombstone: SourceRecord = { id: 's3', type: 'image', mimeType: 'image/jpeg', bytes: 0, createdAt: 3, tags: [], deleted: true }
-const sources: SourceRecord[] = [imgNoCaption, vidWithCaption, tombstone]
+const sources: SourceRecord[] = [img, vid, tombstone]
 const tags: TagRecord[] = [
   { id: 'seed:babies', name: null },
   { id: 'user:1', name: 'Nephews' },
@@ -48,13 +48,6 @@ describe('buildManifest / validateManifest', () => {
     })
   })
 
-  it('preserves an absent caption as absent, not as an undefined key', () => {
-    const built = buildManifest({ sources: [imgNoCaption], tags: [], sessions: [], holdEvents: [] })
-    const result = validateManifest(roundTrip(built))
-    expect(result.ok && result.value.sources).toEqual([imgNoCaption])
-    expect(result.ok && result.value.sources.map((s) => 'caption' in s)).toEqual([false])
-  })
-
   it('rejects a non-object manifest', () => {
     expect(validateManifest(null).ok).toBe(false)
     expect(validateManifest('nope').ok).toBe(false)
@@ -78,7 +71,7 @@ describe('buildManifest / validateManifest', () => {
   })
 
   it('rejects the whole array when one record is malformed', () => {
-    const bad = [imgNoCaption, { id: 's9', type: 'gif', mimeType: 'x', bytes: 1, createdAt: 1, tags: [], deleted: false }]
+    const bad = [img, { id: 's9', type: 'gif', mimeType: 'x', bytes: 1, createdAt: 1, tags: [], deleted: false }]
     const result = validateManifest({ version: BACKUP_VERSION, sources: bad, tags: [], sessions: [], holdEvents: [] })
     expect(result).toEqual({ ok: false, error: 'invalid or missing sources' })
   })
@@ -95,8 +88,8 @@ describe('buildManifest / validateManifest', () => {
   })
 
   it('drops unknown extra keys rather than carrying them into records', () => {
-    const dirty = { ...imgNoCaption, junk: 'x' }
+    const dirty = { ...img, junk: 'x' }
     const result = validateManifest({ version: BACKUP_VERSION, sources: [dirty], tags: [], sessions: [], holdEvents: [] })
-    expect(result.ok && result.value.sources).toEqual([imgNoCaption])
+    expect(result.ok && result.value.sources).toEqual([img])
   })
 })

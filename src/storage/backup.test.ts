@@ -27,7 +27,7 @@ function buf(...nums: number[]): ArrayBuffer {
 
 const sources: SourceRecord[] = [
   { id: 's1', type: 'image', mimeType: 'image/webp', bytes: 3, createdAt: 1, tags: ['seed:babies'], deleted: false },
-  { id: 's2', type: 'video', mimeType: 'video/mp4', bytes: 4, createdAt: 2, tags: [], caption: 'clip', deleted: false },
+  { id: 's2', type: 'video', mimeType: 'video/mp4', bytes: 4, createdAt: 2, tags: [], deleted: false },
   { id: 's3', type: 'image', mimeType: 'image/jpeg', bytes: 0, createdAt: 3, tags: [], deleted: true }, // tombstone, no media
 ]
 const tags: TagRecord[] = [{ id: 'seed:babies', name: null }, { id: 'user:x', name: 'Friends' }]

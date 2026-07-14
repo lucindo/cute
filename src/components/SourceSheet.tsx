@@ -13,7 +13,7 @@ export interface SourceSheetProps {
   tags: TagRecord[]
   // Create a catalog tag and resolve its id so the assignment can be staged.
   onCreateTag(this: void, name: string): Promise<string | null>
-  onSave(this: void, id: string, edits: { caption: string; tags: string[] }): void
+  onSave(this: void, id: string, edits: { tags: string[] }): void
   onRequestDelete(this: void, id: string): void
   onClose(this: void): void
 }
@@ -22,9 +22,9 @@ function sameIds(ids: ReadonlySet<string>, arr: readonly string[]): boolean {
   return ids.size === arr.length && arr.every((id) => ids.has(id))
 }
 
-// Per-item bottom sheet, editing staged locally: caption and tag changes live
-// in draft state and hit the DB only on Save. Closing with unsaved edits asks
-// to confirm; the grid stays thumbnails-only.
+// Per-item bottom sheet, editing staged locally: tag changes live in draft
+// state and hit the DB only on Save. Closing with unsaved edits asks to
+// confirm; the grid stays thumbnails-only.
 export function SourceSheet({
   source,
   tags,
@@ -34,7 +34,6 @@ export function SourceSheet({
   onClose,
 }: SourceSheetProps): ReactElement {
   const strings = useUiStrings()
-  const [caption, setCaption] = useState('')
   const [tagIds, setTagIds] = useState<ReadonlySet<string>>(() => new Set())
   const [confirmingDiscard, setConfirmingDiscard] = useState(false)
   const [seededId, setSeededId] = useState<string | null>(null)
@@ -44,14 +43,11 @@ export function SourceSheet({
   const currentId = source?.id ?? null
   if (currentId !== seededId) {
     setSeededId(currentId)
-    setCaption(source?.caption ?? '')
     setTagIds(new Set(source?.tags ?? []))
     setConfirmingDiscard(false)
   }
 
-  const dirty =
-    source !== null &&
-    (caption.trim() !== (source.caption ?? '').trim() || !sameIds(tagIds, source.tags))
+  const dirty = source !== null && !sameIds(tagIds, source.tags)
 
   const toggleTag = (tagId: string, mode: 'add' | 'remove'): void => {
     setTagIds((prev) => {
@@ -79,7 +75,7 @@ export function SourceSheet({
   }
 
   const save = (): void => {
-    if (source !== null) onSave(source.id, { caption, tags: [...tagIds] })
+    if (source !== null) onSave(source.id, { tags: [...tagIds] })
     onClose()
   }
 
@@ -88,7 +84,7 @@ export function SourceSheet({
       <Sheet
         open={source !== null}
         onClose={requestClose}
-        label={source?.caption ?? strings.collection.openItem}
+        label={strings.collection.openItem}
       >
         {source !== null && (
           <div className="grid gap-5">
@@ -96,23 +92,11 @@ export function SourceSheet({
               {source.thumbUrl !== null && (
                 <img
                   src={source.thumbUrl}
-                  alt={source.caption ?? ''}
+                  alt=""
                   className="mx-auto max-h-64 w-full object-contain"
                 />
               )}
             </div>
-            <label className="grid gap-1.5 text-sm">
-              <span className="text-[var(--color-zen-text-soft)]">{strings.collection.caption}</span>
-              <input
-                type="text"
-                value={caption}
-                placeholder={strings.collection.captionPlaceholder}
-                onChange={(event) => {
-                  setCaption(event.currentTarget.value)
-                }}
-                className="rounded-xl border border-[var(--color-border-soft)] bg-transparent px-3 py-2 text-[15px] text-[var(--color-zen-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
-              />
-            </label>
             <p className="text-xs text-[var(--color-zen-muted)]">{formatBytes(source.bytes)}</p>
             <TagAssignPanel
               tags={tags}

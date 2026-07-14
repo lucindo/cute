@@ -17,7 +17,6 @@ const SOURCE: SourceRecord = {
   bytes: 3,
   createdAt: 1,
   tags: ['babies'],
-  caption: 'Cutie',
   deleted: false,
 }
 
@@ -69,45 +68,23 @@ describe('deleteSource', () => {
 })
 
 describe('updateSource', () => {
-  it('writes caption and tags in one update', async () => {
+  it('writes tags in one update', async () => {
     const db = await freshDb()
     await seed(db)
 
-    const res = await updateSource(db, 's1', { caption: 'Sleepy pup', tags: ['babies', 'puppies'] })
+    const res = await updateSource(db, 's1', { tags: ['babies', 'puppies'] })
     expect(res).toEqual({ ok: true, value: undefined })
 
     const source = await getRecord(db, 'sources', 's1')
     if (!source.ok || source.value === null) throw new Error('expected the source')
-    expect(source.value).toEqual({ ...SOURCE, caption: 'Sleepy pup', tags: ['babies', 'puppies'] })
-  })
-
-  it('trims the caption', async () => {
-    const db = await freshDb()
-    await seed(db)
-
-    await updateSource(db, 's1', { caption: '  padded  ', tags: SOURCE.tags })
-
-    const source = await getRecord(db, 'sources', 's1')
-    if (!source.ok || source.value === null) throw new Error('expected the source')
-    expect(source.value.caption).toBe('padded')
-  })
-
-  it('clears the caption when given only whitespace', async () => {
-    const db = await freshDb()
-    await seed(db) // SOURCE starts with caption 'Cutie'
-
-    await updateSource(db, 's1', { caption: '   ', tags: SOURCE.tags })
-
-    const source = await getRecord(db, 'sources', 's1')
-    if (!source.ok || source.value === null) throw new Error('expected the source')
-    expect(source.value).not.toHaveProperty('caption')
+    expect(source.value).toEqual({ ...SOURCE, tags: ['babies', 'puppies'] })
   })
 
   it('errs on an unknown id', async () => {
     const db = await freshDb()
     await seed(db)
 
-    const res = await updateSource(db, 'nope', { caption: 'x', tags: [] })
+    const res = await updateSource(db, 'nope', { tags: [] })
     expect(res.ok).toBe(false)
     if (res.ok) throw new Error('expected err')
     expect(res.error.name).toBe('NotFound')

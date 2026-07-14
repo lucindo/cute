@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 26
           cache: npm
       - run: npm ci
       - run: npm run lint
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 26
           cache: npm
       - id: read
         name: Read package.json version
@@ -78,7 +78,7 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 26
       - id: read
         name: Validate and read versions.json
         run: |
@@ -111,7 +111,7 @@ jobs:
           ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 26
           cache: npm
       - run: npm ci
       - name: Build current tag at versioned subpath
@@ -137,7 +137,7 @@ jobs:
           ref: ${{ needs.read-manifest.outputs.official }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 26
           cache: npm
       - run: npm ci
       - name: Build official tag at root
@@ -213,7 +213,7 @@ jobs:
           token: ${{ secrets.VERSIONS_JSON_PAT || secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 26
       - name: Append pushed tag to versions.json
         # TAG read from process.env inside the Node script — git ref names may
         # contain quotes/`$`/backticks, so inlining ${{ github.ref_name }} into

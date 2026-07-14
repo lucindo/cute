@@ -212,8 +212,6 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     return <CompletionScreen summary={summary} onDone={onExit} strings={strings.session.completion} />
   }
 
-  const clockLabel = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
   return (
     <div
       // Transparent above the z-10 App <video> so it shows through while a
@@ -236,7 +234,6 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
       {overlayVisible && frame !== null && (
         <SessionOverlay
           frame={frame}
-          clockLabel={clockLabel}
           muted={!soundOn}
           onToggleSound={() => {
             setSoundOn(!soundOn)

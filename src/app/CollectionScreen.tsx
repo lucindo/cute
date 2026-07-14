@@ -171,8 +171,8 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
       )}
       {hasItems && (
         <>
-          <div className="mt-6 flex items-center justify-between gap-3">
-            <div className="w-fit">
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <div className="w-44">
               <SegmentedControl<'recent' | 'aww'>
                 options={[
                   { id: 'recent', label: strings.collection.sortRecent },

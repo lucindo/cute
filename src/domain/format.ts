@@ -1,9 +1,9 @@
 // Clock-style m:ss (minutes uncapped for long overtime). Used by the session
 // overlay and completion summary.
 export function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const minutes = Math.floor(total / 60)
-  const seconds = total % 60
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
   return `${String(minutes)}:${String(seconds).padStart(2, '0')}`
 }
 

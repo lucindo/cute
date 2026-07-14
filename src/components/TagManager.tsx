@@ -1,7 +1,6 @@
 import { useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from './ConfirmDialog'
-import { SettingsRow } from './SettingsRow'
 import { tagDisplayName } from '../domain/tags'
 import { useUiStrings } from '../hooks/useUiStringsContext'
 import type { TagRecord } from '../storage'
@@ -13,9 +12,17 @@ export interface TagManagerProps {
   onDelete(this: void, id: string): void
 }
 
+// Fixed row height so switching a row into rename mode never reflows the list.
+const rowClass =
+  'flex min-h-[3.5rem] items-center gap-2 border-t border-[var(--color-border-soft)] py-2'
+const btnBase =
+  'rounded-lg px-3 py-1.5 text-sm transition motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+const secondaryBtn = `${btnBase} border border-[var(--color-border-soft)] bg-transparent font-medium text-[var(--color-zen-text)] hover:bg-[var(--color-zen-bg-soft)] active:bg-[var(--color-zen-bg-soft)] focus-visible:ring-zen-accent`
+const primaryBtn = `${btnBase} bg-[var(--color-zen-accent)] font-semibold text-[var(--color-zen-on-accent)] hover:opacity-90 active:opacity-90 focus-visible:ring-zen-accent`
+const destructiveBtn = `${btnBase} bg-[var(--color-destructive)] font-semibold text-[var(--color-destructive-on)] hover:bg-[var(--color-destructive-hover)] active:bg-[var(--color-destructive-active)] focus-visible:ring-[var(--color-destructive)]`
+
 // Tag list with rename and confirmed delete (SPEC FR-14). Each row shows a live
 // per-tag item count (counts). Creation lives on the Tags page above this list.
-// Rows use HRV's SettingsRow chrome (divider + 15px label) for fidelity.
 export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps): ReactElement {
   const strings = useUiStrings()
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null)
@@ -24,9 +31,6 @@ export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps
   const sorted = [...tags].sort((a, b) =>
     tagDisplayName(a, strings.tags.seeded).localeCompare(tagDisplayName(b, strings.tags.seeded)),
   )
-
-  const actionButton =
-    'rounded px-1 text-sm text-[var(--color-zen-text-soft)] hover:text-[var(--color-zen-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent'
 
   return (
     <div>
@@ -38,11 +42,7 @@ export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps
           const name = tagDisplayName(tag, strings.tags.seeded)
           if (editing?.id === tag.id) {
             return (
-              <fieldset
-                key={tag.id}
-                aria-label={name}
-                className="flex items-center gap-2 border-t border-[var(--color-border-soft)] py-3"
-              >
+              <fieldset key={tag.id} aria-label={name} className={rowClass}>
                 <form
                   className="flex flex-1 items-center gap-2"
                   onSubmit={(event) => {
@@ -60,14 +60,14 @@ export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps
                       setEditing({ id: tag.id, value: event.target.value })
                     }}
                     aria-label={strings.tags.rename}
-                    className="w-40 rounded-lg border border-[var(--color-border-soft)] bg-transparent px-3 py-1 text-sm text-[var(--color-zen-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
+                    className="w-40 rounded-lg border border-[var(--color-border-soft)] bg-transparent px-3 py-1.5 text-[15px] text-[var(--color-zen-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zen-accent"
                   />
-                  <button type="submit" className={actionButton}>
+                  <button type="submit" className={primaryBtn}>
                     {strings.tags.save}
                   </button>
                   <button
                     type="button"
-                    className={actionButton}
+                    className={secondaryBtn}
                     onClick={() => {
                       setEditing(null)
                     }}
@@ -79,23 +79,19 @@ export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps
             )
           }
           return (
-            <SettingsRow
-              key={tag.id}
-              label={name}
-              ariaLabel={name}
-              className="flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-3">
+            <fieldset key={tag.id} aria-label={name} className={`${rowClass} justify-between`}>
+              <span className="text-[15px] text-[var(--color-zen-text)]">{name}</span>
+              <div className="flex items-center gap-2">
                 <span
                   aria-hidden="true"
-                  className="text-[13px] tabular-nums text-[var(--color-zen-muted)]"
+                  className="mr-1 text-[13px] tabular-nums text-[var(--color-zen-muted)]"
                 >
                   {strings.tags.itemCount(counts.get(tag.id) ?? 0)}
                 </span>
                 <button
                   type="button"
                   aria-label={`${strings.tags.rename} ${name}`}
-                  className={actionButton}
+                  className={secondaryBtn}
                   onClick={() => {
                     setEditing({ id: tag.id, value: name })
                   }}
@@ -105,7 +101,7 @@ export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps
                 <button
                   type="button"
                   aria-label={`${strings.tags.delete} ${name}`}
-                  className={`${actionButton} hover:text-[var(--color-destructive)]`}
+                  className={destructiveBtn}
                   onClick={() => {
                     setPendingDelete(tag.id)
                   }}
@@ -113,7 +109,7 @@ export function TagManager({ tags, counts, onRename, onDelete }: TagManagerProps
                   {strings.tags.delete}
                 </button>
               </div>
-            </SettingsRow>
+            </fieldset>
           )
         })}
       </div>

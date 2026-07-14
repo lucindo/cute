@@ -31,11 +31,16 @@ export function useCollection(): CollectionState {
     let cancelled = false
     let db: IDBDatabase | null = null
     let liveUrls: string[] = []
+    // Bumped per load() call; a load that started before a newer one bails
+    // before committing, so overlapping reloads can't commit out of order or
+    // leak a second IndexedDB connection.
+    let generation = 0
 
     async function load(): Promise<void> {
+      const gen = ++generation
       if (db === null) {
         const opened = await openDb()
-        if (cancelled) {
+        if (cancelled || gen !== generation) {
           if (opened.ok) opened.value.close()
           return
         }
@@ -50,7 +55,7 @@ export function useCollection(): CollectionState {
         getAllRecords(db, 'thumbs'),
         getAllRecords(db, 'holdEvents'),
       ])
-      if (cancelled) return
+      if (cancelled || gen !== generation) return
       if (!sources.ok) {
         setState({ status: 'error', error: sources.error })
         return

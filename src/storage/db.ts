@@ -227,3 +227,38 @@ export function writeMany(
     }
   })
 }
+
+// Delete a tag and strip its id from every source in ONE transaction, so a
+// concurrent source edit can't be lost in the gap between a separate read and
+// write (a read-modify-write across two transactions would clobber it).
+export function deleteTagAndStrip(
+  db: IDBDatabase,
+  id: string,
+): Promise<Result<void, StorageError>> {
+  return new Promise((resolve) => {
+    let tx: IDBTransaction
+    try {
+      tx = db.transaction(['sources', 'tags'], 'readwrite')
+    } catch (cause) {
+      resolve(err(toStorageError(cause)))
+      return
+    }
+    tx.oncomplete = () => { resolve(ok(undefined)) }
+    tx.onabort = () => {
+      resolve(err(toStorageError(tx.error ?? new DOMException('transaction aborted', 'AbortError'))))
+    }
+    try {
+      const sources = tx.objectStore('sources')
+      const all = sources.getAll()
+      all.onsuccess = () => {
+        for (const s of all.result as SourceRecord[]) {
+          if (s.tags.includes(id)) sources.put({ ...s, tags: s.tags.filter((t) => t !== id) })
+        }
+        tx.objectStore('tags').delete(id)
+      }
+    } catch (cause) {
+      resolve(err(toStorageError(cause)))
+      tx.abort()
+    }
+  })
+}

@@ -4,14 +4,7 @@
 
 import { newId } from '../domain/id'
 import { err, ok, type Result } from '../domain/result'
-import {
-  getAllRecords,
-  getRecord,
-  writeMany,
-  type StorageError,
-  type TagRecord,
-  type WriteOp,
-} from './db'
+import { deleteTagAndStrip, getRecord, writeMany, type StorageError, type TagRecord } from './db'
 
 export async function createTag(
   db: IDBDatabase,
@@ -45,14 +38,5 @@ export async function deleteTag(
   const tag = await getRecord(db, 'tags', id)
   if (!tag.ok) return tag
   if (tag.value === null) return err({ name: 'NotFound', message: `no tag with id ${id}` })
-  const sources = await getAllRecords(db, 'sources')
-  if (!sources.ok) return sources
-  const strips = sources.value
-    .filter((s) => s.tags.includes(id))
-    .map((s): WriteOp => ({
-      op: 'put',
-      store: 'sources',
-      record: { ...s, tags: s.tags.filter((t) => t !== id) },
-    }))
-  return writeMany(db, [{ op: 'delete', store: 'tags', id }, ...strips])
+  return deleteTagAndStrip(db, id)
 }

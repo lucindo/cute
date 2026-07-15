@@ -41,7 +41,7 @@ describe('processVideoFile', () => {
     const result = await processVideoFile(file, deps)
     expect(result).toEqual({
       ok: false,
-      error: { reason: 'undecodable', mimeType: 'video/x-msvideo', detail: 'no decoder' },
+      error: { reason: 'undecodable', mimeType: 'video/x-msvideo' },
     })
     expect(deps.encode).not.toHaveBeenCalled()
   })

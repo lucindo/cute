@@ -22,9 +22,9 @@ function rejectionHint(rejection: FileRejection, strings: UiStrings): string {
     case 'unsupported-type':
       return strings.collection.rejection.unsupportedType
     case 'undecodable':
-      if (!rejection.mimeType.startsWith('video/')) return strings.collection.rejection.undecodable
-      // v0.5 diagnostic suffix — surface mime type + probe failure stage.
-      return `${strings.collection.rejection.undecodableVideo} [${rejection.mimeType}${rejection.detail !== undefined ? ` · ${rejection.detail}` : ''}]`
+      return rejection.mimeType.startsWith('video/')
+        ? strings.collection.rejection.undecodableVideo
+        : strings.collection.rejection.undecodable
     case 'encode-failed':
       return strings.collection.rejection.encodeFailed
     case 'storage-failed':

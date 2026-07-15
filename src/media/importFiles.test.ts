@@ -94,7 +94,7 @@ describe('importFiles', () => {
     expect(outcome.imported).toHaveLength(1)
     expect(outcome.rejected).toEqual([
       { name: 'broken.heic', rejection: { reason: 'undecodable', mimeType: 'image/heic' } },
-      { name: 'broken.mov', rejection: { reason: 'undecodable', mimeType: 'video/quicktime', detail: 'undecodable' } },
+      { name: 'broken.mov', rejection: { reason: 'undecodable', mimeType: 'video/quicktime' } },
       { name: 'notes.pdf', rejection: { reason: 'unsupported-type', mimeType: 'application/pdf' } },
     ])
 

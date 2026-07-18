@@ -62,6 +62,14 @@ export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
 
       <div className="flex-1" />
 
+      {canStart ? (
+        <p className="max-w-[38ch] self-center px-2 text-center text-[15px] leading-relaxed text-balance text-[var(--color-zen-text-soft)]">
+          {strings.practice.howTo}
+        </p>
+      ) : null}
+
+      <div className="flex-1" />
+
       <div className="w-full">
         {canStart ? null : (
           <p className="mb-3 text-center text-sm text-[var(--color-zen-text-soft)]">{guidance}</p>

@@ -27,6 +27,7 @@ export interface UiStrings {
       readonly allHint: string
     }
     readonly start: string
+    readonly howTo: string
     readonly emptyCollection: string
     readonly emptyFilter: string
   }
@@ -174,6 +175,8 @@ const EN: UiStrings = {
       allHint: 'All sources',
     },
     start: 'Start',
+    howTo:
+      'When a picture gives you that “aww”, press and hold. Let go when it fades, clear your mind, and hold again, or swipe on to the next image.',
     emptyCollection: 'Your collection is empty. Add photos or videos in the Collection to begin.',
     emptyFilter: 'No sources match the selected tags.',
   },
@@ -325,6 +328,8 @@ const PT_BR: UiStrings = {
       allHint: 'Todas as mídias',
     },
     start: 'Começar',
+    howTo:
+      'Quando uma imagem lhe der aquele “aww”, pressione e segure. Solte quando ele se dissipar, limpe a mente e segure de novo, ou deslize para a próxima imagem.',
     emptyCollection: 'Sua coleção está vazia. Adicione fotos ou vídeos na Coleção para começar.',
     emptyFilter: 'Nenhuma mídia corresponde às tags selecionadas.',
   },

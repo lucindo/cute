@@ -37,8 +37,8 @@ export function CompletionScreen({ summary, onDone, strings }: CompletionScreenP
           {rows.map((row, i) => (
             <div
               key={row.label}
-              className={`flex items-center justify-between py-3 text-[15px]${
-                i > 0 ? ' border-t border-[var(--color-border-soft)]' : ''
+              className={`flex items-center justify-between py-3 text-[15px] ${
+                i > 0 ? 'border-t border-[var(--color-border-soft)]' : ''
               }`}
             >
               <span className="text-[var(--color-zen-text-soft)]">{row.label}</span>

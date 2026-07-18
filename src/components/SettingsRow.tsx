@@ -34,7 +34,7 @@ export function SettingsRow({
   return (
     <fieldset aria-label={ariaLabel} className={fieldsetClass}>
       <span
-        className={`text-[15px] font-normal text-[var(--color-zen-text)]${dimmed ? ' opacity-45' : ''}`}
+        className={`text-[15px] font-normal text-[var(--color-zen-text)] ${dimmed ? 'opacity-45' : ''}`}
       >
         {label}
       </span>

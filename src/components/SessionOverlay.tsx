@@ -51,8 +51,8 @@ export function SessionOverlay({
         {muted ? <SpeakerMutedIcon width={20} height={20} /> : <SpeakerIcon width={20} height={20} />}
       </button>
       <span
-        className={`rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md${
-          frame.holdActive ? ' hold-pulse' : ''
+        className={`rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md ${
+          frame.holdActive ? 'hold-pulse' : ''
         }`}
         style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >

@@ -119,7 +119,8 @@ export function App(): ReactElement {
               />
             }
           />
-          <div className="mb-8 w-full">
+          {/* mt-6 matches the 24px a SettingsSectionHeader puts under the top bar. */}
+          <div className="mt-6 mb-8 w-full">
             <SegmentedControl<AppMode>
               options={[
                 { id: 'practice', label: uiStrings.shell.modeToggle.practiceName },

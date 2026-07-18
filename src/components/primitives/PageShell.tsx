@@ -25,12 +25,15 @@ const WIDTH_CLASS: Record<PageShellWidth, string> = {
  *  first child so the page satisfies the document-outline requirement. */
 export function PageShell({ children, overlays, width = 'page' }: PageShellProps) {
   return (
+    // svh, not vh: iOS Safari measures 100vh with the toolbar retracted, which
+    // hides bottom-anchored content (the Start button) until the user scrolls.
+    // Bottom inset is ours to pay because index.html opts into viewport-fit=cover.
     <main
-      className="min-h-screen px-4 py-6 text-[var(--color-zen-accent-strong)] sm:px-6 sm:py-8"
+      className="flex min-h-[100svh] flex-col px-4 pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-[var(--color-zen-accent-strong)] sm:px-6 sm:pt-8 sm:pb-[max(2rem,env(safe-area-inset-bottom))]"
       style={{ background: 'var(--page-bg-gradient)' }}
     >
       <section
-        className={`mx-auto flex min-h-[calc(100vh-3rem)] w-full ${WIDTH_CLASS[width]} flex-col items-center justify-start text-center sm:min-h-[calc(100vh-4rem)]`}
+        className={`mx-auto flex w-full flex-1 ${WIDTH_CLASS[width]} flex-col items-center justify-start text-center`}
       >
         {children}
       </section>

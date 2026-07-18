@@ -21,8 +21,16 @@ export function TagFilter({ tags, selected, onToggle }: TagFilterProps): ReactEl
 
   return (
     <div>
-      <div className="mb-3 text-[15px] font-normal text-[var(--color-zen-text)]">
-        {strings.practice.filter.label}
+      {/* Hint sits on the label row so selecting a tag drops it without resizing the card. */}
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <span className="text-[15px] font-normal text-[var(--color-zen-text)]">
+          {strings.practice.filter.label}
+        </span>
+        {selected.length === 0 ? (
+          <span className="text-xs text-[var(--color-zen-text-soft)]">
+            {strings.practice.filter.allHint}
+          </span>
+        ) : null}
       </div>
       <ul className="flex flex-wrap gap-2">
         {sorted.map((tag) => {
@@ -46,11 +54,6 @@ export function TagFilter({ tags, selected, onToggle }: TagFilterProps): ReactEl
           )
         })}
       </ul>
-      {selected.length === 0 ? (
-        <p className="mt-2 text-xs text-[var(--color-zen-text-soft)]">
-          {strings.practice.filter.allHint}
-        </p>
-      ) : null}
     </div>
   )
 }

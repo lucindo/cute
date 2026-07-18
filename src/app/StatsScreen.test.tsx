@@ -71,9 +71,9 @@ describe('StatsScreen', () => {
     expect(within(statRow('Total held')).getByText('9s')).toBeInTheDocument()
     expect(within(statRow('Longest hold')).getByText('0:04')).toBeInTheDocument()
 
-    // Recent rows: end reason + "duration · ♥ holds" for each session.
-    expect(screen.getByText('Completed')).toBeInTheDocument()
-    expect(screen.getByText('Stopped')).toBeInTheDocument()
+    // Recent rows: end reason (icon, labelled) + "duration · ♥ holds" for each session.
+    expect(screen.getByRole('img', { name: 'Completed' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Stopped' })).toBeInTheDocument()
     expect(screen.getByText('5:00 · ♥ 2')).toBeInTheDocument()
     expect(screen.getByText('1:00 · ♥ 1')).toBeInTheDocument()
   })

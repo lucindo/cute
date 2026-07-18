@@ -122,6 +122,8 @@ export function SourceSheet({
                   {strings.collection.close}
                 </button>
               </div>
+              {/* Separates the destructive action from Save/Close to blunt mistaps. */}
+              <hr className="my-1 border-[var(--color-border-soft)]" />
               <button
                 type="button"
                 onClick={() => {

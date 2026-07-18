@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react'
 
+import { CheckIcon } from '../components/icons/CheckIcon'
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
+import { StopIcon } from '../components/icons/StopIcon'
 import { IconButton } from '../components/primitives/IconButton'
 import { PageShell } from '../components/primitives/PageShell'
 import { SectionCard } from '../components/primitives/SectionCard'
@@ -43,21 +45,29 @@ function RecentRow({
     dateStyle: 'medium',
     timeStyle: 'short',
   })
+  // The space before the interpolation is load-bearing: Tailwind's scanner drops
+  // a class that runs straight into `${`, so `py-3.5` would never be generated.
   return (
     <div
-      className={`flex items-center justify-between gap-3 py-2.5${
-        first ? '' : ' border-t border-[var(--color-border-soft)]'
+      className={`flex items-center justify-between gap-3 py-3.5 ${
+        first ? '' : 'border-t border-[var(--color-border-soft)]'
       }`}
     >
-      <div className="min-w-0">
-        <div className="truncate text-[13px] text-[var(--color-zen-text)]">{when}</div>
-        <div className="text-[11px] text-[var(--color-zen-muted)]">
-          {strings.endReason[session.endReason]}
-        </div>
+      <div className="min-w-0 truncate text-[13px] text-[var(--color-zen-text)]">{when}</div>
+      <div className="flex shrink-0 items-center gap-1.5 text-[var(--color-zen-text-soft)]">
+        {/* The end reason rides as an icon so the row stays one line; the label is its accessible name. */}
+        <span
+          role="img"
+          aria-label={strings.endReason[session.endReason]}
+          title={strings.endReason[session.endReason]}
+          className="flex text-[var(--color-zen-muted)]"
+        >
+          {session.endReason === 'completed' ? <CheckIcon /> : <StopIcon />}
+        </span>
+        <span className="whitespace-nowrap text-[13px] tabular-nums">
+          {strings.sessionMeta(formatDuration(session.durationMs), session.holdCount)}
+        </span>
       </div>
-      <span className="whitespace-nowrap text-[13px] tabular-nums text-[var(--color-zen-text-soft)]">
-        {strings.sessionMeta(formatDuration(session.durationMs), session.holdCount)}
-      </span>
     </div>
   )
 }

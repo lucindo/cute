@@ -25,11 +25,11 @@ function renderPractice(onStart: (request: SessionRequest) => void = vi.fn()) {
   )
 }
 
-function source(id: string, tags: string[]): SourceRecord {
+function source(id: string, tags: string[], type: SourceRecord['type'] = 'image'): SourceRecord {
   return {
     id,
-    type: 'image',
-    mimeType: 'image/webp',
+    type,
+    mimeType: type === 'video' ? 'video/mp4' : 'image/webp',
     bytes: 3,
     createdAt: 1,
     tags,
@@ -82,6 +82,45 @@ describe('PracticeScreen tag filter', () => {
     renderPractice()
     await screen.findByText(UI_STRINGS.en.practice.emptyCollection)
     expect(screen.queryByRole('button', { name: 'Kittens' })).not.toBeInTheDocument()
+  })
+})
+
+describe('PracticeScreen video sound', () => {
+  const soundSwitch = (): HTMLElement =>
+    screen.getByRole('switch', { name: UI_STRINGS.en.practice.sound })
+
+  it('defaults to on and is inert while the pool holds no video', async () => {
+    await seed([source('s1', ['seed:kittens'])])
+    renderPractice()
+    await waitFor(() => {
+      expect(soundSwitch()).toBeDisabled()
+    })
+    expect(soundSwitch()).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('persists muting so the next session starts silent', async () => {
+    await seed([source('s1', ['seed:kittens'], 'video')])
+    renderPractice()
+    await waitFor(() => {
+      expect(soundSwitch()).toBeEnabled()
+    })
+
+    await userEvent.click(soundSwitch())
+    expect(soundSwitch()).toHaveAttribute('aria-checked', 'false')
+    expect(loadPrefs().videoSound).toBe(false)
+  })
+
+  it('goes inert when the tag filter excludes every video', async () => {
+    await seed([source('s1', ['seed:babies']), source('s2', ['seed:kittens'], 'video')])
+    renderPractice()
+
+    const babies = await screen.findByRole('button', { name: 'Babies' })
+    await waitFor(() => {
+      expect(soundSwitch()).toBeEnabled()
+    })
+
+    await userEvent.click(babies)
+    expect(soundSwitch()).toBeDisabled()
   })
 })
 

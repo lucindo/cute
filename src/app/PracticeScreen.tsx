@@ -1,6 +1,7 @@
 import { useState, type ReactElement } from 'react'
 
 import { SettingsStepper } from '../components/SettingsStepper'
+import { SettingsToggleRow } from '../components/SettingsToggleRow'
 import { TagFilter } from '../components/TagFilter'
 import { SectionCard } from '../components/primitives/SectionCard'
 import { SESSION_DURATIONS, sourceMatchesFilter } from '../domain/session'
@@ -9,6 +10,7 @@ import { useSessionDuration } from '../hooks/useSessionDuration'
 import type { SessionRequest } from '../hooks/useSession'
 import { useTags } from '../hooks/useTags'
 import { useUiStrings } from '../hooks/useUiStringsContext'
+import { useVideoSound } from '../hooks/useVideoSound'
 
 export interface PracticeScreenProps {
   onStart(this: void, request: SessionRequest): void
@@ -17,6 +19,7 @@ export interface PracticeScreenProps {
 export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
   const strings = useUiStrings()
   const { durationMin, setDurationMin } = useSessionDuration()
+  const { soundOn, setSoundOn } = useVideoSound()
   const { tagsState } = useTags()
   const collection = useCollection()
   const [filter, setFilter] = useState<string[]>([])
@@ -31,6 +34,7 @@ export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
   const sources = collection.status === 'ready' ? collection.sources : []
   const pool = sources.filter((s) => sourceMatchesFilter(s.tags, filter))
   const canStart = pool.length > 0
+  const poolHasVideo = pool.some((s) => s.type === 'video')
 
   // Guidance under a blocked Start (SPEC FR-25): distinguish an empty collection
   // from a filter that excludes everything, so the fix is obvious.
@@ -52,6 +56,13 @@ export function PracticeScreen({ onStart }: PracticeScreenProps): ReactElement {
           onChange={setDurationMin}
           strings={strings.practice.stepper}
           noBorder
+        />
+        <SettingsToggleRow
+          label={strings.practice.sound}
+          ariaLabel={strings.practice.sound}
+          checked={soundOn}
+          onChange={setSoundOn}
+          disabled={!poolHasVideo}
         />
         {sources.length > 0 && tags.length > 0 ? (
           <div className="border-t border-[var(--color-border-soft)] py-4">

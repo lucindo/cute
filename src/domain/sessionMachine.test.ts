@@ -15,7 +15,6 @@ import {
   stop,
   summarize,
   tick,
-  VIDEO_SETTLE_CAP_MS,
   type RunningSession,
 } from './sessionMachine'
 
@@ -142,26 +141,10 @@ describe('timer, overtime, completion (FR-36/40, AC-16)', () => {
     }
   })
 
-  it('lets a playing video finish past the timer, then completes', () => {
-    const s = start({ plannedMinutes: 1 })
-    expect(tick(s, 65_000, { videoPlaying: true }).status).toBe('running')
-
-    const done = tick(s, 68_000, { videoPlaying: false })
-    expect(done.status).toBe('complete')
-    if (done.status === 'complete') expect(done.record.overtimeMs).toBe(8000)
-  })
-
-  it('cuts the video wait off at the cap', () => {
-    const s = start({ plannedMinutes: 1 })
-    const capped = 60_000 + VIDEO_SETTLE_CAP_MS
-    expect(tick(s, capped - 1, { videoPlaying: true }).status).toBe('running')
-    expect(tick(s, capped, { videoPlaying: true }).status).toBe('complete')
-  })
-
-  it('keeps waiting on a hold even once the video cap has passed', () => {
+  it('never completes mid-hold, however long the hold outlasts the timer', () => {
     let s = start({ plannedMinutes: 1 })
     s = pressStart(s, 50_000)
-    expect(tick(s, 200_000, { videoPlaying: true }).status).toBe('running')
+    expect(tick(s, 200_000).status).toBe('running')
   })
 })
 

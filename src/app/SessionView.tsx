@@ -89,55 +89,29 @@ function useSessionKeyboard(opts: {
 
 // Drive the shared App-level <video> (SPEC FR-35): swap src, apply the sound
 // pref, show/hide as media/visibility change, and hand the element back hidden
-// and source-less when the session ends. Also owns the end-of-session settle
-// (FR-36) — it reports playback to the tick and drops `loop` once the planned
-// time is spent, so the clip can finish and fire `ended`. Returns whether the
-// video layer is shown.
+// and source-less when the session ends. Stays visible through the settle fade,
+// so the last frame is what fades out. Returns whether the video layer is shown.
 function useSessionVideo(opts: {
   videoRef: RefObject<HTMLVideoElement | null>
   setVideoActive: (active: boolean) => void
-  setVideoPlaying: (playing: boolean) => void
   media: SessionMedia | null
   visible: boolean
-  timeUp: boolean
   soundOn: boolean
 }): boolean {
-  const { videoRef, setVideoActive, setVideoPlaying, media, visible, timeUp, soundOn } = opts
+  const { videoRef, setVideoActive, media, visible, soundOn } = opts
   const showVideo = visible && media !== null && media.type === 'video'
   useEffect(() => {
     const v = videoRef.current
     if (v === null) return
     setVideoActive(showVideo)
-    if (!showVideo) {
+    if (showVideo) {
+      if (v.src !== media.url) v.src = media.url
+      v.muted = !soundOn
+      void v.play().catch(() => undefined)
+    } else {
       v.pause()
-      setVideoPlaying(false)
-      return
     }
-    if (v.src !== media.url) v.src = media.url
-    v.muted = !soundOn
-    // A looping video never fires `ended`, so the session could never wait it out.
-    v.loop = !timeUp
-    // Re-running after the clip ended (a sound toggle, say) must not restart it.
-    if (v.ended) return
-    setVideoPlaying(true)
-    void v.play().catch(() => undefined)
-  }, [showVideo, media, soundOn, timeUp, videoRef, setVideoActive, setVideoPlaying])
-
-  useEffect(() => {
-    const v = videoRef.current
-    if (v === null) return undefined
-    const onSettled = (): void => {
-      setVideoPlaying(false)
-    }
-    // `error` too: a clip that never plays would otherwise defer completion for
-    // the full VIDEO_SETTLE_CAP_MS.
-    v.addEventListener('ended', onSettled)
-    v.addEventListener('error', onSettled)
-    return () => {
-      v.removeEventListener('ended', onSettled)
-      v.removeEventListener('error', onSettled)
-    }
-  }, [videoRef, setVideoPlaying])
+  }, [showVideo, media, soundOn, videoRef, setVideoActive])
 
   useEffect(() => {
     const v = videoRef.current
@@ -242,7 +216,6 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     next,
     prev,
     stop,
-    setVideoPlaying,
   } = useSession(request)
   const [confirmStop, setConfirmStop] = useState(false)
   const [settled, setSettled] = useState(false)
@@ -262,12 +235,8 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
   const showVideo = useSessionVideo({
     videoRef,
     setVideoActive,
-    setVideoPlaying,
     media,
     visible: running || ending,
-    // Null frame means the session already ended — the clip must not re-loop
-    // under the settle fade.
-    timeUp: frame === null || frame.remainingMs === 0,
     soundOn,
   })
   useSessionKeyboard({

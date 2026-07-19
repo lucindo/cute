@@ -55,8 +55,7 @@ export default defineConfig({
         theme_color: '#1a1d24',
         background_color: '#1a1d24',
         display: 'standalone',
-        // start_url and scope omitted — auto-default to the Vite base, so each
-        // versioned Pages build (/cute/, /cute/vN/) self-scopes without colliding.
+        // start_url and scope omitted — they auto-default to the Vite base (/cute/).
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },

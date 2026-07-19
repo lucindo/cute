@@ -44,7 +44,7 @@ export function SessionOverlay({
         aria-label={soundLabel}
         title={soundLabel}
         onClick={onToggleSound}
-        // Keep the press off the takeover's gesture handler (D-84).
+        // Keep the press off the takeover's gesture handler; it would start a hold.
         onPointerDown={(e) => {
           e.stopPropagation()
         }}
@@ -68,8 +68,7 @@ export function SessionOverlay({
       <button
         type="button"
         onClick={onStop}
-        // Keep the press off the takeover's gesture handler, else the bubbled
-        // pointerup toggles the overlay and unmounts this button before onClick.
+        // Keep the press off the takeover's gesture handler; it would start a hold.
         onPointerDown={(e) => {
           e.stopPropagation()
         }}

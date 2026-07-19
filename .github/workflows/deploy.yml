@@ -1,234 +1,53 @@
 name: Deploy to GitHub Pages
 
-# Do NOT add push: branches: [main] — the append-versions-json job commits back
-# to main, and a branch trigger would re-fire deploys in an infinite loop. The
-# [skip ci] tag on that commit is defense-in-depth; the structural guard is the
-# absence of a branch trigger here.
 on:
   push:
     tags: ['v*']
-  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # Never cancel a running deploy — a cancelled assemble leaves Pages serving
+  # the previous build with no indication the release failed.
+  cancel-in-progress: false
 
 jobs:
-  gate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-          cache: npm
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run test:run
-
-  validate-version:
-    runs-on: ubuntu-latest
-    outputs:
-      pkg_version: ${{ steps.read.outputs.pkg_version }}
-      pkg_version_short: ${{ steps.read.outputs.pkg_version_short }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-          cache: npm
-      - id: read
-        name: Read package.json version
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          PKG_VERSION_SHORT="v$(echo "$PKG_VERSION" | cut -d. -f1,2)"
-          echo "pkg_version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
-          echo "pkg_version_short=$PKG_VERSION_SHORT" >> "$GITHUB_OUTPUT"
-          echo "Read package.json version: $PKG_VERSION (short: $PKG_VERSION_SHORT)"
-      - name: Verify tag matches package.json version
-        if: github.event_name == 'push'
-        # Context values pass through env, never inlined: a tag name can carry
-        # shell metacharacters, so inlining ${{ github.ref_name }} into the
-        # script body would be a script-injection sink.
-        env:
-          EXPECTED_TAG: ${{ steps.read.outputs.pkg_version_short }}
-          ACTUAL_TAG: ${{ github.ref_name }}
-          PKG_VERSION: ${{ steps.read.outputs.pkg_version }}
-        run: |
-          # The pushed tag (short form like `v0.1`) must equal the short form of
-          # package.json.version (`0.1.0` → `v0.1`). package.json stays full
-          # SemVer for npm; the short form is the tag + versioned-subpath key.
-          if [ "$ACTUAL_TAG" != "$EXPECTED_TAG" ]; then
-            echo "ERROR: pushed tag '$ACTUAL_TAG' does not match short form '$EXPECTED_TAG' derived from package.json.version '$PKG_VERSION'" >&2
-            echo "Adjust package.json.version (its first two segments form the tag) or re-tag before pushing." >&2
-            exit 1
-          fi
-          echo "Tag match OK: $ACTUAL_TAG == $EXPECTED_TAG (package.json.version: $PKG_VERSION)"
-
-  read-manifest:
-    runs-on: ubuntu-latest
-    outputs:
-      official: ${{ steps.read.outputs.official }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-      - id: read
-        name: Validate and read versions.json
-        run: |
-          node -e "
-            const fs = require('fs');
-            let v;
-            try { v = JSON.parse(fs.readFileSync('versions.json', 'utf8')); }
-            catch (e) { console.error('ERROR: versions.json missing or not valid JSON:', e.message); process.exit(1); }
-            const verRe = /^v[0-9]+\.[0-9]+\$/;
-            if (typeof v.official !== 'string' || !verRe.test(v.official)) {
-              console.error('ERROR: versions.json.official must be a string matching ^v[0-9]+\\\\.[0-9]+\$, got:', JSON.stringify(v.official));
-              process.exit(1);
-            }
-            if (!Array.isArray(v.versions) || !v.versions.every((e) => typeof e === 'string' && verRe.test(e))) {
-              console.error('ERROR: versions.json.versions must be an array of strings matching ^v[0-9]+\\\\.[0-9]+\$, got:', JSON.stringify(v.versions));
-              process.exit(1);
-            }
-            console.log('versions.json schema OK; official =', v.official);
-          "
-          OFFICIAL=$(node -p "JSON.parse(require('fs').readFileSync('versions.json','utf8')).official")
-          echo "official=$OFFICIAL" >> "$GITHUB_OUTPUT"
-
-  build-current:
-    needs: [gate, validate-version]
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref_name }}
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-          cache: npm
-      - run: npm ci
-      - name: Build current tag at versioned subpath
-        # pkg_version_short derives from package.json.version at the checked-out
-        # ref; pass via env so it cannot break out of the build command.
-        env:
-          PKG_VERSION_SHORT: ${{ needs.validate-version.outputs.pkg_version_short }}
-        run: npx vite build --base="/cute/${PKG_VERSION_SHORT}/"
-      - uses: actions/upload-artifact@v7
-        with:
-          name: build-current
-          path: dist
-
-  build-root:
-    # Always rebuilds the `official` tag at the root path on every push/dispatch.
-    # Idempotent: re-running on a non-official tag push re-emits identical root
-    # contents, so there is no conditional skip.
-    needs: [gate, read-manifest]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.read-manifest.outputs.official }}
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-          cache: npm
-      - run: npm ci
-      - name: Build official tag at root
-        run: npx vite build --base=/cute/
-      - uses: actions/upload-artifact@v7
-        with:
-          name: build-root
-          path: dist
-
-  assemble-and-deploy:
-    needs: [validate-version, read-manifest, build-current, build-root]
-    # workflow_dispatch skips build-current (no pushed tag → nothing to build at
-    # /cute/v{X.Y}/). Allow assemble to proceed when build-current was skipped,
-    # but still require build-root to have succeeded.
-    # !cancelled() is required so this still evaluates when build-current is
-    # skipped (workflow_dispatch) — a bare needs-result expression would skip
-    # the job outright the moment any dependency is skipped.
-    if: ${{ !cancelled() && needs.build-root.result == 'success' && (needs.build-current.result == 'success' || needs.build-current.result == 'skipped') }}
+  deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download root build (official tag) into site/
-        uses: actions/download-artifact@v8
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          name: build-root
-          path: site
-      - name: Download current-tag build into versioned subpath
-        # Present only on tag pushes; skipped on workflow_dispatch (build-current
-        # is skipped there, so the official build at the root is the whole deploy).
-        if: needs.build-current.result == 'success'
-        uses: actions/download-artifact@v8
-        with:
-          name: build-current
-          path: site/${{ needs.validate-version.outputs.pkg_version_short }}
-      - name: Show assembled tree
-        run: ls -la site/
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Verify tag matches package.json version
+        # TAG via env, never inlined: a git ref name can carry shell
+        # metacharacters, so ${{ github.ref_name }} in a script body is an
+        # injection sink.
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          EXPECTED="v$(node -p "require('./package.json').version" | cut -d. -f1,2)"
+          if [ "$TAG" != "$EXPECTED" ]; then
+            echo "ERROR: tag '$TAG' does not match '$EXPECTED' derived from package.json.version" >&2
+            exit 1
+          fi
+      - run: npm run lint
+      - run: npm run test:run
+      - run: npx vite build --base=/cute/
       - uses: actions/configure-pages@v6
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: site
+          path: dist
       - id: deployment
         uses: actions/deploy-pages@v5
-
-  append-versions-json:
-    needs: assemble-and-deploy
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          ref: main
-          fetch-depth: 0
-          # PAT fallback: if branch protection blocks the default GITHUB_TOKEN,
-          # supply secrets.VERSIONS_JSON_PAT (fine-grained, contents:write on this
-          # repo).
-          token: ${{ secrets.VERSIONS_JSON_PAT || secrets.GITHUB_TOKEN }}
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26
-      - name: Append pushed tag to versions.json
-        # TAG read from process.env inside the Node script — git ref names may
-        # contain quotes/`$`/backticks, so inlining ${{ github.ref_name }} into
-        # the -e body is an RCE sink.
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          node -e "
-            const fs = require('fs');
-            const v = JSON.parse(fs.readFileSync('versions.json', 'utf8'));
-            const t = process.env.TAG;
-            if (!v.versions.includes(t)) {
-              v.versions.push(t);
-              v.versions.sort();
-            }
-            fs.writeFileSync('versions.json', JSON.stringify(v, null, 2) + '\n');
-          "
-      - name: Commit and push if changed
-        # TAG via env, not inlined into the shell — same injection guard.
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          if git diff --quiet versions.json; then
-            echo "versions.json unchanged (tag '$TAG' already in list) — nothing to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add versions.json
-          git commit -m "chore(release): record $TAG in versions.json [skip ci]"
-          git push origin main

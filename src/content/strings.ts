@@ -26,6 +26,7 @@ export interface UiStrings {
       readonly label: string
       readonly allHint: string
     }
+    readonly sound: string
     readonly start: string
     readonly howTo: string
     readonly emptyCollection: string
@@ -174,6 +175,7 @@ const EN: UiStrings = {
       label: 'Filter by tag',
       allHint: 'All sources',
     },
+    sound: 'Video sound',
     start: 'Start',
     howTo:
       'When a picture gives you that “aww”, press and hold. Let go when it fades, clear your mind, and hold again, or swipe on to the next image.',
@@ -327,6 +329,7 @@ const PT_BR: UiStrings = {
       label: 'Filtrar por tag',
       allHint: 'Todas as mídias',
     },
+    sound: 'Som dos vídeos',
     start: 'Começar',
     howTo:
       'Quando uma imagem lhe der aquele “aww”, pressione e segure. Solte quando ele se dissipar, limpe a mente e segure de novo, ou deslize para a próxima imagem.',

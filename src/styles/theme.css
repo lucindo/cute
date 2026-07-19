@@ -82,15 +82,19 @@ dialog.modal-fade[open]::backdrop {
   }
 }
 
-/* Hold-in-progress indicator (SPEC FR-33): a slow breathing glow on the session
-   overlay's time pill while a hold records. Reduced motion gets a solid ring. */
+/* Hold-in-progress indicator (SPEC FR-33): the pip inside the session overlay's
+   time pill breathes while a hold records. It pulses opacity only — earlier
+   versions glowed outward onto the media and vanished against white photos, so
+   the signal now lives entirely inside the pill and inherits the countdown's own
+   colour. Reduced motion gets the pip solid; presence is the signal, the breath
+   is decoration. */
 @keyframes hold-pulse {
   0%,
   100% {
-    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.25);
+    opacity: 0.3;
   }
   50% {
-    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.7);
+    opacity: 1;
   }
 }
 .hold-pulse {
@@ -99,7 +103,28 @@ dialog.modal-fade[open]::backdrop {
 @media (prefers-reduced-motion: reduce) {
   .hold-pulse {
     animation: none;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+    opacity: 1;
+  }
+}
+
+/* Session settle (SPEC FR-36): the last frame fades to black before the
+   completion summary replaces it, so no session ends on a hard cut. Duration is
+   mirrored by SETTLE_MS in SessionView — keep the two in step. */
+@keyframes session-settle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.session-settle {
+  animation: session-settle 800ms ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .session-settle {
+    animation: none;
+    opacity: 1;
   }
 }
 

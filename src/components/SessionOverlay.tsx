@@ -3,7 +3,7 @@ import type { ReactElement } from 'react'
 import { SpeakerIcon } from './icons/SpeakerIcon'
 import { SpeakerMutedIcon } from './icons/SpeakerMutedIcon'
 import type { UiStrings } from '../content/strings'
-import { formatDuration } from '../domain/format'
+import { formatClock } from '../domain/format'
 import type { SessionFrame } from '../domain/sessionMachine'
 
 export interface SessionOverlayProps {
@@ -18,8 +18,8 @@ export interface SessionOverlayProps {
 // a mute toggle and a stop control on translucent blurred pills so it stays
 // legible over any media. No time-of-day clock — it duplicated the OS status bar
 // on mobile. The container is click-through except the buttons, so presses on the
-// media still reach the surface to record a hold. A subtle ring on the time pill
-// signals a hold in progress.
+// media still reach the surface to record a hold. A breathing pip inside the time
+// pill signals a hold in progress.
 export function SessionOverlay({
   frame,
   muted,
@@ -28,7 +28,9 @@ export function SessionOverlay({
   strings,
 }: SessionOverlayProps): ReactElement {
   const overtime = frame.overtimeMs > 0
-  const time = overtime ? `+${formatDuration(frame.overtimeMs)}` : formatDuration(frame.remainingMs)
+  // Overtime reads as amber rather than carrying a '+': with minutes zero-padded
+  // the clock is a fixed five characters, so nothing beside it can shift.
+  const time = formatClock(overtime ? frame.overtimeMs : frame.remainingMs)
   const soundLabel = muted ? strings.unmute : strings.mute
 
   return (
@@ -51,12 +53,17 @@ export function SessionOverlay({
         {muted ? <SpeakerMutedIcon width={20} height={20} /> : <SpeakerIcon width={20} height={20} />}
       </button>
       <span
-        className={`rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md ${
-          frame.holdActive ? 'hold-pulse' : ''
-        }`}
+        className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
         style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >
         {time}
+        {/* Trails the digits so the overtime '+' prepending can't push it, and is
+            always rendered so starting a hold can't jog the pill's width.
+            bg-current keeps it on the countdown's colour through overtime. */}
+        <span
+          aria-hidden="true"
+          className={`size-2 shrink-0 rounded-full bg-current ${frame.holdActive ? 'hold-pulse' : 'opacity-0'}`}
+        />
       </span>
       <button
         type="button"

@@ -140,6 +140,12 @@ describe('timer, overtime, completion (FR-36/40, AC-16)', () => {
       ])
     }
   })
+
+  it('never completes mid-hold, however long the hold outlasts the timer', () => {
+    let s = start({ plannedMinutes: 1 })
+    s = pressStart(s, 50_000)
+    expect(tick(s, 200_000).status).toBe('running')
+  })
 })
 
 describe('stop (FR-37, AC-17)', () => {

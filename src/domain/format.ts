@@ -7,6 +7,14 @@ export function formatDuration(ms: number): string {
   return `${String(minutes)}:${String(seconds).padStart(2, '0')}`
 }
 
+// Zero-padded mm:ss for the session countdown, which reads as a clock — 09:59
+// keeps a steady shape as it ticks down. Elapsed durations keep formatDuration's
+// bare minutes: "longest hold: 0:12" would read oddly as "00:12". Padding to 5
+// only ever affects single-digit minutes; m:ss is never shorter.
+export function formatClock(ms: number): string {
+  return formatDuration(ms).padStart(5, '0')
+}
+
 // Human-readable lifetime total (s / m / h m) for the Stats page. Unlike
 // formatDuration's per-session m:ss clock, which reads absurdly past an hour
 // (e.g. "437:12") once totals accumulate.

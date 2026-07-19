@@ -62,8 +62,9 @@ describe('SessionView', () => {
     const dialog = await screen.findByRole('dialog')
     await userEvent.click(within(dialog).getByRole('button', { name: S.stopConfirm }))
 
-    // Completion summary shows one hold.
-    expect(await screen.findByText(S.completion.title)).toBeInTheDocument()
+    // Completion summary shows one hold. The timeout clears the settle fade,
+    // which holds the last frame for SETTLE_MS before the summary renders.
+    expect(await screen.findByText(S.completion.title, undefined, { timeout: 2000 })).toBeInTheDocument()
     expect(screen.getByText(S.completion.holds).parentElement).toHaveTextContent('1')
 
     // Session + its hold are persisted.
@@ -111,7 +112,20 @@ describe('SessionView', () => {
     const dialog = await screen.findByRole('dialog')
     await userEvent.click(within(dialog).getByRole('button', { name: S.stopConfirm }))
 
-    await userEvent.click(await screen.findByRole('button', { name: S.completion.done }))
+    const done = await screen.findByRole('button', { name: S.completion.done }, { timeout: 2000 })
+    await userEvent.click(done)
     expect(onExit).toHaveBeenCalledOnce()
+  })
+
+  it('holds the last frame before the summary replaces it (FR-36)', async () => {
+    await seedSource('s1')
+    renderSession()
+
+    fireEvent.keyDown(window, { code: 'Escape' })
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: S.stopConfirm }))
+
+    expect(screen.queryByText(S.completion.title)).not.toBeInTheDocument()
+    expect(await screen.findByText(S.completion.title, undefined, { timeout: 2000 })).toBeInTheDocument()
   })
 })

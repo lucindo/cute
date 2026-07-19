@@ -8,7 +8,9 @@ import { useEffect, useState } from 'react'
 import { aggregateStats, type Stats } from '../domain/stats'
 import { getAllRecords, openDb, type StorageError } from '../storage'
 
-const RECENT_LIMIT = 10
+// Five, not ten: ten pushed the page into scrolling on smaller phones, and a
+// "recent" list long enough to scroll stops reading as recent.
+const RECENT_LIMIT = 5
 
 export type StatsState =
   | { status: 'loading' }

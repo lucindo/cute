@@ -83,14 +83,22 @@ dialog.modal-fade[open]::backdrop {
 }
 
 /* Hold-in-progress indicator (SPEC FR-33): a slow breathing glow on the session
-   overlay's time pill while a hold records. Reduced motion gets a solid ring. */
+   overlay's time pill while a hold records. The glow is inset and the pill's own
+   background breathes with it, so the signal never depends on the media behind —
+   an outward white glow vanished against white photos. Two cues, one per
+   direction: over bright media the pill visibly darkens, over dark media the
+   inner white glow carries it. The 0%/100% background must stay in step with the
+   pill's resting `bg-black/40`, or the animation jumps as a hold starts and ends.
+   Reduced motion gets the peak as a static state. */
 @keyframes hold-pulse {
   0%,
   100% {
-    box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.25);
+    background-color: rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 0 8px 2px rgba(255, 255, 255, 0.18);
   }
   50% {
-    box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.7);
+    background-color: rgba(0, 0, 0, 0.7);
+    box-shadow: inset 0 0 16px 5px rgba(255, 255, 255, 0.55);
   }
 }
 .hold-pulse {
@@ -99,7 +107,8 @@ dialog.modal-fade[open]::backdrop {
 @media (prefers-reduced-motion: reduce) {
   .hold-pulse {
     animation: none;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
+    background-color: rgba(0, 0, 0, 0.7);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.75);
   }
 }
 

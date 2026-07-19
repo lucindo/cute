@@ -26,8 +26,8 @@ function renderOverlay(frame: Partial<SessionFrame> = {}) {
   )
 }
 
-// The countdown renders across fixed-width slots (so the pill can't change width
-// mid-session); these guard the reassembled string, not the slots themselves.
+// Zero-padded minutes keep the clock a fixed five characters for the whole
+// session, so nothing beside it drifts; these guard that shape.
 describe('SessionOverlay countdown', () => {
   it('zero-pads the minutes so the clock keeps one shape', () => {
     renderOverlay({ remainingMs: 5 * 60_000 })
@@ -39,8 +39,15 @@ describe('SessionOverlay countdown', () => {
     expect(screen.getByText('30:00')).toBeInTheDocument()
   })
 
-  it('prefixes overtime with +', () => {
+  // Colour is the only overtime cue — the clock carries no sign — so it is the
+  // one thing here worth pinning.
+  it('counts overtime up in amber, unsigned', () => {
     renderOverlay({ remainingMs: 0, overtimeMs: 12_000 })
-    expect(screen.getByText('+00:12')).toBeInTheDocument()
+    expect(screen.getByText('00:12')).toHaveStyle({ color: 'rgb(232, 184, 75)' })
+  })
+
+  it('counts remaining time down in white', () => {
+    renderOverlay({ remainingMs: 12_000 })
+    expect(screen.getByText('00:12')).toHaveStyle({ color: 'rgb(255, 255, 255)' })
   })
 })

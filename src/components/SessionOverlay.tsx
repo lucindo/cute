@@ -28,7 +28,9 @@ export function SessionOverlay({
   strings,
 }: SessionOverlayProps): ReactElement {
   const overtime = frame.overtimeMs > 0
-  const time = overtime ? `+${formatClock(frame.overtimeMs)}` : formatClock(frame.remainingMs)
+  // Overtime reads as amber rather than carrying a '+': with minutes zero-padded
+  // the clock is a fixed five characters, so nothing beside it can shift.
+  const time = formatClock(overtime ? frame.overtimeMs : frame.remainingMs)
   const soundLabel = muted ? strings.unmute : strings.mute
 
   return (
@@ -51,15 +53,10 @@ export function SessionOverlay({
         {muted ? <SpeakerMutedIcon width={20} height={20} /> : <SpeakerIcon width={20} height={20} />}
       </button>
       <span
-        className="inline-flex items-center rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
+        className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
         style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >
-        {/* 7ch box, right-aligned, with 1ch of it spent as right padding: the
-            digits sit centred between a 1ch reserve on the left (which the
-            overtime '+' grows into, so nothing shifts when it appears) and a
-            matching 1ch before the pip. Minutes are zero-padded, so the sign is
-            the only thing that ever changes the character count. */}
-        <span className="min-w-[7ch] pr-[1ch] text-right">{time}</span>
+        {time}
         {/* Trails the digits so the overtime '+' prepending can't push it, and is
             always rendered so starting a hold can't jog the pill's width.
             bg-current keeps it on the countdown's colour through overtime. */}

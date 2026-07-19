@@ -51,14 +51,15 @@ export function SessionOverlay({
         {muted ? <SpeakerMutedIcon width={20} height={20} /> : <SpeakerIcon width={20} height={20} />}
       </button>
       <span
-        className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
+        className="inline-flex items-center rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
         style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >
-        {/* Width-reserved and right-aligned, so the two things that change the
-            character count mid-session — the overtime '+' and minutes crossing
-            10 — grow leftward into slack instead of resizing the pill. The
-            seconds and the pip hold one position throughout. */}
-        <span className="min-w-[6ch] text-right">{time}</span>
+        {/* 7ch box, right-aligned, with 1ch of it spent as right padding: the
+            digits sit centred between a 1ch reserve on the left (which the
+            overtime '+' grows into, so nothing shifts when it appears) and a
+            matching 1ch before the pip. Minutes are zero-padded, so the sign is
+            the only thing that ever changes the character count. */}
+        <span className="min-w-[7ch] pr-[1ch] text-right">{time}</span>
         {/* Trails the digits so the overtime '+' prepending can't push it, and is
             always rendered so starting a hold can't jog the pill's width.
             bg-current keeps it on the countdown's colour through overtime. */}

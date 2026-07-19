@@ -3,7 +3,7 @@ import type { ReactElement } from 'react'
 import { SpeakerIcon } from './icons/SpeakerIcon'
 import { SpeakerMutedIcon } from './icons/SpeakerMutedIcon'
 import type { UiStrings } from '../content/strings'
-import { formatDuration } from '../domain/format'
+import { formatClock } from '../domain/format'
 import type { SessionFrame } from '../domain/sessionMachine'
 
 export interface SessionOverlayProps {
@@ -28,7 +28,7 @@ export function SessionOverlay({
   strings,
 }: SessionOverlayProps): ReactElement {
   const overtime = frame.overtimeMs > 0
-  const time = overtime ? `+${formatDuration(frame.overtimeMs)}` : formatDuration(frame.remainingMs)
+  const time = overtime ? `+${formatClock(frame.overtimeMs)}` : formatClock(frame.remainingMs)
   const soundLabel = muted ? strings.unmute : strings.mute
 
   return (

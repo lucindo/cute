@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatBytes, formatDuration, formatTotalDuration } from './format'
+import { formatBytes, formatClock, formatDuration, formatTotalDuration } from './format'
 
 describe('formatBytes', () => {
   it('formats across unit boundaries', () => {
@@ -31,6 +31,15 @@ describe('formatDuration', () => {
   it('leaves minutes uncapped for long overtime and floors negatives to zero', () => {
     expect(formatDuration(3_720_000)).toBe('62:00')
     expect(formatDuration(-1000)).toBe('0:00')
+  })
+})
+
+describe('formatClock', () => {
+  it('zero-pads single-digit minutes, leaving wider clocks alone', () => {
+    expect(formatClock(0)).toBe('00:00')
+    expect(formatClock(599_000)).toBe('09:59')
+    expect(formatClock(600_000)).toBe('10:00')
+    expect(formatClock(3_720_000)).toBe('62:00')
   })
 })
 

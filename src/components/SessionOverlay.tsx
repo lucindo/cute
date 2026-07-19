@@ -54,7 +54,11 @@ export function SessionOverlay({
         className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
         style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >
-        {time}
+        {/* Width-reserved and right-aligned, so the two things that change the
+            character count mid-session — the overtime '+' and minutes crossing
+            10 — grow leftward into slack instead of resizing the pill. The
+            seconds and the pip hold one position throughout. */}
+        <span className="min-w-[6ch] text-right">{time}</span>
         {/* Trails the digits so the overtime '+' prepending can't push it, and is
             always rendered so starting a hold can't jog the pill's width.
             bg-current keeps it on the countdown's colour through overtime. */}

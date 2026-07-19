@@ -10,6 +10,11 @@ import { createBag, deal, type Rng, type ShuffleBag } from './shuffleBag'
 // Presses held ≥300ms are recorded holds; shorter presses are taps (FR-28/29).
 export const HOLD_THRESHOLD_MS = 300
 
+// Longest a playing video may defer completion past the planned time. Unbounded
+// waiting would let one long clip double a short session; an active hold has no
+// such cap because the user is the one extending it.
+export const VIDEO_SETTLE_CAP_MS = 30_000
+
 const MS_PER_MINUTE = 60_000
 
 // A recorded hold minus its storage id, assigned when persisted.
@@ -135,12 +140,21 @@ function complete(s: RunningSession, endedAt: number, endReason: SessionEndReaso
   return { status: 'complete', record, holds: ended.holds }
 }
 
+export interface TickInput {
+  /** The current source is a video still playing its final pass (FR-35). */
+  readonly videoPlaying?: boolean
+}
+
 // Wall-clock advance (FR-36/38): completes only once the planned time has
-// elapsed AND no hold is active — an active hold keeps the session in overtime
-// until release, then the next tick completes it.
-export function tick(s: RunningSession, now: number): SessionState {
-  if (s.hold === null && now - s.startedAt >= plannedMs(s)) return complete(s, now, 'completed')
-  return s
+// elapsed AND nothing is still settling — an active hold or a playing video
+// keeps the session in overtime, then the next tick completes it. The video
+// wait is capped (VIDEO_SETTLE_CAP_MS); a hold is not.
+export function tick(s: RunningSession, now: number, input: TickInput = {}): SessionState {
+  const overrun = now - s.startedAt - plannedMs(s)
+  if (overrun < 0) return s
+  if (s.hold !== null) return s
+  if (input.videoPlaying === true && overrun < VIDEO_SETTLE_CAP_MS) return s
+  return complete(s, now, 'completed')
 }
 
 export function stop(s: RunningSession, now: number): CompleteSession {

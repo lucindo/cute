@@ -103,6 +103,27 @@ dialog.modal-fade[open]::backdrop {
   }
 }
 
+/* Session settle (SPEC FR-36): the last frame fades to black before the
+   completion summary replaces it, so no session ends on a hard cut. Duration is
+   mirrored by SETTLE_MS in SessionView — keep the two in step. */
+@keyframes session-settle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.session-settle {
+  animation: session-settle 800ms ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .session-settle {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* Page background gradient — mobile uses a circle-at-top wash; desktop (≥sm)
    switches to a positioned wider-canvas variant. A custom property so shells
    can apply it via Tailwind arbitrary value without per-breakpoint class

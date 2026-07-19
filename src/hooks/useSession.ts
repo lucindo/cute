@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
   type Dispatch,
+  type RefObject,
   type SetStateAction,
 } from 'react'
 
@@ -58,6 +59,8 @@ export interface UseSession {
   readonly next: () => void
   readonly prev: () => void
   readonly stop: () => void
+  /** Reports video playback to the tick. Writes a ref, so it never re-renders. */
+  readonly setVideoPlaying: (playing: boolean) => void
 }
 
 type SessionSetState = Dispatch<SetStateAction<SessionState>>
@@ -74,6 +77,7 @@ function useSessionRuntime(
   status: SessionState['status'],
   setState: SessionSetState,
   setNow: Dispatch<SetStateAction<number>>,
+  videoPlayingRef: RefObject<boolean>,
 ): void {
   const { request: acquireWakeLock, release: releaseWakeLock } = useWakeLock()
 
@@ -82,12 +86,14 @@ function useSessionRuntime(
     const id = setInterval(() => {
       const t = Date.now()
       setNow(t)
-      setState((s) => (s.status === 'running' ? tick(s, t) : s))
+      setState((s) =>
+        s.status === 'running' ? tick(s, t, { videoPlaying: videoPlayingRef.current }) : s,
+      )
     }, TICK_MS)
     return () => {
       clearInterval(id)
     }
-  }, [status, setState, setNow])
+  }, [status, setState, setNow, videoPlayingRef])
 
   useEffect(() => {
     void acquireWakeLock()
@@ -210,18 +216,24 @@ export function useSession(request: SessionRequest): UseSession {
     ),
   )
   const [now, setNow] = useState<number>(() => Date.now())
+  const videoPlayingRef = useRef<boolean>(false)
 
-  useSessionRuntime(state.status, setState, setNow)
+  useSessionRuntime(state.status, setState, setNow, videoPlayingRef)
   useSessionPersistence(state)
   const currentSourceId = state.status === 'running' ? currentSource(state) : null
   const media = useSessionMedia(currentSourceId)
   const controls = useSessionControls(state, setState)
+
+  const setVideoPlaying = useCallback((playing: boolean): void => {
+    videoPlayingRef.current = playing
+  }, [])
 
   return {
     state,
     frame: state.status === 'running' ? sessionFrame(state, now) : null,
     summary: state.status === 'complete' ? summarize(state.record, state.holds) : null,
     media,
+    setVideoPlaying,
     ...controls,
   }
 }

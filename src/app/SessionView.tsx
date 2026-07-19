@@ -19,6 +19,10 @@ import { useVideoSound } from '../hooks/useVideoSound'
 // Movement past this many pixels turns a press into a swipe, not a hold (FR-30).
 const SLOP_PX = 10
 
+// The last frame holds and fades to black for this long before the completion
+// summary takes over (FR-36). Mirrors the .session-settle animation in theme.css.
+const SETTLE_MS = 800
+
 export interface SessionViewProps {
   request: SessionRequest
   videoRef: RefObject<HTMLVideoElement | null>
@@ -84,29 +88,56 @@ function useSessionKeyboard(opts: {
 }
 
 // Drive the shared App-level <video> (SPEC FR-35): swap src, apply the sound
-// pref, show/hide as media/running change, and hand the element back hidden and
-// source-less when the session ends. Returns whether the video layer is shown.
+// pref, show/hide as media/visibility change, and hand the element back hidden
+// and source-less when the session ends. Also owns the end-of-session settle
+// (FR-36) — it reports playback to the tick and drops `loop` once the planned
+// time is spent, so the clip can finish and fire `ended`. Returns whether the
+// video layer is shown.
 function useSessionVideo(opts: {
   videoRef: RefObject<HTMLVideoElement | null>
   setVideoActive: (active: boolean) => void
+  setVideoPlaying: (playing: boolean) => void
   media: SessionMedia | null
-  running: boolean
+  visible: boolean
+  timeUp: boolean
   soundOn: boolean
 }): boolean {
-  const { videoRef, setVideoActive, media, running, soundOn } = opts
-  const showVideo = running && media !== null && media.type === 'video'
+  const { videoRef, setVideoActive, setVideoPlaying, media, visible, timeUp, soundOn } = opts
+  const showVideo = visible && media !== null && media.type === 'video'
   useEffect(() => {
     const v = videoRef.current
     if (v === null) return
     setVideoActive(showVideo)
-    if (showVideo) {
-      if (v.src !== media.url) v.src = media.url
-      v.muted = !soundOn
-      void v.play().catch(() => undefined)
-    } else {
+    if (!showVideo) {
       v.pause()
+      setVideoPlaying(false)
+      return
     }
-  }, [showVideo, media, soundOn, videoRef, setVideoActive])
+    if (v.src !== media.url) v.src = media.url
+    v.muted = !soundOn
+    // A looping video never fires `ended`, so the session could never wait it out.
+    v.loop = !timeUp
+    // Re-running after the clip ended (a sound toggle, say) must not restart it.
+    if (v.ended) return
+    setVideoPlaying(true)
+    void v.play().catch(() => undefined)
+  }, [showVideo, media, soundOn, timeUp, videoRef, setVideoActive, setVideoPlaying])
+
+  useEffect(() => {
+    const v = videoRef.current
+    if (v === null) return undefined
+    const onSettled = (): void => {
+      setVideoPlaying(false)
+    }
+    // `error` too: a clip that never plays would otherwise defer completion for
+    // the full VIDEO_SETTLE_CAP_MS.
+    v.addEventListener('ended', onSettled)
+    v.addEventListener('error', onSettled)
+    return () => {
+      v.removeEventListener('ended', onSettled)
+      v.removeEventListener('error', onSettled)
+    }
+  }, [videoRef, setVideoPlaying])
 
   useEffect(() => {
     const v = videoRef.current
@@ -211,11 +242,34 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     next,
     prev,
     stop,
+    setVideoPlaying,
   } = useSession(request)
   const [confirmStop, setConfirmStop] = useState(false)
+  const [settled, setSettled] = useState(false)
   const running = state.status === 'running'
+  const ending = state.status === 'complete' && !settled
 
-  const showVideo = useSessionVideo({ videoRef, setVideoActive, media, running, soundOn })
+  useEffect(() => {
+    if (state.status !== 'complete') return undefined
+    const id = setTimeout(() => {
+      setSettled(true)
+    }, SETTLE_MS)
+    return () => {
+      clearTimeout(id)
+    }
+  }, [state.status])
+
+  const showVideo = useSessionVideo({
+    videoRef,
+    setVideoActive,
+    setVideoPlaying,
+    media,
+    visible: running || ending,
+    // Null frame means the session already ended — the clip must not re-loop
+    // under the settle fade.
+    timeUp: frame === null || frame.remainingMs === 0,
+    soundOn,
+  })
   useSessionKeyboard({
     running,
     confirmStop,
@@ -226,21 +280,23 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     setConfirmStop,
   })
   const pointer = usePointerGestures({ pressStart, pressEnd, cancelPress, next, prev })
-  useBlackStatusBar(running)
+  useBlackStatusBar(running || ending)
 
-  if (state.status === 'complete' && summary !== null) {
+  if (state.status === 'complete' && settled && summary !== null) {
     return <CompletionScreen summary={summary} onDone={onExit} strings={strings.session.completion} />
   }
+
+  const gesturesLive = running && !confirmStop
 
   return (
     <div
       // Transparent above the z-10 App <video> so it shows through while a
       // video plays; a black backdrop stands in for images and while loading.
       className="fixed inset-0 z-20 touch-none select-none"
-      onPointerDown={confirmStop ? undefined : pointer.onPointerDown}
-      onPointerMove={confirmStop ? undefined : pointer.onPointerMove}
-      onPointerUp={confirmStop ? undefined : pointer.onPointerUp}
-      onPointerCancel={confirmStop ? undefined : pointer.onPointerCancel}
+      onPointerDown={gesturesLive ? pointer.onPointerDown : undefined}
+      onPointerMove={gesturesLive ? pointer.onPointerMove : undefined}
+      onPointerUp={gesturesLive ? pointer.onPointerUp : undefined}
+      onPointerCancel={gesturesLive ? pointer.onPointerCancel : undefined}
     >
       {!showVideo && <div className="absolute inset-0 bg-black" />}
       {media !== null && media.type === 'image' && (
@@ -264,6 +320,7 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
           strings={strings.session}
         />
       )}
+      {ending && <div className="session-settle pointer-events-none absolute inset-0 z-30 bg-black" />}
       <ConfirmDialog
         open={confirmStop}
         title={strings.session.stopTitle}

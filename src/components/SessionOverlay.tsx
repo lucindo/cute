@@ -54,13 +54,14 @@ export function SessionOverlay({
         className="inline-flex items-center gap-2 rounded-full bg-black/40 px-4 py-1.5 text-lg font-semibold tabular-nums backdrop-blur-md"
         style={{ color: overtime ? '#e8b84b' : '#ffffff' }}
       >
-        {/* Always rendered so starting a hold can't jog the pill's width.
+        {time}
+        {/* Trails the digits so the overtime '+' prepending can't push it, and is
+            always rendered so starting a hold can't jog the pill's width.
             bg-current keeps it on the countdown's colour through overtime. */}
         <span
           aria-hidden="true"
           className={`size-2 shrink-0 rounded-full bg-current ${frame.holdActive ? 'hold-pulse' : 'opacity-0'}`}
         />
-        {time}
       </span>
       <button
         type="button"

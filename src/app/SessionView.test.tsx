@@ -90,6 +90,62 @@ describe('SessionView', () => {
     expect(within(dialog).getByText(S.stopTitle)).toBeInTheDocument()
   })
 
+  // Release Space while the confirm is open, cancel, then idle well past the
+  // release: a hold that ended on time cannot grow here, so an inflated duration
+  // means the release was dropped.
+  async function expectReleasedHoldDidNotOutliveTheConfirm(): Promise<void> {
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.keyUp(window, { code: 'Space' })
+    await userEvent.click(within(dialog).getByRole('button', { name: S.stopCancel }))
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400))
+    })
+
+    fireEvent.keyDown(window, { code: 'Escape' })
+    const stopDialog = await screen.findByRole('dialog')
+    await userEvent.click(within(stopDialog).getByRole('button', { name: S.stopConfirm }))
+
+    await waitFor(async () => {
+      const opened = await openDb()
+      if (!opened.ok) throw new Error('assert: openDb failed')
+      const holds = await getAllRecords(opened.value, 'holdEvents')
+      opened.value.close()
+      if (!holds.ok) throw new Error('assert: read failed')
+      expect(holds.value).toHaveLength(1)
+      expect(holds.value[0]?.durationMs).toBeLessThan(600)
+    })
+  }
+
+  async function holdSpacePastThreshold(): Promise<void> {
+    fireEvent.keyDown(window, { code: 'Space' })
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 350))
+    })
+  }
+
+  // Opening the confirm detaches the keyboard and pointer surfaces mid-press, so
+  // the release that ends the hold is never delivered. Both entry points strand it.
+  it('ends a held press when Esc opens the confirm', async () => {
+    await seedSource('s1')
+    renderSession()
+
+    await holdSpacePastThreshold()
+    fireEvent.keyDown(window, { code: 'Escape' })
+
+    await expectReleasedHoldDidNotOutliveTheConfirm()
+  })
+
+  it('ends a held press when the overlay Stop button opens the confirm', async () => {
+    await seedSource('s1')
+    renderSession()
+
+    await holdSpacePastThreshold()
+    await userEvent.click(screen.getByRole('button', { name: S.stop }))
+
+    await expectReleasedHoldDidNotOutliveTheConfirm()
+  })
+
   it('toggles video sound from the overlay and persists the pref', async () => {
     await seedSource('s1')
     renderSession()

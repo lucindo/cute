@@ -232,6 +232,13 @@ export function SessionView({ request, videoRef, setVideoActive, onExit }: Sessi
     }
   }, [state.status])
 
+  // Opening the confirm suspends both the keyboard and pointer surfaces, so a
+  // press held at that moment would never see its release. Truncate it here,
+  // the same way backgrounding mid-hold does (FR-38).
+  useEffect(() => {
+    if (confirmStop) pressEnd()
+  }, [confirmStop, pressEnd])
+
   const showVideo = useSessionVideo({
     videoRef,
     setVideoActive,

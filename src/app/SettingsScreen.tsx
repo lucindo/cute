@@ -118,7 +118,7 @@ export function SettingsScreen({ onBack, onOpenStats, backupDeps }: SettingsScre
           />
         }
       />
-      <div className="w-full text-left">
+      <div className="w-full px-5 text-left sm:px-8">
         <SettingsSectionHeader label={strings.settings.statistics.label} />
         <SectionCard padding="4px 8px">
           <button

@@ -34,7 +34,7 @@ export function LearnScreen({ locale, onBack }: LearnScreenProps): ReactElement 
           />
         }
       />
-      <div className="w-full text-left">
+      <div className="w-full px-5 text-left sm:px-8">
         <LearnPanel content={LEARN_CONTENT[locale]} locked={LOCKED_COPY[locale]} strings={strings} />
       </div>
     </PageShell>

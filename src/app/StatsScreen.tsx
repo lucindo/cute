@@ -131,7 +131,7 @@ export function StatsScreen({ locale, onBack }: StatsScreenProps): ReactElement 
           <IconButton icon={<ChevronBackIcon />} label={s.back} onClick={onBack} buttonRef={backRef} />
         }
       />
-      <div className="mt-6 w-full text-left">
+      <div className="mt-6 w-full px-5 text-left sm:px-8">
         {state.status === 'error' ? (
           <p className="text-center text-sm text-[var(--color-zen-muted)]">{s.loadError}</p>
         ) : state.status === 'loading' ? null : state.stats.totalSessions === 0 ? (

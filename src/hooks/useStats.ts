@@ -1,12 +1,14 @@
 // Lifetime stats read model (SPEC FR-44 / AC-23): loads the full session and
-// hold-event log once and aggregates it. No change subscription — Stats is a
-// static snapshot opened from Settings; no session can complete while it is on
-// screen (a running session is a separate full-viewport takeover).
+// hold-event log and aggregates it. Subscribes to COLLECTION_CHANGED_EVENT so
+// the on-screen Clear-history action refreshes it — that clear is the only
+// mutation reachable while Stats is up (a running session is a separate
+// full-viewport takeover) and it also changes the collection's aww factor.
 
 import { useEffect, useState } from 'react'
 
 import { aggregateStats, type Stats } from '../domain/stats'
 import { getAllRecords, openDb, type StorageError } from '../storage'
+import { COLLECTION_CHANGED_EVENT } from './useCollection'
 
 // Five, not ten: ten pushed the page into scrolling on smaller phones, and a
 // "recent" list long enough to scroll stops reading as recent.
@@ -51,8 +53,13 @@ export function useStats(): StatsState {
     }
 
     void load()
+    const onChanged = (): void => {
+      void load()
+    }
+    window.addEventListener(COLLECTION_CHANGED_EVENT, onChanged)
     return () => {
       cancelled = true
+      window.removeEventListener(COLLECTION_CHANGED_EVENT, onChanged)
     }
   }, [])
 

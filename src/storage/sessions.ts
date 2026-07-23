@@ -21,3 +21,14 @@ export function saveCompletedSession(
   ]
   return writeMany(db, ops)
 }
+
+// Wipe all practice history in one transaction: every session and every hold
+// event. Stats and the per-source aww factor both derive from these two stores
+// at read time (holds are never pre-aggregated, FR-28), so clearing them is the
+// only reset. Media, thumbs, tags, and prefs are untouched.
+export function clearHistory(db: IDBDatabase): Promise<Result<void, StorageError>> {
+  return writeMany(db, [
+    { op: 'clear', store: 'sessions' },
+    { op: 'clear', store: 'holdEvents' },
+  ])
+}

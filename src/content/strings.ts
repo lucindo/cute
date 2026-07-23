@@ -145,6 +145,12 @@ export interface UiStrings {
     readonly sessionMeta: (duration: string, holds: number) => string
     readonly empty: string
     readonly loadError: string
+    readonly clear: string
+    readonly clearTitle: string
+    readonly clearBody: string
+    readonly clearConfirm: string
+    readonly clearCancel: string
+    readonly clearError: string
   }
   readonly learn: {
     readonly title: string
@@ -299,6 +305,13 @@ const EN: UiStrings = {
     sessionMeta: (duration, holds) => `${duration} · ♥ ${String(holds)}`,
     empty: 'No sessions yet. Your practice history will appear here.',
     loadError: 'Could not open your practice history.',
+    clear: 'Clear history',
+    clearTitle: 'Clear history?',
+    clearBody:
+      'This clears your entire practice history — every session and hold. All statistics reset to zero, and the Aww sorting in your collection is affected. Photos, videos, and tags are kept. This cannot be undone.',
+    clearConfirm: 'Clear',
+    clearCancel: 'Cancel',
+    clearError: 'Could not clear your history. Please try again.',
   },
   learn: {
     title: 'About this practice',
@@ -453,6 +466,13 @@ const PT_BR: UiStrings = {
     sessionMeta: (duration, holds) => `${duration} · ♥ ${String(holds)}`,
     empty: 'Nenhuma sessão ainda. Seu histórico de prática aparecerá aqui.',
     loadError: 'Não foi possível abrir seu histórico de prática.',
+    clear: 'Limpar histórico',
+    clearTitle: 'Limpar histórico?',
+    clearBody:
+      'Isso apaga todo o seu histórico de prática — todas as sessões e retenções. Todas as estatísticas voltam a zero, e a ordenação por Aww da sua coleção é afetada. Fotos, vídeos e tags são mantidos. Isso não pode ser desfeito.',
+    clearConfirm: 'Limpar',
+    clearCancel: 'Cancelar',
+    clearError: 'Não foi possível limpar seu histórico. Tente novamente.',
   },
   learn: {
     title: 'Sobre esta prática',

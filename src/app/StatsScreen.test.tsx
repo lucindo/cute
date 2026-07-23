@@ -90,3 +90,37 @@ describe('StatsScreen', () => {
     expect(onBack).toHaveBeenCalledOnce()
   })
 })
+
+describe('StatsScreen — clear history', () => {
+  const STATS = UI_STRINGS.en.stats
+
+  it('hides the clear control when there is no history', async () => {
+    renderScreen()
+    await screen.findByText(STATS.empty)
+    expect(screen.queryByRole('button', { name: STATS.clear })).not.toBeInTheDocument()
+  })
+
+  it('wipes the history and empties the screen once confirmed', async () => {
+    await seed(session({ id: 'a' }), [hold('a', 2000)])
+    renderScreen()
+
+    await waitFor(() => { expect(screen.getByText('Sessions')).toBeInTheDocument() })
+    await userEvent.click(screen.getByRole('button', { name: STATS.clear }))
+    await userEvent.click(screen.getByRole('button', { name: STATS.clearConfirm }))
+
+    expect(await screen.findByText(STATS.empty)).toBeInTheDocument()
+    expect(screen.queryByText('Sessions')).not.toBeInTheDocument()
+  })
+
+  it('keeps the history when the clear is cancelled', async () => {
+    await seed(session({ id: 'a' }), [hold('a', 2000)])
+    renderScreen()
+
+    await waitFor(() => { expect(screen.getByText('Sessions')).toBeInTheDocument() })
+    await userEvent.click(screen.getByRole('button', { name: STATS.clear }))
+    await userEvent.click(screen.getByRole('button', { name: STATS.clearCancel }))
+
+    expect(screen.getByText('Sessions')).toBeInTheDocument()
+    expect(screen.queryByText(STATS.empty)).not.toBeInTheDocument()
+  })
+})

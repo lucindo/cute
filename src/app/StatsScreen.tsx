@@ -1,5 +1,6 @@
-import type { ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { CheckIcon } from '../components/icons/CheckIcon'
 import { ChevronBackIcon } from '../components/icons/ChevronBackIcon'
 import { StopIcon } from '../components/icons/StopIcon'
@@ -12,6 +13,7 @@ import { formatDuration, formatTotalDuration } from '../domain/format'
 import type { RecentSession } from '../domain/stats'
 import type { LocaleId } from '../domain/settings'
 import type { UiStrings } from '../content/strings'
+import { useClearHistory } from '../hooks/useClearHistory'
 import { useFocusOnMount } from '../hooks/useFocusOnMount'
 import { useStats } from '../hooks/useStats'
 import { useUiStrings } from '../hooks/useUiStringsContext'
@@ -72,6 +74,48 @@ function RecentRow({
   )
 }
 
+// Terminal destructive action: wipes every session and hold event (and with them
+// the collection's aww factor). Only rendered when there is history to clear; on
+// success useStats reloads to empty and this whole branch unmounts.
+function ClearHistorySection({ strings }: { strings: UiStrings['stats'] }): ReactElement {
+  const { clearState, clear } = useClearHistory()
+  const [pendingClear, setPendingClear] = useState(false)
+
+  const errorText = clearState.status === 'error' ? strings.clearError : null
+
+  function confirmClear(): void {
+    setPendingClear(false)
+    clear()
+  }
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <button
+        type="button"
+        onClick={() => { setPendingClear(true) }}
+        disabled={clearState.status === 'clearing'}
+        className="w-full rounded-xl bg-[var(--color-destructive)] px-5 py-3 text-[15px] font-semibold text-[var(--color-destructive-on)] transition hover:bg-[var(--color-destructive-hover)] active:bg-[var(--color-destructive-active)] disabled:opacity-50 motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-destructive)] focus-visible:ring-offset-2"
+      >
+        {strings.clear}
+      </button>
+      {errorText !== null && (
+        <p role="alert" className="mt-2 px-2 text-[13px] text-[var(--color-destructive)]">
+          {errorText}
+        </p>
+      )}
+      <ConfirmDialog
+        open={pendingClear}
+        title={strings.clearTitle}
+        body={strings.clearBody}
+        confirmLabel={strings.clearConfirm}
+        cancelLabel={strings.clearCancel}
+        onConfirm={confirmClear}
+        onCancel={() => { setPendingClear(false) }}
+      />
+    </div>
+  )
+}
+
 // Stats sub-page (SPEC FR-44): lifetime totals + a recent-session list, both
 // aggregated at read time by useStats. Reached from the Settings Statistics row.
 export function StatsScreen({ locale, onBack }: StatsScreenProps): ReactElement {
@@ -114,6 +158,7 @@ export function StatsScreen({ locale, onBack }: StatsScreenProps): ReactElement 
                 />
               ))}
             </SectionCard>
+            <ClearHistorySection strings={s} />
           </>
         )}
       </div>

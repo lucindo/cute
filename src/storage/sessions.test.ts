@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { getAllRecords, openDb, type HoldEventRecord, type SessionRecord } from './index'
-import { saveCompletedSession } from './sessions'
+import {
+  getAllRecords,
+  openDb,
+  writeMany,
+  type HoldEventRecord,
+  type SessionRecord,
+  type SourceRecord,
+} from './index'
+import { clearHistory, saveCompletedSession } from './sessions'
 
 async function openOrThrow(): Promise<IDBDatabase> {
   const opened = await openDb()
@@ -45,5 +52,36 @@ describe('saveCompletedSession', () => {
     const holds = await getAllRecords(db, 'holdEvents')
     db.close()
     expect(holds.ok && holds.value).toEqual([])
+  })
+})
+
+describe('clearHistory', () => {
+  it('wipes every session and hold event but leaves media untouched', async () => {
+    const db = await openOrThrow()
+    await saveCompletedSession(db, record, [
+      { sessionId: 'sess-1', sourceId: 's1', startedAt: 1000, durationMs: 2000 },
+    ])
+    const source: SourceRecord = {
+      id: 's1',
+      type: 'image',
+      mimeType: 'image/webp',
+      bytes: 3,
+      createdAt: 1,
+      tags: [],
+      deleted: false,
+    }
+    await writeMany(db, [{ op: 'put', store: 'sources', record: source }])
+
+    const result = await clearHistory(db)
+    expect(result.ok).toBe(true)
+
+    const sessions = await getAllRecords(db, 'sessions')
+    const holds = await getAllRecords(db, 'holdEvents')
+    const sources = await getAllRecords(db, 'sources')
+    db.close()
+
+    expect(sessions.ok && sessions.value).toEqual([])
+    expect(holds.ok && holds.value).toEqual([])
+    expect(sources.ok && sources.value).toEqual([source])
   })
 })

@@ -74,12 +74,18 @@ export interface UiStrings {
     readonly discardBody: string
     readonly discardConfirm: string
     readonly discardCancel: string
+    readonly clipboardEmpty: string
     readonly rejection: {
       readonly unsupportedType: string
       readonly undecodable: string
       readonly undecodableVideo: string
       readonly encodeFailed: string
       readonly storageFailed: string
+      readonly pageLink: string
+      readonly fetchBlocked: string
+      readonly notImageContent: string
+      readonly tooLarge: string
+      readonly unreadable: string
     }
   }
   readonly tags: {
@@ -229,12 +235,18 @@ const EN: UiStrings = {
     discardBody: 'Your edits to this item will be lost.',
     discardConfirm: 'Discard',
     discardCancel: 'Keep editing',
+    clipboardEmpty: 'No image found in the clipboard.',
     rejection: {
       unsupportedType: 'Not a supported image or video type.',
       undecodable: 'Could not read this image. Converting it to JPEG may help.',
       undecodableVideo: 'Could not play this video. Converting it to MP4 (H.264) may help.',
       encodeFailed: 'Could not process this image.',
       storageFailed: 'Could not save — device storage may be full.',
+      pageLink: "That's a page link, not an image. Open it, press and hold the image, then Copy.",
+      fetchBlocked: 'Could not load that link.',
+      notImageContent: "That link isn't an image.",
+      tooLarge: 'That image is too large to import.',
+      unreadable: 'Could not read that clipboard item.',
     },
   },
   tags: {
@@ -390,12 +402,18 @@ const PT_BR: UiStrings = {
     discardBody: 'Suas edições neste item serão perdidas.',
     discardConfirm: 'Descartar',
     discardCancel: 'Continuar editando',
+    clipboardEmpty: 'Nenhuma imagem encontrada na área de transferência.',
     rejection: {
       unsupportedType: 'Tipo de imagem ou vídeo não suportado.',
       undecodable: 'Não foi possível ler esta imagem. Converter para JPEG pode ajudar.',
       undecodableVideo: 'Não foi possível reproduzir este vídeo. Converter para MP4 (H.264) pode ajudar.',
       encodeFailed: 'Não foi possível processar esta imagem.',
       storageFailed: 'Não foi possível salvar — o armazenamento do aparelho pode estar cheio.',
+      pageLink: 'Esse é um link de página, não de imagem. Abra o link, pressione a imagem e escolha Copiar.',
+      fetchBlocked: 'Não foi possível carregar esse link.',
+      notImageContent: 'Esse link não é uma imagem.',
+      tooLarge: 'Essa imagem é grande demais para importar.',
+      unreadable: 'Não foi possível ler esse item da área de transferência.',
     },
   },
   tags: {

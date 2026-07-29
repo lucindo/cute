@@ -29,6 +29,16 @@ function rejectionHint(rejection: FileRejection, strings: UiStrings): string {
       return strings.collection.rejection.encodeFailed
     case 'storage-failed':
       return strings.collection.rejection.storageFailed
+    case 'page-link':
+      return strings.collection.rejection.pageLink
+    case 'fetch-blocked':
+      return strings.collection.rejection.fetchBlocked
+    case 'not-image-content':
+      return strings.collection.rejection.notImageContent
+    case 'too-large':
+      return strings.collection.rejection.tooLarge
+    case 'unreadable':
+      return strings.collection.rejection.unreadable
   }
 }
 
@@ -198,6 +208,11 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
       )}
       {actionState.status === 'error' && (
         <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">{strings.tags.actionFailed}</p>
+      )}
+      {importState.status === 'clipboard-empty' && (
+        <p className="mt-3 text-sm text-[var(--color-zen-text-soft)]">
+          {strings.collection.clipboardEmpty}
+        </p>
       )}
       {importState.status === 'done' && importState.rejected.length > 0 && (
         <ul className="mt-3 space-y-1">

@@ -2,13 +2,17 @@
 // source + blob + thumb atomically; a rejected file never kills the batch.
 // The outcome is not a Result — the batch always completes, per file.
 
+import { type ClipboardRejection } from './clipboard'
 import { processImageFile, type ImageCodecDeps, type ImportRejection } from './importImage'
 import { processVideoFile, type VideoProbeDeps } from './importVideo'
 import { newId } from '../domain/id'
 import { writeMany, type SourceRecord, type SourceType, type StorageError } from '../storage'
 
+// Everything that can keep an item out of the collection, whether it came from
+// the picker, a drop, or a paste — this is what the Collection screen renders.
 export type FileRejection =
   | ImportRejection
+  | ClipboardRejection
   | { reason: 'unsupported-type'; mimeType: string }
   | { reason: 'storage-failed'; error: StorageError }
 

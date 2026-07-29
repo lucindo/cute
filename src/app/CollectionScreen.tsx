@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { SourceSheet } from '../components/SourceSheet'
+import { ClipboardIcon } from '../components/icons/ClipboardIcon'
 import { PlusIcon } from '../components/icons/PlusIcon'
 import { TagIcon } from '../components/icons/TagIcon'
 import { IconButton, type IconButtonSize } from '../components/primitives/IconButton'
@@ -42,6 +43,14 @@ function rejectionHint(rejection: FileRejection, strings: UiStrings): string {
   }
 }
 
+// lib.dom types navigator.clipboard as always present, but it is absent on an
+// insecure origin — hence Partial, and hence no paste button over plain-http LAN
+// testing, where it could only ever fail. Read per render rather than at module
+// load so the capability stays observable to tests.
+function canReadClipboard(): boolean {
+  return typeof (navigator as Partial<Navigator>).clipboard?.read === 'function'
+}
+
 export interface CollectionScreenProps {
   onOpenTags(this: void): void
 }
@@ -49,7 +58,7 @@ export interface CollectionScreenProps {
 export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactElement {
   const strings = useUiStrings()
   const collection = useCollection()
-  const { importState, importFrom } = useImportFiles()
+  const { importState, importFrom, pasteFromClipboard } = useImportFiles()
   const { deleteState, deleteById } = useDeleteSource()
   const { saveState, saveSource } = useSaveSource()
   const { tagsState, actionState, create } = useTags()
@@ -108,6 +117,17 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
       }
     />
   )
+
+  const pasteButton = (size: IconButtonSize): ReactElement | false =>
+    canReadClipboard() && (
+      <IconButton
+        size={size}
+        disabled={importing}
+        label={strings.collection.pasteButton}
+        onClick={pasteFromClipboard}
+        icon={<ClipboardIcon />}
+      />
+    )
 
   const grid = (
     <ul className="grid w-full grid-cols-3 gap-2 sm:grid-cols-4">
@@ -175,7 +195,10 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
       )}
       {isEmpty && (
         <div className="mt-12 flex flex-col items-center gap-4 text-center">
-          {importButton('md')}
+          <div className="flex items-center gap-3">
+            {importButton('md')}
+            {pasteButton('md')}
+          </div>
           <p className="max-w-xs text-sm text-[var(--color-zen-text-soft)]">{strings.collection.empty}</p>
         </div>
       )}
@@ -194,6 +217,7 @@ export function CollectionScreen({ onOpenTags }: CollectionScreenProps): ReactEl
               />
             </div>
             {importButton('sm')}
+            {pasteButton('sm')}
             {tagsState.status === 'ready' && (
               <IconButton
                 size="sm"

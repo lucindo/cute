@@ -444,4 +444,81 @@ describe('CollectionScreen import', () => {
     expect(await screen.findByRole('button', { name: IMPORT_LABEL })).toBeEnabled()
     expect(await screen.findAllByRole('listitem')).toHaveLength(1)
   })
+
+  describe('paste button', () => {
+    const PASTE_LABEL = UI_STRINGS.en.collection.pasteButton
+
+    function stubClipboard(items: { types: string[]; getType(type: string): Promise<Blob> }[]): void {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { read: () => Promise.resolve(items) },
+        configurable: true,
+      })
+    }
+
+    function textItem(text: string): { types: string[]; getType(type: string): Promise<Blob> } {
+      return { types: ['text/plain'], getType: () => Promise.resolve(new Blob([text])) }
+    }
+
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, 'clipboard')
+    })
+
+    it('stays hidden where the clipboard cannot be read', async () => {
+      renderScreen()
+      await screen.findByText(EMPTY_TEXT)
+
+      expect(screen.queryByRole('button', { name: PASTE_LABEL })).not.toBeInTheDocument()
+    })
+
+    it('imports image bytes off the clipboard', async () => {
+      stubClipboard([
+        { types: ['image/png'], getType: () => Promise.resolve(new Blob(['x'], { type: 'image/png' })) },
+      ])
+      const { container } = renderScreen()
+      await screen.findByText(EMPTY_TEXT)
+
+      await userEvent.click(screen.getByRole('button', { name: PASTE_LABEL }))
+
+      await waitFor(() => {
+        expect(container.querySelectorAll('img')).toHaveLength(1)
+      })
+    })
+
+    it('names the host when a social page link was pasted', async () => {
+      stubClipboard([textItem('https://www.instagram.com/p/abc123/')])
+      renderScreen()
+      await screen.findByText(EMPTY_TEXT)
+
+      await userEvent.click(screen.getByRole('button', { name: PASTE_LABEL }))
+
+      await findRejectionLine(`instagram.com — ${UI_STRINGS.en.collection.rejection.pageLink}`)
+    })
+
+    it('reports an empty clipboard', async () => {
+      stubClipboard([textItem('what a cute baby')])
+      renderScreen()
+      await screen.findByText(EMPTY_TEXT)
+
+      await userEvent.click(screen.getByRole('button', { name: PASTE_LABEL }))
+
+      await screen.findByText(UI_STRINGS.en.collection.clipboardEmpty)
+    })
+
+    it('says nothing when the paste prompt is refused', async () => {
+      Object.defineProperty(navigator, 'clipboard', {
+        value: { read: () => Promise.reject(new DOMException('denied', 'NotAllowedError')) },
+        configurable: true,
+      })
+      renderScreen()
+      await screen.findByText(EMPTY_TEXT)
+
+      await userEvent.click(screen.getByRole('button', { name: PASTE_LABEL }))
+
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: PASTE_LABEL })).toBeEnabled()
+      })
+      expect(screen.queryByText(UI_STRINGS.en.collection.clipboardEmpty)).not.toBeInTheDocument()
+      expect(screen.queryAllByRole('listitem')).toHaveLength(0)
+    })
+  })
 })

@@ -53,6 +53,7 @@ export interface UiStrings {
     readonly loadError: string
     readonly importButton: string
     readonly importing: string
+    readonly pasteButton: string
     readonly storageGauge: (used: string, total: string) => string
     readonly storageUsed: (used: string) => string
     readonly sortLabel: string
@@ -215,6 +216,7 @@ const EN: UiStrings = {
     loadError: 'Could not open the collection storage.',
     importButton: 'Import media',
     importing: 'Importing…',
+    pasteButton: 'Paste from clipboard',
     storageGauge: (used, total) => `Using ${used} of ${total}`,
     storageUsed: (used) => `Using ${used}`,
     sortLabel: 'Sort',
@@ -382,6 +384,7 @@ const PT_BR: UiStrings = {
     loadError: 'Não foi possível abrir o armazenamento da coleção.',
     importButton: 'Importar mídia',
     importing: 'Importando…',
+    pasteButton: 'Colar da área de transferência',
     storageGauge: (used, total) => `Usando ${used} de ${total}`,
     storageUsed: (used) => `Usando ${used}`,
     sortLabel: 'Ordenar',

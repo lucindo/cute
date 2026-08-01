@@ -1,0 +1,177 @@
+name: Build desktop apps
+
+# Wraps the live PWA in a Pake (Tauri) shell. Decoupled from deploy.yml on
+# purpose: the installed app loads the live URL, so web content auto-updates and
+# desktop releases are rare/independent of web releases.
+#   - workflow_dispatch : build installers as artifacts (test runs, no release)
+#   - push tag desktop-v*: build + publish a GitHub Release with the installers
+# `desktop-v*` cannot match deploy.yml's `v*` — tag patterns anchor at the start
+# of the ref name — so the two pipelines never cross.
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PAKE_VERSION: "3.11.10" # bump deliberately; pinned for reproducible builds
+  APP_URL: "https://lucindo.github.io/cute/"
+  APP_NAME: "Cute Baby Meditation"
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: macos-universal
+            ext: dmg
+            pake_extra: "--multi-arch"
+            rust_targets: "aarch64-apple-darwin,x86_64-apple-darwin"
+          - os: windows-latest
+            platform: windows-x64
+            ext: msi
+            pake_extra: ""
+            rust_targets: ""
+          # One Linux job per package format — deb (apt), rpm (Fedora/openSUSE), and
+          # AppImage (distro-agnostic) cover the main families. ubuntu-22.04: build on
+          # the oldest supported Ubuntu for wider glibc compat.
+          - os: ubuntu-22.04
+            platform: linux-x64
+            ext: deb
+            pake_extra: "--targets deb"
+            rust_targets: ""
+          - os: ubuntu-22.04
+            platform: linux-x64
+            ext: rpm
+            pake_extra: "--targets rpm"
+            rust_targets: ""
+          - os: ubuntu-22.04
+            platform: linux-x64
+            ext: AppImage
+            pake_extra: "--targets appimage"
+            rust_targets: ""
+    steps:
+      - uses: actions/checkout@v6
+
+      # Node 20, not the 26 deploy.yml uses: this job builds no TypeScript, and 20
+      # is the version pake-cli is proven green on.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_targets }}
+
+      # Tauri 2 (Pake's runtime) Linux build prerequisites — webkit2gtk-4.1 et al.;
+      # `rpm` for the rpm bundle, `patchelf` for the AppImage bundle.
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev patchelf rpm
+
+      # Wrapper version = the tag (desktop-vX.Y.Z), decoupled from the app/package.json
+      # version. The app auto-updates via APP_URL, so a desktop release is cut only when
+      # the Pake shell changes — its version is whatever tag we push. Dispatch test runs
+      # have no tag, so they fall back to a dev marker.
+      - id: ver
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/desktop-v* ]]; then
+            echo "v=${GITHUB_REF_NAME#desktop-v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "v=0.0.0-dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --icon is mandatory: omit it and pake falls back to fetching the site's
+      # favicon, which fails silently and ships an iconless app.
+      # Retry: macOS bundle_dmg.sh is intermittently flaky in CI (hdiutil/Finder race) —
+      # it fails with no output while the same image + command succeeds on a re-run.
+      # Cargo's target/ persists across attempts, so a retry only re-bundles, not rebuilds.
+      - name: Build with Pake
+        shell: bash
+        run: |
+          attempt=1; max=3
+          until npx --yes "pake-cli@${PAKE_VERSION}" "$APP_URL" \
+                  --name "$APP_NAME" \
+                  --icon public/pwa-512x512.png \
+                  --width 630 --height 900 \
+                  --hide-title-bar \
+                  ${{ matrix.pake_extra }}; do
+            if [ "$attempt" -ge "$max" ]; then
+              echo "pake build failed after $max attempts" >&2; exit 1
+            fi
+            attempt=$((attempt + 1)); echo "pake build failed; retry $attempt/$max..." >&2; sleep 5
+          done
+
+      # Pake copies <appname>.<target> into the workspace, but slugifies the name on
+      # Linux ("cute-baby-meditation.deb") and lowercases AppImage — so match by
+      # extension (nocaseglob: *.AppImage ⇢ cute-baby-meditation.appimage) rather than
+      # guessing the name.
+      - name: Rename installer
+        shell: bash
+        env:
+          VERSION: ${{ steps.ver.outputs.v }}
+          EXT: ${{ matrix.ext }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          shopt -s nullglob nocaseglob
+          built=( *."${EXT}" )
+          shopt -u nocaseglob
+          if [ "${#built[@]}" -ne 1 ]; then
+            echo "expected exactly one *.${EXT} in workspace, found: ${built[*]:-none}" >&2; exit 1
+          fi
+          mv "${built[0]}" "Cute-Baby-Meditation-${VERSION}-${PLATFORM}.${EXT}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          # platform+ext: the three Linux formats share platform, so ext keeps it unique.
+          name: ${{ matrix.platform }}-${{ matrix.ext }}
+          path: Cute-Baby-Meditation-*-${{ matrix.platform }}.${{ matrix.ext }}
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: installers
+          merge-multiple: true
+      - name: Publish GitHub Release
+        # TAG/REPO via env, never inlined into the shell (deploy.yml convention).
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          cat > notes.md <<'EOF'
+          Native desktop builds of Cute Baby Meditation — macOS (universal), Windows (x64), and Linux x64 (.deb / .rpm / .AppImage).
+
+          **Your collection does not carry over.** The desktop app keeps its own storage, separate from your browser — it starts empty. To move an existing collection across, use **Settings → Backup → Export backup** in the browser, then **Restore backup** in the desktop app.
+
+          **Unsigned builds.** First launch:
+          - **macOS** may report the app is "damaged". Run
+            `xattr -dr com.apple.quarantine "/Applications/Cute Baby Meditation.app"`,
+            or right-click the app → Open.
+          - **Windows** SmartScreen: click **More info → Run anyway**.
+          - **Linux** — pick your format: `.deb` (Debian/Ubuntu), `.rpm` (Fedora/openSUSE),
+            or `.AppImage` (any distro — `chmod +x` and run).
+
+          The app loads the live site, so web content stays up to date automatically.
+          EOF
+          gh release create "$TAG" installers/* \
+            --repo "$REPO" \
+            --title "$TAG" \
+            --notes-file notes.md

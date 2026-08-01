@@ -93,7 +93,11 @@ jobs:
           fi
 
       # --icon is mandatory: omit it and pake falls back to fetching the site's
-      # favicon, which fails silently and ships an iconless app.
+      # favicon, which fails silently and ships an iconless app. The source PNG must
+      # be RGBA (color-type 6) — the Linux legs consume it raw and Tauri panics at
+      # `generate_context!` on anything else; mac/win convert to .icns/.ico first and
+      # never notice. The rest of public/*.png are still color-type 2, so a future
+      # icon refresh that regenerates this one from them re-breaks Linux only.
       # Retry: macOS bundle_dmg.sh is intermittently flaky in CI (hdiutil/Finder race) —
       # it fails with no output while the same image + command succeeds on a re-run.
       # Cargo's target/ persists across attempts, so a retry only re-bundles, not rebuilds.
